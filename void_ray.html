@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rüya Bahçesi: Void Ray Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ray-color: #38bdf8;
+            --echo-color: #67e8f9;
+            --toxic-color: #84cc16;
+            --lost-color: #a855f7;
+            --glass-bg: rgba(8, 10, 15, 0.90);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+        body {
+            margin: 0; overflow: hidden; background-color: #020204;
+            font-family: 'Outfit', sans-serif; touch-action: none;
+            color: rgba(255, 255, 255, 0.9); user-select: none;
+        }
+        canvas { display: block; }
+
+        /* --- ANA MENÜ --- */
+        #main-menu {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 100%, #0f172a 0%, #000000 80%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; transition: opacity 1s ease;
+        }
+        .menu-hidden { opacity: 0; pointer-events: none; }
+
+        .title-main {
+            font-size: 6rem; font-weight: 100; letter-spacing: 0.3em;
+            background: linear-gradient(to bottom, #fff, #94a3b8);
+            -webkit-background-clip: text; color: transparent;
+            margin-bottom: 10px; text-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
+            text-align: center;
+        }
+        
+        /* Vatoz Sembolü */
+        .void-symbol {
+            width: 140px; height: 140px; margin: 40px 0;
+            filter: drop-shadow(0 0 25px var(--ray-color));
+            opacity: 0.9; animation: floatLogo 5s ease-in-out infinite;
+        }
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .menu-btn {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            padding: 20px 80px; border-radius: 100px;
+            font-size: 1.2rem; letter-spacing: 5px; text-transform: uppercase;
+            color: #e2e8f0; cursor: pointer; transition: all 0.4s;
+            backdrop-filter: blur(10px); margin-top: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+        }
+        .menu-btn:hover {
+            background: rgba(56, 189, 248, 0.1); border-color: var(--ray-color);
+            box-shadow: 0 0 60px rgba(56, 189, 248, 0.3); letter-spacing: 8px;
+            color: white;
+        }
+
+        /* Modern Tips */
+        .tips-container {
+            position: absolute; bottom: 80px; text-align: center;
+            width: 100%; max-width: 700px; height: 60px;
+        }
+        .tip-text {
+            font-size: 0.95rem; color: #94a3b8; letter-spacing: 1px;
+            font-weight: 300; opacity: 0; transition: opacity 1s;
+            position: absolute; width: 100%; left: 0; top: 25px;
+        }
+        .tip-text.active { opacity: 1; }
+        .tip-label {
+            font-size: 0.7rem; color: var(--ray-color); letter-spacing: 4px;
+            margin-bottom: 5px; display: block; opacity: 0.6;
+        }
+
+        /* --- ZEHİR EFEKTİ --- */
+        #toxic-overlay {
+            position: absolute; inset: 0; pointer-events: none; z-index: 40;
+            background: radial-gradient(circle, transparent 50%, rgba(132, 204, 22, 0) 100%);
+            transition: background 0.5s ease;
+        }
+        #toxic-overlay.active {
+            background: radial-gradient(circle, transparent 40%, rgba(132, 204, 22, 0.3) 100%);
+            animation: toxicPulse 1.5s infinite alternate;
+        }
+        @keyframes toxicPulse { 0% { opacity: 0.4; } 100% { opacity: 0.8; } }
+
+        /* --- HUD --- */
+        .hud-container { pointer-events: none; position: absolute; inset: 0; z-index: 50; }
+        .pointer-events-auto { pointer-events: auto; }
+
+        .hud-icon-group { position: absolute; top: 30px; left: 30px; display: flex; gap: 15px; pointer-events: auto; }
+        .hud-btn {
+            width: 50px; height: 50px; border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; color: rgba(255,255,255,0.6);
+            transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
+            font-size: 1.2rem;
+        }
+        .hud-btn:hover, .hud-btn.active { border-color: var(--ray-color); color: white; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+        .hud-btn.active { background: rgba(56, 189, 248, 0.2); } 
+
+        #xp-container { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; }
+        .xp-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+        .xp-bar-fill { height: 100%; background: var(--ray-color); width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px var(--ray-color); }
+        .level-text { font-size: 0.8rem; letter-spacing: 2px; color: #94a3b8; }
+
+        /* --- BİLDİRİMLER (Hayalet) --- */
+        #notification-area { 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            display: flex; flex-direction: column-reverse; align-items: center; 
+            width: 100%; pointer-events: none; 
+        }
+        .zen-notif {
+            background: transparent;
+            padding: 5px 20px; margin-top: 2px;
+            font-weight: 300; letter-spacing: 2px; font-size: 0.95rem; 
+            animation: floatUpFade 3.5s forwards;
+            color: rgba(255, 255, 255, 0.85); 
+            text-shadow: 0 2px 15px rgba(0,0,0,0.9); 
+            display: flex; align-items: center; gap: 12px;
+        }
+        .rarity-dot { 
+            width: 6px; height: 6px; border-radius: 50%; 
+            box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; 
+        }
+        @keyframes floatUpFade { 
+            0% { opacity: 0; transform: translateY(40px) scale(0.9); } 
+            20% { opacity: 0.9; transform: translateY(0) scale(1); } 
+            80% { opacity: 0.7; } 
+            100% { opacity: 0; transform: translateY(-30px); } 
+        }
+
+        /* --- MERGE PROMPT (Hayalet) --- */
+        #merge-prompt {
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.2); padding: 8px 25px; border-radius: 50px;
+            border: 1px solid rgba(103, 232, 249, 0.2); color: var(--echo-color);
+            font-size: 0.8rem; letter-spacing: 2px; backdrop-filter: blur(2px);
+            opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        }
+        #merge-prompt.visible { opacity: 1; animation: pulse 2s infinite; }
+        #merge-prompt.subtle-ghost { opacity: 0.3; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); animation: ghostPulse 4s infinite; }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
+        @keyframes ghostPulse { 0% { opacity: 0.1; } 50% { opacity: 0.4; } 100% { opacity: 0.1; } }
+
+        /* --- ENVANTER --- */
+        #inventory-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); z-index: 70; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; justify-content: center; align-items: center; }
+        #inventory-overlay.open { opacity: 1; pointer-events: auto; }
+        .inv-window { width: 900px; height: 650px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; display: flex; box-shadow: 0 0 100px rgba(0,0,0,0.8); overflow: hidden; }
+        .inv-sidebar { width: 220px; background: rgba(255,255,255,0.02); border-right: 1px solid var(--glass-border); padding: 30px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .filter-btn { padding: 12px 15px; border-radius: 10px; color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 0.9rem; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        .filter-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .filter-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--ray-color); border-left: 3px solid var(--ray-color); }
+        .inv-content { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); }
+        .inv-header { padding: 25px 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        .inv-list { flex: 1; padding: 20px 40px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .item-card { background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(0,0,0,0.2)); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .item-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.05); }
+        .item-glow { position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .item-icon { font-size: 1.5rem; margin-bottom: 5px; }
+        .item-name { font-size: 0.9rem; color: #e2e8f0; }
+
+        /* Mini Map */
+        #minimap-wrapper { position: absolute; bottom: 40px; right: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: auto; }
+        #minimap-container { width: 180px; height: 180px; border-radius: 50%; background: rgba(5, 5, 10, 0.6); border: 1px solid rgba
