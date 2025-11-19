@@ -171,4 +171,811 @@
 
         /* Mini Map */
         #minimap-wrapper { position: absolute; bottom: 40px; right: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: auto; }
-        #minimap-container { width: 180px; height: 180px; border-radius: 50%; background: rgba(5, 5, 10, 0.6); border: 1px solid rgba
+        #minimap-container { width: 180px; height: 180px; border-radius: 50%; background: rgba(5, 5, 10, 0.6); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(15px); overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .coords { font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.4); letter-spacing: 2px; }
+
+        /* Ses Panel */
+        #btn-sound { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; }
+        #btn-sound:hover { border-color: white; color: white; }
+        #sound-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: 16px; padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
+        #sound-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; margin-top: 10px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ray-color); cursor: pointer; box-shadow: 0 0 10px var(--ray-color); }
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop>
+        <source src="uploaded:Crater.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Zehir Vinyeti -->
+    <div id="toxic-overlay"></div>
+
+    <!-- ANA MENÜ -->
+    <div id="main-menu">
+        <div class="title-main">VOID RAY</div>
+        
+        <!-- Modern Vatoz SVG -->
+        <svg class="void-symbol" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" fill="rgba(56, 189, 248, 0.1)"/>
+            <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
+            <path d="M50 95 Q 50 115 45 125" stroke-width="1" opacity="0.6" />
+        </svg>
+
+        <button id="btn-start" class="menu-btn">YAŞAM DÖNGÜSÜNÜ BAŞLAT</button>
+        
+        <!-- Modern Tips -->
+        <div class="tips-container">
+            <span class="tip-label">SİSTEM REHBERİ</span>
+            <div id="tip-text" class="tip-text active">Yankı'yla birleşmek için [F] tuşuna basın.</div>
+        </div>
+    </div>
+
+    <!-- HUD -->
+    <div class="hud-container">
+        <div class="hud-icon-group">
+            <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)">❖</div>
+            <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (AI)">◈</div>
+        </div>
+        
+        <!-- XP Bar -->
+        <div id="xp-container">
+            <div class="level-text">EVRİM SEVİYESİ <span id="level-val" class="text-white font-bold text-lg">1</span></div>
+            <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+        </div>
+
+        <div id="btn-sound">♫</div>
+        <div id="sound-panel">
+            <div class="mb-4"><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div><input type="range" id="vol-music" min="0" max="100" value="50"></div>
+            <div><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div><input type="range" id="vol-sfx" min="0" max="100" value="80"></div>
+        </div>
+
+        <div id="notification-area"></div>
+        <div id="merge-prompt">YANKI İLE BİRLEŞMEK İÇİN [F]</div>
+
+        <div id="minimap-wrapper">
+            <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
+            <div class="coords" id="coords">0000 : 0000</div>
+        </div>
+    </div>
+
+    <!-- ENVANTER -->
+    <div id="inventory-overlay">
+        <div class="inv-window">
+            <div class="inv-sidebar">
+                <div class="text-xs text-gray-500 mb-4 tracking-widest">FİLTRELER</div>
+                <div class="filter-btn active" onclick="filterInventory('all')">Tümü <span id="count-all" class="text-xs opacity-50">0</span></div>
+                <div class="filter-btn" onclick="filterInventory('legendary')">Efsanevi <span id="count-legendary" class="text-xs opacity-50">0</span></div>
+                <div class="filter-btn" onclick="filterInventory('epic')">Destansı <span id="count-epic" class="text-xs opacity-50">0</span></div>
+                <div class="filter-btn" onclick="filterInventory('rare')">Nadir <span id="count-rare" class="text-xs opacity-50">0</span></div>
+            </div>
+            <div class="inv-content">
+                <div class="inv-header">
+                    <h2 class="text-2xl font-light tracking-[0.2em] text-white">ENVANTER</h2>
+                    <div class="cursor-pointer opacity-50 hover:opacity-100 text-xl" id="btn-close-inv">✕</div>
+                </div>
+                <div class="inv-list" id="inv-grid-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // --- AYARLAR ---
+        const WORLD_SIZE = 30000; 
+        const RARITY = {
+            COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.6, xp: 10 },
+            RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.25, xp: 40 },
+            EPIC:      { id: 'epic',      name: 'Öz',        color: '#c084fc', prob: 0.1, xp: 100 },
+            LEGENDARY: { id: 'legendary', name: 'Yadigâr',   color: '#fbbf24', prob: 0.05, xp: 500 },
+            TOXIC:     { id: 'toxic',     name: 'Zehir',     color: '#84cc16', prob: 0.01, xp: 0 }, 
+            LOST:      { id: 'lost',      name: 'Kayıp Kargo', color: '#a855f7', prob: 0, xp: 0 }
+        };
+        const LOOT_DB = {
+            common: ["Hidrojen", "Karbon Tozu", "Demir", "Silika"],
+            rare: ["Buz Çekirdeği", "Safir", "İyonize Gaz"],
+            epic: ["Yıldız Parçası", "Nebula Özü", "Plazma"],
+            legendary: ["Zaman Kristali", "Kara Delik Kalıntısı"],
+            toxic: ["Zehirli Gaz", "Asit Bulutu"],
+            lost: ["KAYIP SİNYAL"]
+        };
+        
+        const TIPS = [
+            "Yankı'yla birleşmek için [F] tuşuna basın.",
+            "Zehirli gezegenler (Yeşil) enerjinizi tüketir.",
+            "Efsanevi elementler (Sarı) çok nadir bulunur.",
+            "[I] tuşu ile envanterinizi kontrol edin.",
+            "Mouse tekerleği ile kamerayı yakınlaştırıp uzaklaştırabilirsiniz.",
+            "Space tuşu ile kısa süreli hız patlaması yapabilirsiniz.",
+            "Yankı otonom modda nadiren kargosunu düşürebilir.",
+            "Mor sinyaller kayıp kargoları işaret eder."
+        ];
+
+        let volMusic = 0.5, volSFX = 0.8;
+        let lastToxicNotification = 0; 
+        let currentZoom = 1.0;
+        let targetZoom = 1.0;
+
+        // --- SES ---
+        class ZenAudio {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.bgMusic = document.getElementById('bgMusic');
+                this.bgMusic.volume = volMusic;
+                this.scale = [196.00, 220.00, 261.63, 293.66, 329.63, 392.00];
+            }
+            init() { if(this.ctx.state === 'suspended') this.ctx.resume(); }
+            
+            playChime(rarity) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const freq = this.scale[Math.floor(Math.random()*this.scale.length)];
+                
+                if (rarity.id === 'lost') osc.type = 'square';
+                else osc.type = rarity.id === 'legendary' ? 'triangle' : 'sine';
+                
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(volSFX * 0.2, this.ctx.currentTime+0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+4);
+                
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime+4.1);
+            }
+            
+            playEvolve() {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime+2);
+                gain.gain.setValueAtTime(volSFX*0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+2.5);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime+3);
+            }
+            
+            playToxic() {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime+0.4);
+                gain.gain.setValueAtTime(volSFX*0.5, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.4);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime+0.5);
+            }
+        }
+
+        // --- OYUN DEĞİŞKENLERİ ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const mmCanvas = document.getElementById('minimap-canvas');
+        const mmCtx = mmCanvas.getContext('2d');
+        
+        let width, height, player, echoRay = null, audio;
+        let planets = [], stars = [], collectedItems = [], particles = [], inventoryOpen = false, activeFilter = 'all';
+        let autopilot = false;
+        let echoDeathLevel = 0;
+
+        const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false, Escape:false };
+
+        // --- VOID RAY (PLAYER) ---
+        class VoidRay {
+            constructor() {
+                this.x = WORLD_SIZE/2; this.y = WORLD_SIZE/2;
+                this.vx = 0; this.vy = 0; this.angle = -Math.PI/2;
+                this.roll = 0; this.wingState = 0; this.wingPhase = 0;
+                this.scale = 1; 
+                this.level = 1; this.xp = 0; 
+                this.maxXp = 150; 
+                this.tail = [];
+                for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
+            }
+
+            gainXp(amount) {
+                this.xp += amount;
+                if(this.xp >= this.maxXp) {
+                    this.levelUp();
+                }
+                this.updateUI();
+            }
+
+            levelUp() {
+                this.level++;
+                this.xp = 0;
+                this.maxXp *= 1.5; 
+                this.scale += 0.2; 
+                audio.playEvolve();
+                showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}});
+                
+                if (!echoRay) {
+                    if (this.level === 6) {
+                        spawnEcho(this.x, this.y);
+                    } else if (this.level > 6 && this.level >= echoDeathLevel + 6) {
+                        spawnEcho(this.x, this.y);
+                    }
+                }
+            }
+
+            updateUI() {
+                document.getElementById('level-val').innerText = this.level;
+                document.getElementById('xp-fill').style.width = `${(this.xp/this.maxXp)*100}%`;
+            }
+
+            update() {
+                const BOOST = keys[" "] ? 0.6 : 0;
+                let ACCEL = 0.2 + BOOST;
+                const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.1); 
+                const TURN_SPEED = 0.05 / Math.sqrt(this.scale); 
+
+                let targetRoll = 0;
+                let targetWingState = 0;
+
+                if (autopilot) {
+                    let nearest = null, minDist = Infinity;
+                    for(let p of planets) {
+                        if(!p.collected && p.type.id !== 'toxic') {
+                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
+                            if(d < minDist) { minDist = d; nearest = p; }
+                        }
+                    }
+                    if(nearest) {
+                        const targetAngle = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+                        let diff = targetAngle - this.angle;
+                        while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
+                        this.angle += diff * 0.05;
+                        const dist = Math.sqrt(minDist);
+                        const aiThrust = dist > 500 ? ACCEL : ACCEL * 0.5;
+                        this.vx += Math.cos(this.angle) * aiThrust;
+                        this.vy += Math.sin(this.angle) * aiThrust;
+                        this.wingPhase += 0.2; 
+                        targetRoll = diff * 5 * 0.6; // Soft AI için yanlamayı azalt
+                    } else { this.wingPhase += 0.05; }
+                } else {
+                    if (keys.a || keys.ArrowLeft) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
+                    if (keys.d || keys.ArrowRight) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
+                    if (keys.w || keys.ArrowUp || keys[" "]) {
+                        this.vx += Math.cos(this.angle) * ACCEL;
+                        this.vy += Math.sin(this.angle) * ACCEL;
+                        targetWingState = -0.8; this.wingPhase += 0.2;
+                    } else { this.wingPhase += 0.05; }
+                    if (keys.s || keys.ArrowDown) {
+                        this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2;
+                    }
+                }
+
+                planets.forEach(p => {
+                    if(!p.collected && p.type.id !== 'toxic') {
+                        const dx = p.x - this.x; const dy = p.y - this.y;
+                        const distSq = dx*dx + dy*dy;
+                        if(distSq < (p.radius*10)**2 && distSq > p.radius**2) {
+                            const force = (p.radius * 5) / distSq; 
+                            this.vx += (dx / Math.sqrt(distSq)) * force;
+                            this.vy += (dy / Math.sqrt(distSq)) * force;
+                        }
+                    }
+                });
+
+                const speed = Math.hypot(this.vx, this.vy);
+                if (speed > MAX_SPEED) { this.vx=(this.vx/speed)*MAX_SPEED; this.vy=(this.vy/speed)*MAX_SPEED; }
+                this.vx *= 0.98; this.vy *= 0.98;
+                this.x += this.vx; this.y += this.vy;
+
+                this.roll += (targetRoll - this.roll) * 0.05; 
+                this.wingState += (targetWingState - this.wingState) * 0.1;
+
+                let targetX = this.x - Math.cos(this.angle) * 20 * this.scale;
+                let targetY = this.y - Math.sin(this.angle) * 20 * this.scale;
+                this.tail[0].x += (targetX - this.tail[0].x) * 0.5;
+                this.tail[0].y += (targetY - this.tail[0].y) * 0.5;
+
+                for (let i = 1; i < this.tail.length; i++) {
+                    let prev = this.tail[i-1]; let curr = this.tail[i];
+                    let dx = prev.x - curr.x; let dy = prev.y - curr.y;
+                    let d = Math.sqrt(dx*dx + dy*dy); let a = Math.atan2(dy, dx);
+                    if(d > 5 * this.scale) {
+                        curr.x = prev.x - Math.cos(a) * 5 * this.scale;
+                        curr.y = prev.y - Math.sin(a) * 5 * this.scale;
+                    }
+                }
+                document.getElementById('coords').innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
+            }
+
+            draw(ctx) {
+                ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
+                for(let i=1; i<this.tail.length-1; i++) {
+                    let xc = (this.tail[i].x + this.tail[i+1].x) / 2;
+                    let yc = (this.tail[i].y + this.tail[i+1].y) / 2;
+                    ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc);
+                }
+                let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
+                grad.addColorStop(0, "rgba(56, 189, 248, 0.9)"); grad.addColorStop(1, "transparent");
+                ctx.strokeStyle = grad; ctx.lineWidth = 3 * this.scale; ctx.lineCap = 'round'; ctx.stroke();
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle + Math.PI/2);
+                ctx.scale(this.scale, this.scale); 
+
+                let scaleX = 1 - Math.abs(this.roll) * 0.4;
+                let shiftX = this.roll * 15;
+                let wingTipY = 20 + (this.wingState * 15);
+                let wingTipX = 60 - (this.wingState * 10);
+                let wingFlap = Math.sin(this.wingPhase) * 5;
+
+                ctx.shadowBlur = 25; ctx.shadowColor = "rgba(56, 189, 248, 0.5)";
+                ctx.fillStyle = "rgba(8, 15, 30, 0.95)";
+                ctx.beginPath(); ctx.moveTo(0+shiftX, -30);
+                ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40);
+                ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50);
+                ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40);
+                ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30);
+                ctx.fill();
+
+                ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = "#e0f2fe"; ctx.shadowBlur = 30; ctx.shadowColor = "#0ea5e9";
+                ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- ECHO RAY ---
+        class EchoRay {
+            constructor(x, y) {
+                this.x = x; this.y = y; this.vx = 0; this.vy = 0;
+                this.angle = 0; this.lootBag = [];
+                this.attached = false; 
+            }
+            update() {
+                if (this.attached) {
+                    const target = player.tail[player.tail.length - 1];
+                    this.x += (target.x - this.x) * 0.1;
+                    this.y += (target.y - this.y) * 0.1;
+                    this.angle = player.angle; 
+                } else {
+                    let nearest = null, minDist = Infinity;
+                    for(let p of planets) {
+                        if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
+                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
+                            if(d < minDist) { minDist = d; nearest = p; }
+                        }
+                    }
+                    if(nearest) {
+                        const dist = Math.sqrt(minDist);
+                        const targetA = Math.atan2(nearest.y-this.y, nearest.x-this.x);
+                        let diff = targetA - this.angle;
+                        while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
+                        this.angle += diff * 0.1;
+                        if(dist < 200) {
+                            this.vx += Math.cos(targetA) * 0.5;
+                            this.vy += Math.sin(targetA) * 0.5;
+                        } else {
+                            this.vx += Math.cos(this.angle) * 0.2;
+                            this.vy += Math.sin(this.angle) * 0.2;
+                        }
+                    } else {
+                        this.angle += (Math.random()-0.5)*0.1;
+                        this.vx += Math.cos(this.angle)*0.1; this.vy += Math.sin(this.angle)*0.1;
+                    }
+                    const speed = Math.hypot(this.vx, this.vy);
+                    if(speed > 5) { this.vx *= 0.9; this.vy *= 0.9; } 
+                    this.x += this.vx * 0.5; this.y += this.vy * 0.5; // Yankı hızı yarıya düşürüldü
+
+                    for(let p of planets) {
+                        if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
+                            const d = Math.hypot(this.x-p.x, this.y-p.y);
+                            if(d < p.radius + 40) { 
+                                p.collected = true; 
+                                
+                                if (Math.random() < 0.01 && this.lootBag.length > 0) {
+                                    createLostLootPlanet(this.x, this.y, [...this.lootBag]);
+                                    this.lootBag = []; 
+                                    showNotification({name: "YANKI GANİMETİ DÜŞÜRDÜ! MOR SİNYALİ BUL!", type:{color:'#a855f7'}});
+                                } else {
+                                    this.lootBag.push(p);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            draw(ctx) { 
+                const onScreen = this.x > 0 && this.x < WORLD_SIZE && this.y > 0 && this.y < WORLD_SIZE; 
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle + Math.PI/2);
+                ctx.scale(0.6, 0.6); 
+                ctx.shadowBlur = 20; ctx.shadowColor = "#67e8f9";
+                ctx.fillStyle = "rgba(10, 20, 40, 0.9)";
+                ctx.beginPath(); ctx.moveTo(0, -25);
+                ctx.lineTo(30, 30); ctx.lineTo(0, 40); ctx.lineTo(-30, 30);
+                ctx.fill();
+                ctx.strokeStyle = "#67e8f9"; ctx.lineWidth = 3; ctx.stroke();
+                ctx.restore();
+                if(this.lootBag.length > 0) {
+                    ctx.fillStyle = "#fbbf24";
+                    ctx.font = "12px Arial";
+                    ctx.fillText(`+${this.lootBag.length}`, this.x+10, this.y-10);
+                }
+            }
+        }
+
+        function drawEchoIndicator() {
+            if (!echoRay || echoRay.attached) return; // Bağlıysa ok gösterme
+
+            const camCX = player.x; const camCY = player.y;
+            const dx = echoRay.x - camCX; const dy = echoRay.y - camCY;
+            const screenHalfW = (width / currentZoom) / 2; const screenHalfH = (height / currentZoom) / 2;
+            
+            if (Math.abs(dx) > screenHalfW || Math.abs(dy) > screenHalfH) {
+                const angle = Math.atan2(dy, dx);
+                const borderW = screenHalfW * 0.9; const borderH = screenHalfH * 0.9;
+                let tx = Math.cos(angle) * borderW; let ty = Math.sin(angle) * borderH;
+                
+                // Okun ekran kenarına oturmasını sağla
+                let dist = Math.sqrt(tx*tx + ty*ty);
+                let factor = Math.min(borderW/Math.abs(tx), borderH/Math.abs(ty));
+                
+                tx = Math.cos(angle) * borderW * factor * 0.9;
+                ty = Math.sin(angle) * borderH * factor * 0.9;
+
+                const screenX = width/2 + tx * currentZoom; 
+                const screenY = height/2 + ty * currentZoom;
+
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                ctx.translate(screenX, screenY); ctx.rotate(angle);
+                ctx.fillStyle = "#67e8f9"; ctx.shadowBlur = 10; ctx.shadowColor = "#67e8f9";
+                ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-10, 7); ctx.lineTo(-10, -7); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Planet {
+            constructor(x, y, type, lootContent = []) {
+                this.x = x !== undefined ? x : Math.random()*WORLD_SIZE;
+                this.y = y !== undefined ? y : Math.random()*WORLD_SIZE;
+                this.collected = false;
+                
+                if (type) {
+                    this.type = type;
+                    this.lootContent = lootContent; 
+                } else {
+                    const r = Math.random();
+                    if(r < 0.01) this.type = RARITY.TOXIC;
+                    else if(r < 0.03) this.type = RARITY.LEGENDARY;
+                    else if(r < 0.13) this.type = RARITY.EPIC;
+                    else if(r < 0.45) this.type = RARITY.RARE;
+                    else this.type = RARITY.COMMON;
+                    this.lootContent = [];
+                }
+
+                this.name = this.type.id === 'lost' ? "KAYIP KARGO" : LOOT_DB[this.type.id][Math.floor(Math.random()*LOOT_DB[this.type.id].length)];
+                this.radius = this.type.id==='legendary'?120 : (this.type.id==='toxic'? 60 : (this.type.id==='lost' ? 80 : 40+Math.random()*60));
+            }
+            draw(ctx, camX, camY) {
+                if(this.collected) return;
+                
+                ctx.shadowBlur=50; ctx.shadowColor=this.type.color;
+                const grad = ctx.createRadialGradient(this.x-this.radius*0.3, this.y-this.radius*0.3, this.radius*0.1, this.x, this.y, this.radius);
+                grad.addColorStop(0, this.type.color); grad.addColorStop(1, "#020617");
+                ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+                
+                if(this.type.id === 'toxic') {
+                    const t = Date.now() * 0.002;
+                    ctx.strokeStyle = "rgba(132, 204, 22, 0.15)";
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 10 + Math.sin(t)*5, 0, Math.PI*2); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20 + Math.sin(t+1)*8, 0, Math.PI*2); ctx.stroke();
+                }
+                if (this.type.id === 'lost') {
+                    ctx.strokeStyle = this.type.color;
+                    ctx.lineWidth = 3;
+                    const pulse = Math.sin(Date.now() * 0.005) * 10;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20 + pulse, 0, Math.PI*2); ctx.stroke();
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.vx = (Math.random()-0.5)*3; this.vy = (Math.random()-0.5)*3;
+                this.life = 1.0;
+                this.radius = Math.random() * 5 + 3; 
+                this.growth = 0.15; 
+            }
+            update() { 
+                this.x+=this.vx; this.y+=this.vy; 
+                this.life-=0.015; 
+                this.radius += this.growth; 
+            }
+            draw(ctx) {
+                ctx.globalAlpha = this.life * 0.6; ctx.fillStyle=this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function spawnEcho(x, y) {
+            echoRay = new EchoRay(x, y);
+            showNotification({name: "YANKI DOĞDU: SADIK YOLDAŞ", type:{color:'#67e8f9'}});
+        }
+
+        function createLostLootPlanet(x, y, items) {
+            const p = new Planet(x, y, RARITY.LOST, items);
+            planets.push(p);
+        }
+
+        // --- UI & EVENTS ---
+        
+        function showToxicEffect() {
+            const el = document.getElementById('toxic-overlay');
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 1500);
+        }
+
+        function showNotification(planet) {
+            const div = document.createElement('div'); div.className='zen-notif';
+            div.innerHTML = `<div class="rarity-dot" style="background:${planet.type.color}; box-shadow:0 0 15px ${planet.type.color}"></div> ${planet.name}`;
+            document.getElementById('notification-area').appendChild(div);
+            setTimeout(()=>div.remove(), 4000);
+        }
+
+        function addItemToInventory(planet) {
+            collectedItems.push(planet);
+            if(inventoryOpen) renderInventory();
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inv-grid-content'); grid.innerHTML = '';
+            let items = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
+            items.sort((a, b) => b.type.xp - a.type.xp);
+            if(items.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-gray-600 mt-20">Boş.</div>'; return; }
+            items.forEach(item => {
+                const div = document.createElement('div'); div.className='item-card';
+                div.innerHTML = `<div class="item-glow" style="background:${item.type.color}"></div><div class="item-icon" style="color:${item.type.color}">●</div><div class="item-name">${item.name}</div>`;
+                grid.appendChild(div);
+            });
+        }
+
+        function filterInventory(f) {
+            activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+            event.currentTarget.classList.add('active'); renderInventory();
+        }
+
+        // --- TIPS DÖNGÜSÜ ---
+        function startTips() {
+            const tipEl = document.getElementById('tip-text');
+            let idx = 0;
+            setInterval(() => {
+                tipEl.style.opacity = 0;
+                setTimeout(() => {
+                    idx = (idx + 1) % TIPS.length;
+                    tipEl.innerText = TIPS[idx];
+                    tipEl.style.opacity = 1;
+                }, 1000);
+            }, 5000);
+        }
+
+        // --- LOOP ---
+        function init() {
+            player = new VoidRay(); audio = new ZenAudio();
+            planets = []; for(let i=0; i<400; i++) planets.push(new Planet());
+            stars = []; for(let i=0; i<2000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
+            player.updateUI();
+        }
+
+        function loop() {
+            currentZoom += (targetZoom - currentZoom) * 0.1;
+
+            player.update();
+            if(echoRay) echoRay.update();
+
+            if (keys.Escape) { // ESC tuşu Envanter ve Ses panelini kapatır
+                if (inventoryOpen) {
+                    inventoryOpen = false;
+                    document.getElementById('inventory-overlay').classList.remove('open');
+                }
+                if (soundPanel.classList.contains('open')) {
+                    soundPanel.classList.remove('open');
+                }
+                keys.Escape = false;
+            }
+
+            if(echoRay) {
+                const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                const prompt = document.getElementById('merge-prompt');
+                
+                if (echoRay.attached) {
+                     prompt.innerText = "[F] AYRIL";
+                     prompt.className = 'subtle-ghost'; 
+                     if(keys.f) { echoRay.attached = false; keys.f = false; }
+                } else {
+                    if(dist < 300) {
+                        prompt.innerText = "[F] BİRLEŞ";
+                        prompt.className = 'visible';
+                        if(keys.f) {
+                            echoRay.lootBag.forEach(p => { addItemToInventory(p); player.gainXp(p.type.xp); });
+                            echoRay.lootBag = [];
+                            audio.playEvolve();
+                            echoRay.attached = true; 
+                            keys.f = false;
+                        }
+                    } else { prompt.className = ''; }
+                }
+            } else { document.getElementById('merge-prompt').className = ''; }
+
+            ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
+            
+            ctx.fillStyle="white";
+            stars.forEach(s => {
+                let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height;
+                if(sx<0) sx+=width; if(sy<0) sy+=height;
+                ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s);
+            });
+            ctx.globalAlpha = 1;
+
+            ctx.save();
+            ctx.translate(width/2, height/2);
+            ctx.scale(currentZoom, currentZoom);
+            ctx.translate(-player.x, -player.y);
+            
+            for(let i=particles.length-1; i>=0; i--) {
+                particles[i].update(); particles[i].draw(ctx);
+                if(particles[i].life<=0) particles.splice(i,1);
+            }
+
+            planets.forEach(p => {
+                const viewW = width / currentZoom;
+                const viewH = height / currentZoom;
+                if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) {
+                   p.draw(ctx, 0, 0); 
+                }
+
+                if(!p.collected) {
+                    if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) {
+                        if(p.type.id === 'toxic') {
+                            audio.playToxic();
+                            showToxicEffect();
+                            for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16'));
+                            if(echoRay && echoRay.attached) { // Sadece bağlıyken ölür
+                                echoRay = null; echoDeathLevel = player.level;
+                                showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}});
+                                document.getElementById('merge-prompt').className = '';
+                            } else {
+                                const now = Date.now();
+                                if (now - lastToxicNotification > 2000) {
+                                    showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}});
+                                    lastToxicNotification = now;
+                                }
+                            }
+                        } else if (p.type.id === 'lost') {
+                            p.collected = true; audio.playChime({id:'legendary'});
+                            showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}});
+                            if (p.lootContent && p.lootContent.length > 0) {
+                                p.lootContent.forEach(item => { addItemToInventory(item); player.gainXp(item.type.xp); });
+                            }
+                        } else {
+                            p.collected = true; 
+                            audio.playChime(p.type.id); 
+                            showNotification(p); addItemToInventory(p); player.gainXp(p.type.xp);
+                        }
+                    }
+                }
+            });
+
+            if(echoRay) echoRay.draw(ctx);
+            player.draw(ctx);
+            ctx.restore();
+
+            drawEchoIndicator();
+            drawMiniMap();
+            requestAnimationFrame(loop);
+        }
+
+        function drawMiniMap() {
+            mmCtx.clearRect(0,0,180,180);
+            mmCtx.save(); mmCtx.beginPath(); mmCtx.arc(90,90,90,0,Math.PI*2); mmCtx.clip();
+            const scale = 180/30000; 
+            const cx = 90, cy = 90;
+            mmCtx.fillStyle = "rgba(255,255,255,0.4)";
+            planets.forEach(p => {
+                if(!p.collected) {
+                    let dx = (p.x-player.x)*scale, dy = (p.y-player.y)*scale;
+                    if(dx*dx+dy*dy < 8100) {
+                        if(p.type.id === 'lost') { mmCtx.fillStyle = "#a855f7"; } 
+                        else { mmCtx.fillStyle = "rgba(255,255,255,0.4)"; }
+                        
+                        mmCtx.beginPath(); mmCtx.arc(cx+dx, cy+dy, p.type.id === 'lost' ? 5 : 2, 0, Math.PI*2); mmCtx.fill();
+                    }
+                }
+            });
+            if(echoRay) {
+                let ex = (echoRay.x-player.x)*scale, ey = (echoRay.y-player.y)*scale;
+                if(ex*ex+ey*ey < 8100) {
+                    mmCtx.fillStyle = "#67e8f9"; mmCtx.beginPath(); mmCtx.arc(cx+ex, cy+ey, 4, 0, Math.PI*2); mmCtx.fill();
+                }
+            }
+            mmCtx.translate(cx, cy); mmCtx.rotate(player.angle+Math.PI/2);
+            mmCtx.fillStyle="white"; mmCtx.beginPath(); mmCtx.moveTo(0,-6); mmCtx.lineTo(-5,6); mmCtx.lineTo(5,6); mmCtx.fill();
+            mmCtx.restore();
+        }
+
+        window.addEventListener('keydown', e => {
+            if(e.key === "Escape") keys.Escape = true; 
+            else if(keys.hasOwnProperty(e.key)) keys[e.key] = true;
+            else if(e.code === "Space") keys[" "] = true;
+            else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
+
+            if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); }
+            if(e.key.toLowerCase() === 'f') keys.f = true;
+            if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+                autopilot = false; updateAIBtn();
+            }
+        });
+        window.addEventListener('keyup', e => {
+            if(e.key === "Escape") keys.Escape = false;
+            else if(keys.hasOwnProperty(e.key)) keys[e.key] = false;
+            else if(e.code === "Space") keys[" "] = false;
+            else if(keys.hasOwnProperty(e.code)) keys[e.code] = false;
+            if(e.key.toLowerCase() === 'f') keys.f = false;
+        });
+        
+        window.addEventListener('wheel', e => {
+            e.preventDefault();
+            targetZoom += e.deltaY * -0.001;
+            targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); 
+        }, { passive: false });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('main-menu').classList.add('menu-hidden');
+            init(); audio.init(); startTips(); loop();
+            document.getElementById('bgMusic').play().catch(e=>console.log(e));
+        });
+        
+        document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });
+        document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
+        
+        function updateAIBtn() {
+            const btn = document.getElementById('btn-ai-toggle');
+            if(autopilot) btn.classList.add('active'); else btn.classList.remove('active');
+        }
+        document.getElementById('btn-ai-toggle').addEventListener('click', () => {
+            autopilot = !autopilot; updateAIBtn();
+        });
+
+        // SES AYARLARI
+        const soundPanel = document.getElementById('sound-panel');
+        document.getElementById('btn-sound').addEventListener('click', () => soundPanel.classList.toggle('open'));
+        
+        document.getElementById('vol-music').addEventListener('input', (e) => {
+            const val = e.target.value / 100;
+            const m = document.getElementById('bgMusic');
+            if(m) m.volume = val;
+            document.getElementById('val-m').innerText = e.target.value + '%';
+            volMusic = val;
+            if(audio && audio.bgMusic) audio.bgMusic.volume = val;
+        });
+        document.getElementById('vol-sfx').addEventListener('input', (e) => {
+            const val = e.target.value / 100;
+            volSFX = val;
+            document.getElementById('val-s').innerText = e.target.value + '%';
+        });
+
+        function resize() {
+            width = window.innerWidth; height = window.innerHeight;
+            canvas.width = width; canvas.height = height;
+            mmCanvas.width = 180; mmCanvas.height = 180;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+    </script>
+</body>
+</html>
