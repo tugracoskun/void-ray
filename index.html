@@ -1,9 +1,10 @@
+<!-- START OF FILE last09.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rüya Bahçesi: Void Ray Final</title>
+    <title>Rüya Bahçesi: Void Ray - Sharp Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -12,8 +13,10 @@
             --echo-color: #67e8f9;
             --toxic-color: #84cc16;
             --lost-color: #a855f7;
-            --glass-bg: rgba(8, 10, 15, 0.90);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --gold-color: #fbbf24;
+            --glass-bg: rgba(5, 5, 5, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --sharp-radius: 2px; /* Keskin kenarlar için düşük radius */
         }
         body {
             margin: 0; overflow: hidden; background-color: #020204;
@@ -22,12 +25,18 @@
         }
         canvas { display: block; }
 
+        /* SCROLLBAR DESIGN */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 0px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
         /* --- ANA MENÜ --- */
         #main-menu {
             position: absolute; inset: 0;
             background: radial-gradient(circle at 50% 100%, #0f172a 0%, #000000 80%);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100; transition: opacity 1s ease;
+            z-index: 100; transition: opacity 0.5s ease;
         }
         .menu-hidden { opacity: 0; pointer-events: none; }
 
@@ -39,148 +48,249 @@
             text-align: center;
         }
         
-        /* Vatoz Sembolü */
-        .void-symbol {
-            width: 140px; height: 140px; margin: 40px 0;
-            filter: drop-shadow(0 0 25px var(--ray-color));
-            opacity: 0.9; animation: floatLogo 5s ease-in-out infinite;
-        }
-        @keyframes floatLogo {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
         .menu-btn {
             background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-            padding: 20px 80px; border-radius: 100px;
+            padding: 20px 80px; border-radius: var(--sharp-radius);
             font-size: 1.2rem; letter-spacing: 5px; text-transform: uppercase;
             color: #e2e8f0; cursor: pointer; transition: all 0.4s;
-            backdrop-filter: blur(10px); margin-top: 20px;
+            backdrop-filter: blur(10px); margin-top: 30px;
             box-shadow: 0 0 30px rgba(0,0,0,0.3);
         }
         .menu-btn:hover {
-            background: rgba(56, 189, 248, 0.1); border-color: var(--ray-color);
-            box-shadow: 0 0 60px rgba(56, 189, 248, 0.3); letter-spacing: 8px;
+            background: rgba(255, 255, 255, 0.1); border-color: white;
+            box-shadow: 0 0 60px rgba(255, 255, 255, 0.1); letter-spacing: 8px;
             color: white;
         }
 
-        /* Modern Tips */
-        .tips-container {
-            position: absolute; bottom: 80px; text-align: center;
-            width: 100%; max-width: 700px; height: 60px;
+        /* Controls Info */
+        .controls-grid {
+            position: absolute; bottom: 40px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 40px;
+            text-align: left;
+            background: rgba(255,255,255,0.02); padding: 20px 40px; 
+            border-radius: var(--sharp-radius);
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .tip-text {
-            font-size: 0.95rem; color: #94a3b8; letter-spacing: 1px;
-            font-weight: 300; opacity: 0; transition: opacity 1s;
-            position: absolute; width: 100%; left: 0; top: 25px;
-        }
-        .tip-text.active { opacity: 1; }
-        .tip-label {
-            font-size: 0.7rem; color: var(--ray-color); letter-spacing: 4px;
-            margin-bottom: 5px; display: block; opacity: 0.6;
+        .key-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #94a3b8; letter-spacing: 1px; }
+        .key-cap { 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            padding: 4px 8px; border-radius: 2px; color: white; font-weight: 600; font-size: 0.75rem; min-width: 25px; text-align: center;
         }
 
-        /* --- ZEHİR EFEKTİ --- */
-        #toxic-overlay {
-            position: absolute; inset: 0; pointer-events: none; z-index: 40;
-            background: radial-gradient(circle, transparent 50%, rgba(132, 204, 22, 0) 100%);
-            transition: background 0.5s ease;
+        /* PAUSE OVERLAY */
+        #pause-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
         }
-        #toxic-overlay.active {
-            background: radial-gradient(circle, transparent 40%, rgba(132, 204, 22, 0.3) 100%);
-            animation: toxicPulse 1.5s infinite alternate;
+        #pause-overlay.active { display: flex; }
+        .pause-title { font-size: 3rem; letter-spacing: 10px; color: white; font-weight: 200; margin-bottom: 20px; }
+        .pause-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;
+            padding: 15px 60px; border-radius: var(--sharp-radius); font-size: 1rem; letter-spacing: 3px;
+            cursor: pointer; transition: 0.3s;
         }
-        @keyframes toxicPulse { 0% { opacity: 0.4; } 100% { opacity: 0.8; } }
+        .pause-btn:hover { background: white; color: black; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+        .pause-btn.danger:hover { background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
 
-        /* --- HUD --- */
+        /* HUD Elements */
         .hud-container { pointer-events: none; position: absolute; inset: 0; z-index: 50; }
         .pointer-events-auto { pointer-events: auto; }
 
-        .hud-icon-group { position: absolute; top: 30px; left: 30px; display: flex; gap: 15px; pointer-events: auto; }
+        .hud-icon-group { position: absolute; top: 30px; left: 30px; display: flex; gap: 15px; pointer-events: auto; align-items: flex-start; }
         .hud-btn {
-            width: 50px; height: 50px; border-radius: 16px;
+            width: 50px; height: 50px; border-radius: var(--sharp-radius);
             border: 1px solid var(--glass-border);
             display: flex; justify-content: center; align-items: center;
             cursor: pointer; color: rgba(255,255,255,0.6);
             transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
-            font-size: 1.2rem;
+            font-size: 1.2rem; position: relative;
         }
-        .hud-btn:hover, .hud-btn.active { border-color: var(--ray-color); color: white; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
-        .hud-btn.active { background: rgba(56, 189, 248, 0.2); } 
+        .hud-btn:hover, .hud-btn.active { border-color: var(--ray-color); color: white; background: rgba(255,255,255,0.05); }
+        .hud-btn.active { background: rgba(56, 189, 248, 0.1); } 
 
-        #xp-container { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; }
-        .xp-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 5px; }
-        .xp-bar-fill { height: 100%; background: var(--ray-color); width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px var(--ray-color); }
-        .level-text { font-size: 0.8rem; letter-spacing: 2px; color: #94a3b8; }
+        /* AI Mode Toggle */
+        .ai-controls { display: flex; flex-direction: column; gap: 5px; }
+        .ai-mode-switch {
+            font-size: 0.65rem; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 2px;
+            cursor: pointer; pointer-events: auto; display: none; text-align: center; border: 1px solid transparent;
+        }
+        .ai-mode-switch.visible { display: block; }
+        .ai-mode-switch:hover { background: rgba(255,255,255,0.2); color: white; }
 
-        /* --- BİLDİRİMLER (Hayalet) --- */
-        #notification-area { 
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
-            display: flex; flex-direction: column-reverse; align-items: center; 
-            width: 100%; pointer-events: none; 
-        }
-        .zen-notif {
-            background: transparent;
-            padding: 5px 20px; margin-top: 2px;
-            font-weight: 300; letter-spacing: 2px; font-size: 0.95rem; 
-            animation: floatUpFade 3.5s forwards;
-            color: rgba(255, 255, 255, 0.85); 
-            text-shadow: 0 2px 15px rgba(0,0,0,0.9); 
-            display: flex; align-items: center; gap: 12px;
-        }
-        .rarity-dot { 
-            width: 6px; height: 6px; border-radius: 50%; 
-            box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; 
-        }
-        @keyframes floatUpFade { 
-            0% { opacity: 0; transform: translateY(40px) scale(0.9); } 
-            20% { opacity: 0.9; transform: translateY(0) scale(1); } 
-            80% { opacity: 0.7; } 
-            100% { opacity: 0; transform: translateY(-30px); } 
+        /* Currency Display - Updated (Top Right, Monochrome, Crystal) */
+        #currency-display {
+            position: absolute; top: 30px; right: 100px; 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border); color: rgba(255,255,255,0.7);
+            padding: 10px 25px; border-radius: var(--sharp-radius);
+            font-size: 1rem; letter-spacing: 2px; font-weight: 400;
+            display: flex; align-items: center; gap: 10px;
         }
 
-        /* --- MERGE PROMPT (Hayalet) --- */
-        #merge-prompt {
-            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.2); padding: 8px 25px; border-radius: 50px;
-            border: 1px solid rgba(103, 232, 249, 0.2); color: var(--echo-color);
-            font-size: 0.8rem; letter-spacing: 2px; backdrop-filter: blur(2px);
-            opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        /* Echo Menu & Profile */
+        .echo-wrapper { position: relative; display: none; flex-direction: column; }
+        .echo-wrapper:hover .echo-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .echo-dropdown {
+            position: absolute; top: 60px; left: 0;
+            background: rgba(8, 10, 15, 0.95); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--sharp-radius); padding: 8px; width: 240px;
+            display: flex; flex-direction: column; gap: 5px;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        #merge-prompt.visible { opacity: 1; animation: pulse 2s infinite; }
-        #merge-prompt.subtle-ghost { opacity: 0.3; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); animation: ghostPulse 4s infinite; }
-        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
-        @keyframes ghostPulse { 0% { opacity: 0.1; } 50% { opacity: 0.4; } 100% { opacity: 0.1; } }
+        .echo-profile {
+            padding: 10px; margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .echo-p-icon { 
+            width: 36px; height: 36px; background: rgba(103, 232, 249, 0.1); border: 1px solid var(--echo-color);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: var(--echo-color);
+        }
+        .echo-p-stats { display: flex; flex-direction: column; }
+        .echo-p-name { font-size: 0.85rem; color: white; font-weight: 600; }
+        .echo-p-rate { font-size: 0.65rem; color: #94a3b8; }
 
-        /* --- ENVANTER --- */
-        #inventory-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); z-index: 70; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; justify-content: center; align-items: center; }
-        #inventory-overlay.open { opacity: 1; pointer-events: auto; }
-        .inv-window { width: 900px; height: 650px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; display: flex; box-shadow: 0 0 100px rgba(0,0,0,0.8); overflow: hidden; }
-        .inv-sidebar { width: 220px; background: rgba(255,255,255,0.02); border-right: 1px solid var(--glass-border); padding: 30px 20px; display: flex; flex-direction: column; gap: 10px; }
-        .filter-btn { padding: 12px 15px; border-radius: 10px; color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 0.9rem; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-        .filter-btn:hover { background: rgba(255,255,255,0.05); color: white; }
-        .filter-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--ray-color); border-left: 3px solid var(--ray-color); }
-        .inv-content { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); }
-        .inv-header { padding: 25px 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
-        .inv-list { flex: 1; padding: 20px 40px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .item-card { background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(0,0,0,0.2)); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px; transition: all 0.3s; position: relative; overflow: hidden; }
-        .item-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.05); }
-        .item-glow { position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
-        .item-icon { font-size: 1.5rem; margin-bottom: 5px; }
-        .item-name { font-size: 0.9rem; color: #e2e8f0; }
+        .echo-menu-item {
+            padding: 10px 15px; border-radius: 2px; cursor: pointer;
+            font-size: 0.85rem; letter-spacing: 1px; color: #cbd5e1;
+            transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center;
+        }
+        .echo-menu-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .echo-menu-item.active-mode { color: var(--echo-color); background: rgba(103, 232, 249, 0.1); border-color: rgba(103, 232, 249, 0.2); }
 
-        /* Mini Map */
-        #minimap-wrapper { position: absolute; bottom: 40px; right: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: auto; }
-        #minimap-container { width: 180px; height: 180px; border-radius: 50%; background: rgba(5, 5, 10, 0.6); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(15px); overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .coords { font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.4); letter-spacing: 2px; }
+        /* Speedometer - Updated (Minimal, No Color, Bottom Left) */
+        #speedometer {
+            position: absolute; bottom: 30px; left: 30px;
+            background: transparent; border: none;
+            padding: 0; border-radius: 0;
+            display: flex; flex-direction: column; gap: 0px;
+            opacity: 0.7;
+        }
+        .speed-label { font-size: 0.6rem; color: #64748b; letter-spacing: 2px; text-transform: uppercase; }
+        .speed-val { font-size: 2rem; color: #e2e8f0; font-weight: 300; font-family: monospace; line-height: 1; }
+        .speed-unit { font-size: 0.8rem; color: rgba(255,255,255,0.3); margin-left: 5px; font-weight: 300; }
 
-        /* Ses Panel */
-        #btn-sound { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; }
+        /* Sound Menu */
+        #btn-sound { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: var(--sharp-radius); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; }
         #btn-sound:hover { border-color: white; color: white; }
-        #sound-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: 16px; padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
+        #sound-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: var(--sharp-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
         #sound-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
-        input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; margin-top: 10px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ray-color); cursor: pointer; box-shadow: 0 0 10px var(--ray-color); }
+        input[type=range] { width: 100%; -webkit-appearance: none; height: 2px; background: rgba(255,255,255,0.1); outline: none; margin-top: 10px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: white; cursor: pointer; border-radius: 0; }
+
+        /* XP Bar */
+        #xp-container { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; }
+        .xp-bar-bg { width: 100%; height: 2px; background: rgba(255,255,255,0.1); overflow: hidden; margin-top: 5px; }
+        .xp-bar-fill { height: 100%; background: white; width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .level-text { font-size: 0.7rem; letter-spacing: 3px; color: #64748b; }
+
+        /* Prompt */
+        #merge-prompt { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.4); padding: 10px 30px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 0.9rem; letter-spacing: 2px; backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.5s; pointer-events: none; text-align: center; }
+        #merge-prompt.visible { opacity: 1; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
+
+        /* Notifications */
+        #notification-area { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column-reverse; align-items: center; width: 100%; pointer-events: none; }
+        .zen-notif { background: transparent; padding: 5px 20px; margin-top: 2px; font-weight: 300; letter-spacing: 2px; font-size: 0.95rem; animation: floatUpFade 3.5s forwards; color: rgba(255, 255, 255, 0.85); text-shadow: 0 2px 15px rgba(0,0,0,0.9); display: flex; align-items: center; gap: 12px; }
+        .rarity-dot { width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+        @keyframes floatUpFade { 0% { opacity: 0; transform: translateY(40px); } 20% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+
+        /* MINIMAP - Fixed Position Bottom Right */
+        #minimap-wrapper {
+            position: absolute; bottom: 30px; right: 30px;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+            z-index: 60; pointer-events: auto;
+        }
+        #minimap-container {
+            width: 180px; height: 180px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            border-radius: 2px; /* Sharp */
+            overflow: hidden;
+            position: relative;
+        }
+        .coords { font-family: monospace; font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+
+        /* OVERLAYS BASE */
+        .overlay-base { position: absolute; inset: 0; background: transparent; z-index: 70; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; justify-content: center; align-items: center; }
+        .overlay-base.open { opacity: 1; pointer-events: auto; }
+
+        /* WINDOWS - SHARP & GLASS */
+        .nexus-window, .inv-window {
+            width: 1000px; height: 700px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--sharp-radius); /* SHARP */
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 80px rgba(0,0,0,0.8);
+            overflow: hidden; backdrop-filter: blur(30px);
+        }
+
+        /* Inventory Layout */
+        .inv-sidebar { width: 240px; background: rgba(255,255,255,0.01); border-right: 1px solid var(--glass-border); padding: 30px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .filter-btn { padding: 12px 15px; border-radius: 2px; color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 0.9rem; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        .filter-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .filter-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--ray-color); border-left: 2px solid var(--ray-color); }
+        
+        .inv-content { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+        .inv-header { padding: 25px 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .inv-table-container { flex: 1; padding: 0; overflow-y: auto; }
+        
+        .inv-table { width: 100%; border-collapse: collapse; text-align: left; }
+        /* Sticky Header Fix */
+        .inv-table th { 
+            padding: 15px 40px; color: rgba(255,255,255,0.4); font-weight: 400; 
+            font-size: 0.7rem; letter-spacing: 2px; border-bottom: 1px solid var(--glass-border); 
+            position: sticky; top: 0; background: rgba(5, 5, 5, 0.95); z-index: 10; 
+        }
+        .inv-table td { padding: 12px 40px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #e2e8f0; font-size: 0.9rem; }
+        .inv-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+        /* Nexus Styles */
+        .nexus-header { padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent); }
+        .nexus-tabs { display: flex; gap: 20px; margin-left: 50px; }
+        .nexus-tab { padding: 10px 30px; border-radius: 2px; cursor: pointer; color: #64748b; letter-spacing: 2px; transition: 0.3s; border: 1px solid transparent; }
+        .nexus-tab:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nexus-tab.active { color: var(--ray-color); border-bottom: 1px solid var(--ray-color); background: rgba(56, 189, 248, 0.05); }
+        .nexus-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
+        .nexus-content.active { display: block; }
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .market-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; padding: 20px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; gap: 10px; }
+        .market-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
+        .sell-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 10px; border-radius: 2px; font-weight: normal; cursor: pointer; margin-top: auto; transition: 0.2s; letter-spacing: 1px; }
+        .sell-btn:hover { background: white; color: black; }
+
+        .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .upgrade-col-title { font-size: 1.2rem; color: white; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .upgrade-item { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); padding: 20px; border-radius: 2px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .upg-info h4 { margin: 0; font-weight: 400; color: #e2e8f0; font-size: 1rem; }
+        .upg-info p { margin: 5px 0 0; font-size: 0.8rem; color: #94a3b8; }
+        .upg-level { margin-top: 8px; display: flex; gap: 4px; }
+        .lvl-pip { width: 6px; height: 6px; background: #334155; border-radius: 0; }
+        .lvl-pip.filled { background: white; box-shadow: 0 0 5px white; }
+        .buy-btn { background: transparent; border: 1px solid var(--ray-color); color: var(--ray-color); padding: 8px 20px; border-radius: 2px; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; min-width: 100px; }
+        .buy-btn:hover:not(:disabled) { background: var(--ray-color); color: black; box-shadow: 0 0 15px var(--ray-color); }
+        .buy-btn:disabled { opacity: 0.3; border-color: #475569; color: #475569; cursor: not-allowed; }
+        .cost-text { font-size: 0.75rem; margin-top: 2px; }
+
+        /* Glassmorphism Big Map */
+        #big-map-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; display: none; justify-content: center; align-items: center; }
+        #big-map-overlay.active { display: flex; }
+        .big-map-container { position: relative; width: 90vh; height: 90vh; border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; background: rgba(5, 5, 10, 0.8); backdrop-filter: blur(10px); box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .big-map-info-overlay { 
+            position: absolute; top: 20px; right: 20px; width: 250px;
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px; border-radius: 2px; pointer-events: none;
+        }
+        .legend-item { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; color: #cbd5e1; letter-spacing: 1px; font-size: 0.9rem; }
+        .l-dot { width: 10px; height: 10px; border-radius: 0; }
+        .map-tip { position: absolute; bottom: 20px; left: 20px; color: rgba(255,255,255,0.5); font-size: 0.8rem; pointer-events: none; }
+
+        #toxic-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 40; background: radial-gradient(circle, transparent 50%, rgba(132, 204, 22, 0) 100%); transition: background 0.5s ease; }
+        #toxic-overlay.active { background: radial-gradient(circle, transparent 40%, rgba(132, 204, 22, 0.3) 100%); animation: toxicPulse 1.5s infinite alternate; }
+        @keyframes toxicPulse { 0% { opacity: 0.4; } 100% { opacity: 0.8; } }
     </style>
 </head>
 <body>
@@ -189,37 +299,72 @@
         <source src="uploaded:Crater.mp3" type="audio/mpeg">
     </audio>
     
-    <!-- Zehir Vinyeti -->
     <div id="toxic-overlay"></div>
+    
+    <!-- PAUSE / ESC MENU -->
+    <div id="pause-overlay">
+        <div class="pause-title">DURAKLATILDI</div>
+        <button class="pause-btn" onclick="resumeGame()">DEVAM ET</button>
+        <button class="pause-btn danger" onclick="quitToMain()">ANA MENÜ</button>
+    </div>
 
     <!-- ANA MENÜ -->
     <div id="main-menu">
         <div class="title-main">VOID RAY</div>
-        
-        <!-- Modern Vatoz SVG -->
-        <svg class="void-symbol" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="void-symbol" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2" width="120" height="120" style="margin: 20px;">
             <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" fill="rgba(56, 189, 248, 0.1)"/>
             <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
-            <path d="M50 95 Q 50 115 45 125" stroke-width="1" opacity="0.6" />
         </svg>
-
-        <button id="btn-start" class="menu-btn">YAŞAM DÖNGÜSÜNÜ BAŞLAT</button>
         
-        <!-- Modern Tips -->
-        <div class="tips-container">
-            <span class="tip-label">SİSTEM REHBERİ</span>
-            <div id="tip-text" class="tip-text active">Yankı'yla birleşmek için [F] tuşuna basın.</div>
+        <button id="btn-start" class="menu-btn">SİMÜLASYONU BAŞLAT</button>
+
+        <div class="controls-grid">
+            <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Hareket</span></div>
+            <div class="key-row"><span class="key-cap">E</span> <span>Nexus Etkileşim</span></div>
+            <div class="key-row"><span class="key-cap">F</span> <span>Yankı Birleş</span></div>
+            <div class="key-row"><span class="key-cap">Q</span> <span>AI Modu</span></div>
+            <div class="key-row"><span class="key-cap">I</span> <span>Envanter</span></div>
+            <div class="key-row"><span class="key-cap">M</span> <span>Harita</span></div>
+            <div class="key-row"><span class="key-cap">ESC</span> <span>Menü</span></div>
         </div>
     </div>
 
     <!-- HUD -->
     <div class="hud-container">
         <div class="hud-icon-group">
-            <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)">❖</div>
-            <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (AI)">◈</div>
+            <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)">
+                ❖ <span id="inv-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#fff; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
+            </div>
+            
+            <div id="echo-wrapper-el" class="echo-wrapper">
+                <div id="btn-echo-icon" class="hud-btn">
+                    ◎ <span id="echo-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#67e8f9; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
+                </div>
+                <div class="echo-dropdown">
+                    <div class="echo-profile">
+                        <div class="echo-p-icon">◈</div>
+                        <div class="echo-p-stats">
+                            <span class="echo-p-name">YANKI V1</span>
+                            <span id="echo-rate-disp" class="echo-p-rate">Toplama Hızı: Normal</span>
+                        </div>
+                    </div>
+                    <div id="menu-roam" class="echo-menu-item active-mode" onclick="setEchoMode('roam')">◈ SERBEST</div>
+                    <div id="menu-return" class="echo-menu-item" onclick="setEchoMode('return')">↪ ÇAĞIR</div>
+                    <div id="menu-merge" class="echo-menu-item" onclick="echoManualMerge()">☌ BİRLEŞ</div>
+                    <div class="echo-menu-item" onclick="openEchoInventory()">❖ ENVANTER</div>
+                </div>
+            </div>
+            
+            <div class="ai-controls">
+                <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (Q)">◈</div>
+                <div id="ai-mode-btn" class="ai-mode-switch" onclick="cycleAIMode()">TOPLA</div>
+            </div>
+        </div>
+
+        <div id="currency-display">
+            <span style="color: rgba(255,255,255,0.6);">◆</span> <span id="stardust-amount">0</span>
         </div>
         
-        <!-- XP Bar -->
         <div id="xp-container">
             <div class="level-text">EVRİM SEVİYESİ <span id="level-val" class="text-white font-bold text-lg">1</span></div>
             <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
@@ -232,30 +377,98 @@
         </div>
 
         <div id="notification-area"></div>
-        <div id="merge-prompt">YANKI İLE BİRLEŞMEK İÇİN [F]</div>
+        <div id="merge-prompt"></div>
+
+        <div id="speedometer">
+            <span class="speed-label">HIZ</span>
+            <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
+        </div>
 
         <div id="minimap-wrapper">
-            <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
             <div class="coords" id="coords">0000 : 0000</div>
+            <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
         </div>
     </div>
 
-    <!-- ENVANTER -->
-    <div id="inventory-overlay">
-        <div class="inv-window">
-            <div class="inv-sidebar">
-                <div class="text-xs text-gray-500 mb-4 tracking-widest">FİLTRELER</div>
-                <div class="filter-btn active" onclick="filterInventory('all')">Tümü <span id="count-all" class="text-xs opacity-50">0</span></div>
-                <div class="filter-btn" onclick="filterInventory('legendary')">Efsanevi <span id="count-legendary" class="text-xs opacity-50">0</span></div>
-                <div class="filter-btn" onclick="filterInventory('epic')">Destansı <span id="count-epic" class="text-xs opacity-50">0</span></div>
-                <div class="filter-btn" onclick="filterInventory('rare')">Nadir <span id="count-rare" class="text-xs opacity-50">0</span></div>
+    <!-- BIG MAP OVERLAY -->
+    <div id="big-map-overlay">
+        <div class="big-map-container">
+            <canvas id="big-map-canvas"></canvas>
+            <div class="big-map-info-overlay">
+                <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
+                <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
+                <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #fff;"></div> NEXUS</div>
+                <div class="legend-item"><div class="l-dot" style="background:#67e8f9;"></div> YANKI</div>
+                <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
+                <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
+                <div class="legend-item"><div class="l-dot" style="border:1px dashed #ef4444;"></div> Hedef</div>
             </div>
-            <div class="inv-content">
-                <div class="inv-header">
-                    <h2 class="text-2xl font-light tracking-[0.2em] text-white">ENVANTER</h2>
-                    <div class="cursor-pointer opacity-50 hover:opacity-100 text-xl" id="btn-close-inv">✕</div>
+            <div class="map-tip">Oto-pilot ile gitmek için haritada bir noktaya tıklayın.</div>
+            <div class="absolute top-4 right-4 cursor-pointer text-white opacity-50 hover:opacity-100" onclick="closeMap()">✕</div>
+        </div>
+    </div>
+
+    <!-- ENVANTER (Tablo Görünümü) -->
+    <div id="inventory-overlay" class="overlay-base">
+        <div class="inv-window">
+            <div style="display:flex; flex:1; overflow:hidden;">
+                <div class="inv-sidebar">
+                    <div class="text-xs text-gray-500 mb-4 tracking-widest">FİLTRELER</div>
+                    <div class="filter-btn active" onclick="filterInventory('all')">Tümü <span id="count-all" class="text-xs opacity-50">0</span></div>
+                    <div class="filter-btn" onclick="filterInventory('legendary')">Efsanevi <span id="count-legendary" class="text-xs opacity-50">0</span></div>
+                    <div class="filter-btn" onclick="filterInventory('epic')">Destansı <span id="count-epic" class="text-xs opacity-50">0</span></div>
+                    <div class="filter-btn" onclick="filterInventory('rare')">Nadir <span id="count-rare" class="text-xs opacity-50">0</span></div>
                 </div>
-                <div class="inv-list" id="inv-grid-content"></div>
+                <div class="inv-content">
+                    <div class="inv-header">
+                        <h2 class="text-2xl font-light tracking-[0.2em] text-white">ENVANTER</h2>
+                        <div class="cursor-pointer opacity-50 hover:opacity-100 text-xl" id="btn-close-inv">✕</div>
+                    </div>
+                    <div class="inv-table-container" id="inv-grid-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- YANKI ENVANTERI (Tablo Görünümü) -->
+    <div id="echo-inventory-overlay" class="overlay-base">
+        <div class="inv-window" style="border-color: var(--echo-color); height: 500px; width: 700px;">
+            <div class="inv-content" style="background: rgba(0,0,0,0.3); padding: 20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid rgba(103, 232, 249, 0.3); padding-bottom:10px;">
+                    <h2 class="text-2xl font-light tracking-widest text-cyan-300">YANKI DEPOSU</h2>
+                    <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeEchoInventory()">✕</div>
+                </div>
+                <div id="echo-inv-grid-content" style="overflow-y: auto; flex: 1;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEXUS (BASE) EKRANI -->
+    <div id="nexus-overlay" class="overlay-base">
+        <div class="nexus-window">
+            <div class="nexus-header">
+                <div>
+                    <h1 class="text-4xl font-thin tracking-[0.2em] text-white">NEXUS</h1>
+                    <span class="text-xs text-gray-400 tracking-widest">TİCARET VE GELİŞTİRME İSTASYONU</span>
+                </div>
+                <div class="nexus-tabs">
+                    <div class="nexus-tab active" onclick="switchNexusTab('market')">PAZAR</div>
+                    <div class="nexus-tab" onclick="switchNexusTab('upgrades')">HANGAR</div>
+                </div>
+                <div class="cursor-pointer text-2xl opacity-50 hover:opacity-100" onclick="exitNexus()">✕</div>
+            </div>
+            <div id="tab-market" class="nexus-content active">
+                <div class="flex justify-between items-center mb-6">
+                    <p class="text-gray-400">Elde edilen materyalleri Yıldız Tozu karşılığında takas et.</p>
+                    <button onclick="sellAll()" class="bg-white/10 text-white border border-white/20 px-6 py-2 rounded-sm hover:bg-white hover:text-black transition text-sm tracking-widest">TÜMÜNÜ SAT</button>
+                </div>
+                <div id="market-grid" class="market-grid"></div>
+            </div>
+            <div id="tab-upgrades" class="nexus-content">
+                <div class="upgrade-grid">
+                    <div><div class="upgrade-col-title text-sky-300">VOID RAY (SİZ)</div><div id="upg-player-list"></div></div>
+                    <div><div class="upgrade-col-title text-cyan-300">ECHO RAY (YANKI)</div><div id="upg-echo-list"></div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -266,12 +479,12 @@
         // --- AYARLAR ---
         const WORLD_SIZE = 30000; 
         const RARITY = {
-            COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.6, xp: 10 },
-            RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.25, xp: 40 },
-            EPIC:      { id: 'epic',      name: 'Öz',        color: '#c084fc', prob: 0.1, xp: 100 },
-            LEGENDARY: { id: 'legendary', name: 'Yadigâr',   color: '#fbbf24', prob: 0.05, xp: 500 },
-            TOXIC:     { id: 'toxic',     name: 'Zehir',     color: '#84cc16', prob: 0.01, xp: 0 }, 
-            LOST:      { id: 'lost',      name: 'Kayıp Kargo', color: '#a855f7', prob: 0, xp: 0 }
+            COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.6, xp: 10, value: 10 },
+            RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.25, xp: 40, value: 30 },
+            EPIC:      { id: 'epic',      name: 'Öz',        color: '#c084fc', prob: 0.1, xp: 100, value: 100 },
+            LEGENDARY: { id: 'legendary', name: 'Yadigâr',   color: '#fbbf24', prob: 0.05, xp: 500, value: 400 },
+            TOXIC:     { id: 'toxic',     name: 'Zehir',     color: '#84cc16', prob: 0.01, xp: 0, value: 0 }, 
+            LOST:      { id: 'lost',      name: 'Kayıp Kargo', color: '#a855f7', prob: 0, xp: 0, value: 0 }
         };
         const LOOT_DB = {
             common: ["Hidrojen", "Karbon Tozu", "Demir", "Silika"],
@@ -281,22 +494,23 @@
             toxic: ["Zehirli Gaz", "Asit Bulutu"],
             lost: ["KAYIP SİNYAL"]
         };
+
+        const UPGRADES = {
+            playerSpeed: { name: "İyon Motorları", desc: "Maksimum uçuş hızı.", baseCost: 100, max: 5 },
+            playerTurn:  { name: "Manevra İticileri", desc: "Dönüş kabiliyeti.", baseCost: 150, max: 5 },
+            playerMagnet:{ name: "Çekim Alanı", desc: "Eşya toplama mesafesi.", baseCost: 200, max: 5 },
+            echoSpeed:   { name: "Yankı Hızı", desc: "Yankı'nın uçuş hızı.", baseCost: 150, max: 5 },
+            echoRange:   { name: "Sensör Ağı", desc: "Yankı'nın toplama çapı.", baseCost: 250, max: 5 }
+        };
         
-        const TIPS = [
-            "Yankı'yla birleşmek için [F] tuşuna basın.",
-            "Zehirli gezegenler (Yeşil) enerjinizi tüketir.",
-            "Efsanevi elementler (Sarı) çok nadir bulunur.",
-            "[I] tuşu ile envanterinizi kontrol edin.",
-            "Mouse tekerleği ile kamerayı yakınlaştırıp uzaklaştırabilirsiniz.",
-            "Space tuşu ile kısa süreli hız patlaması yapabilirsiniz.",
-            "Yankı otonom modda nadiren kargosunu düşürebilir.",
-            "Mor sinyaller kayıp kargoları işaret eder."
-        ];
+        let playerData = { stardust: 0, upgrades: { playerSpeed: 0, playerTurn: 0, playerMagnet: 0, echoSpeed: 0, echoRange: 0 } };
 
         let volMusic = 0.5, volSFX = 0.8;
         let lastToxicNotification = 0; 
-        let currentZoom = 1.0;
-        let targetZoom = 1.0;
+        let currentZoom = 1.0, targetZoom = 1.0;
+        let isPaused = false;
+        let animationId = null;
+        let manualTarget = null; 
 
         // --- SES ---
         class ZenAudio {
@@ -304,50 +518,42 @@
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.bgMusic = document.getElementById('bgMusic');
                 this.bgMusic.volume = volMusic;
-                this.scale = [196.00, 220.00, 261.63, 293.66, 329.63, 392.00];
             }
             init() { if(this.ctx.state === 'suspended') this.ctx.resume(); }
-            
             playChime(rarity) {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                const freq = this.scale[Math.floor(Math.random()*this.scale.length)];
-                
-                if (rarity.id === 'lost') osc.type = 'square';
-                else osc.type = rarity.id === 'legendary' ? 'triangle' : 'sine';
-                
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                const freq = rarity.id === 'legendary' ? 440 : (rarity.id === 'epic' ? 330 : 220);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 gain.gain.setValueAtTime(0, this.ctx.currentTime);
                 gain.gain.linearRampToValueAtTime(volSFX * 0.2, this.ctx.currentTime+0.1);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+4);
-                
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+1);
                 osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime+4.1);
+                osc.start(); osc.stop(this.ctx.currentTime+1.1);
             }
-            
+            playCash() {
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(2000, this.ctx.currentTime+0.1);
+                gain.gain.setValueAtTime(volSFX*0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+0.3);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+0.3);
+            }
             playEvolve() {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(100, this.ctx.currentTime);
                 osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime+2);
                 gain.gain.setValueAtTime(volSFX*0.3, this.ctx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+2.5);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime+3);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+3);
             }
-            
             playToxic() {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(150, this.ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime+0.4);
                 gain.gain.setValueAtTime(volSFX*0.5, this.ctx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.4);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime+0.5);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+0.5);
             }
         }
 
@@ -356,104 +562,140 @@
         const ctx = canvas.getContext('2d');
         const mmCanvas = document.getElementById('minimap-canvas');
         const mmCtx = mmCanvas.getContext('2d');
+        const bmCanvas = document.getElementById('big-map-canvas');
+        const bmCtx = bmCanvas.getContext('2d');
         
-        let width, height, player, echoRay = null, audio;
-        let planets = [], stars = [], collectedItems = [], particles = [], inventoryOpen = false, activeFilter = 'all';
+        let width, height, player, echoRay = null, nexus = null, audio;
+        let planets = [], stars = [], collectedItems = [], particles = [];
+        let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false;
+        let activeFilter = 'all';
+        
         let autopilot = false;
+        let aiMode = 'gather';
         let echoDeathLevel = 0;
 
-        const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false, Escape:false };
+        const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, Escape:false };
+
+        // --- NEXUS ---
+        class Nexus {
+            constructor() { this.x = WORLD_SIZE/2; this.y = WORLD_SIZE/2; this.radius = 300; this.rotation = 0; }
+            update() {
+                this.rotation += 0.002;
+                const dist = Math.hypot(player.x - this.x, player.y - this.y);
+                if (dist < this.radius + 100 && !nexusOpen) {
+                    document.getElementById('merge-prompt').innerText = "[E] NEXUS'A GİRİŞ YAP";
+                    document.getElementById('merge-prompt').className = 'visible';
+                    if(keys.e) { enterNexus(); keys.e = false; }
+                } else if (nexusOpen || (echoRay && !echoRay.attached && Math.hypot(player.x-echoRay.x, player.y-echoRay.y) < 300)) {
+                    if(nexusOpen) document.getElementById('merge-prompt').className = '';
+                } else {
+                     document.getElementById('merge-prompt').className = '';
+                }
+            }
+            draw(ctx) {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                ctx.beginPath(); ctx.arc(0,0, this.radius, 0, Math.PI*2);
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"; ctx.lineWidth = 20; ctx.stroke();
+                ctx.strokeStyle = "rgba(56, 189, 248, 0.8)"; ctx.lineWidth = 2; ctx.stroke();
+                for(let i=0; i<4; i++) { ctx.rotate(Math.PI/2); ctx.fillStyle = "rgba(15, 23, 42, 0.9)"; ctx.fillRect(-50, -this.radius, 100, 100); ctx.fillStyle = "rgba(56, 189, 248, 0.5)"; ctx.fillRect(-40, -this.radius+10, 80, 20); }
+                ctx.beginPath(); ctx.arc(0,0, 80, 0, Math.PI*2); ctx.fillStyle = "#000"; ctx.fill();
+                ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 5; ctx.stroke();
+                ctx.shadowBlur = 50; ctx.shadowColor = "#38bdf8"; ctx.fillStyle = "#e0f2fe"; ctx.beginPath(); ctx.arc(0,0, 30, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+        }
 
         // --- VOID RAY (PLAYER) ---
         class VoidRay {
             constructor() {
-                this.x = WORLD_SIZE/2; this.y = WORLD_SIZE/2;
+                this.x = WORLD_SIZE/2 + 600; this.y = WORLD_SIZE/2 + 600;
                 this.vx = 0; this.vy = 0; this.angle = -Math.PI/2;
                 this.roll = 0; this.wingState = 0; this.wingPhase = 0;
-                this.scale = 1; 
-                this.level = 1; this.xp = 0; 
-                this.maxXp = 150; 
-                this.tail = [];
-                for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
+                this.scale = 1; this.level = 1; this.xp = 0; this.maxXp = 150; 
+                this.tail = []; for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
             }
-
-            gainXp(amount) {
-                this.xp += amount;
-                if(this.xp >= this.maxXp) {
-                    this.levelUp();
-                }
-                this.updateUI();
-            }
-
+            gainXp(amount) { this.xp += amount; if(this.xp >= this.maxXp) this.levelUp(); this.updateUI(); }
             levelUp() {
-                this.level++;
-                this.xp = 0;
-                this.maxXp *= 1.5; 
-                this.scale += 0.2; 
-                audio.playEvolve();
-                showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}});
-                
-                if (!echoRay) {
-                    if (this.level === 6) {
-                        spawnEcho(this.x, this.y);
-                    } else if (this.level > 6 && this.level >= echoDeathLevel + 6) {
-                        spawnEcho(this.x, this.y);
-                    }
-                }
+                this.level++; this.xp = 0; this.maxXp *= 1.5; this.scale += 0.1; 
+                audio.playEvolve(); showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
+                if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
             }
-
             updateUI() {
                 document.getElementById('level-val').innerText = this.level;
                 document.getElementById('xp-fill').style.width = `${(this.xp/this.maxXp)*100}%`;
+                document.getElementById('stardust-amount').innerText = playerData.stardust;
             }
-
             update() {
+                const spdMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
+                const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
                 const BOOST = keys[" "] ? 0.6 : 0;
                 let ACCEL = 0.2 + BOOST;
-                const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.1); 
-                const TURN_SPEED = 0.05 / Math.sqrt(this.scale); 
+                const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
+                const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
 
-                let targetRoll = 0;
-                let targetWingState = 0;
+                let targetRoll = 0; let targetWingState = 0;
 
                 if (autopilot) {
-                    let nearest = null, minDist = Infinity;
-                    for(let p of planets) {
-                        if(!p.collected && p.type.id !== 'toxic') {
-                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
-                            if(d < minDist) { minDist = d; nearest = p; }
+                    let targetX, targetY, doThrust = true;
+                    
+                    if (aiMode === 'base') {
+                         targetX = nexus.x; targetY = nexus.y;
+                         const distToNexus = Math.hypot(this.x - nexus.x, this.y - nexus.y);
+                         if(distToNexus < 400) doThrust = false;
+                    } else if (aiMode === 'travel' && manualTarget) {
+                        targetX = manualTarget.x; targetY = manualTarget.y;
+                        const distToTarget = Math.hypot(this.x - targetX, this.y - targetY);
+                        if(distToTarget < 200) {
+                             doThrust = false; 
+                             autopilot = false; manualTarget = null; 
+                             showNotification({name: "HEDEFE ULAŞILDI", type:{color:'#fff'}}, "");
+                             document.getElementById('btn-ai-toggle').classList.remove('active');
+                             updateAIButton();
                         }
+                    } else {
+                        aiMode = 'gather';
+                        let nearest = null, minDist = Infinity;
+                        for(let p of planets) {
+                            if(!p.collected && p.type.id !== 'toxic') {
+                                const d = (p.x-this.x)**2 + (p.y-this.y)**2;
+                                if(d < minDist) { minDist = d; nearest = p; }
+                            }
+                        }
+                        if(nearest) { targetX = nearest.x; targetY = nearest.y; } 
+                        else { targetX = this.x + Math.cos(this.angle)*1000; targetY = this.y + Math.sin(this.angle)*1000; }
                     }
-                    if(nearest) {
-                        const targetAngle = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+
+                    if(targetX !== undefined) {
+                        const targetAngle = Math.atan2(targetY - this.y, targetX - this.x);
                         let diff = targetAngle - this.angle;
                         while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
-                        this.angle += diff * 0.05;
-                        const dist = Math.sqrt(minDist);
-                        const aiThrust = dist > 500 ? ACCEL : ACCEL * 0.5;
-                        this.vx += Math.cos(this.angle) * aiThrust;
-                        this.vy += Math.sin(this.angle) * aiThrust;
-                        this.wingPhase += 0.2; 
-                        targetRoll = diff * 5 * 0.6; // Soft AI için yanlamayı azalt
-                    } else { this.wingPhase += 0.05; }
+                        this.angle += diff * 0.1;
+                        
+                        if(doThrust) {
+                            if(Math.abs(diff) < 1.0) {
+                                this.vx += Math.cos(this.angle) * ACCEL;
+                                this.vy += Math.sin(this.angle) * ACCEL;
+                            } else { this.vx *= 0.95; this.vy *= 0.95; }
+                        } else { this.vx *= 0.9; this.vy *= 0.9; }
+                        this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
+                    }
                 } else {
-                    if (keys.a || keys.ArrowLeft) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
-                    if (keys.d || keys.ArrowRight) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
-                    if (keys.w || keys.ArrowUp || keys[" "]) {
+                    if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
+                    if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
+                    if (keys.w || keys[" "]) {
                         this.vx += Math.cos(this.angle) * ACCEL;
                         this.vy += Math.sin(this.angle) * ACCEL;
                         targetWingState = -0.8; this.wingPhase += 0.2;
                     } else { this.wingPhase += 0.05; }
-                    if (keys.s || keys.ArrowDown) {
-                        this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2;
-                    }
+                    if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
                 }
 
                 planets.forEach(p => {
                     if(!p.collected && p.type.id !== 'toxic') {
                         const dx = p.x - this.x; const dy = p.y - this.y;
                         const distSq = dx*dx + dy*dy;
-                        if(distSq < (p.radius*10)**2 && distSq > p.radius**2) {
+                        const magnetRange = 200 * (1 + playerData.upgrades.playerMagnet * 0.5);
+                        if(distSq < magnetRange**2 && distSq > p.radius**2) {
                             const force = (p.radius * 5) / distSq; 
                             this.vx += (dx / Math.sqrt(distSq)) * force;
                             this.vy += (dy / Math.sqrt(distSq)) * force;
@@ -462,81 +704,51 @@
                 });
 
                 const speed = Math.hypot(this.vx, this.vy);
+                document.getElementById('speed-val').innerText = Math.floor(speed * 10); 
                 if (speed > MAX_SPEED) { this.vx=(this.vx/speed)*MAX_SPEED; this.vy=(this.vy/speed)*MAX_SPEED; }
                 this.vx *= 0.98; this.vy *= 0.98;
                 this.x += this.vx; this.y += this.vy;
 
-                this.roll += (targetRoll - this.roll) * 0.05; 
-                this.wingState += (targetWingState - this.wingState) * 0.1;
-
+                this.roll += (targetRoll - this.roll) * 0.05; this.wingState += (targetWingState - this.wingState) * 0.1;
                 let targetX = this.x - Math.cos(this.angle) * 20 * this.scale;
                 let targetY = this.y - Math.sin(this.angle) * 20 * this.scale;
-                this.tail[0].x += (targetX - this.tail[0].x) * 0.5;
-                this.tail[0].y += (targetY - this.tail[0].y) * 0.5;
-
+                this.tail[0].x += (targetX - this.tail[0].x) * 0.5; this.tail[0].y += (targetY - this.tail[0].y) * 0.5;
                 for (let i = 1; i < this.tail.length; i++) {
                     let prev = this.tail[i-1]; let curr = this.tail[i];
                     let dx = prev.x - curr.x; let dy = prev.y - curr.y;
                     let d = Math.sqrt(dx*dx + dy*dy); let a = Math.atan2(dy, dx);
-                    if(d > 5 * this.scale) {
-                        curr.x = prev.x - Math.cos(a) * 5 * this.scale;
-                        curr.y = prev.y - Math.sin(a) * 5 * this.scale;
-                    }
+                    if(d > 5 * this.scale) { curr.x = prev.x - Math.cos(a) * 5 * this.scale; curr.y = prev.y - Math.sin(a) * 5 * this.scale; }
                 }
                 document.getElementById('coords').innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
             }
-
             draw(ctx) {
                 ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
-                for(let i=1; i<this.tail.length-1; i++) {
-                    let xc = (this.tail[i].x + this.tail[i+1].x) / 2;
-                    let yc = (this.tail[i].y + this.tail[i+1].y) / 2;
-                    ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc);
-                }
+                for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
                 let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
                 grad.addColorStop(0, "rgba(56, 189, 248, 0.9)"); grad.addColorStop(1, "transparent");
                 ctx.strokeStyle = grad; ctx.lineWidth = 3 * this.scale; ctx.lineCap = 'round'; ctx.stroke();
-
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle + Math.PI/2);
-                ctx.scale(this.scale, this.scale); 
-
-                let scaleX = 1 - Math.abs(this.roll) * 0.4;
-                let shiftX = this.roll * 15;
-                let wingTipY = 20 + (this.wingState * 15);
-                let wingTipX = 60 - (this.wingState * 10);
-                let wingFlap = Math.sin(this.wingPhase) * 5;
-
-                ctx.shadowBlur = 25; ctx.shadowColor = "rgba(56, 189, 248, 0.5)";
-                ctx.fillStyle = "rgba(8, 15, 30, 0.95)";
-                ctx.beginPath(); ctx.moveTo(0+shiftX, -30);
-                ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40);
-                ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50);
-                ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40);
-                ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30);
-                ctx.fill();
-
-                ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = "#e0f2fe"; ctx.shadowBlur = 30; ctx.shadowColor = "#0ea5e9";
-                ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill();
-                ctx.restore();
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
+                let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
+                ctx.shadowBlur = 25; ctx.shadowColor = "rgba(56, 189, 248, 0.5)"; ctx.fillStyle = "rgba(8, 15, 30, 0.95)";
+                ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
+                ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = "#e0f2fe"; ctx.shadowBlur = 30; ctx.shadowColor = "#0ea5e9"; ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); ctx.restore();
             }
         }
 
         // --- ECHO RAY ---
         class EchoRay {
-            constructor(x, y) {
-                this.x = x; this.y = y; this.vx = 0; this.vy = 0;
-                this.angle = 0; this.lootBag = [];
-                this.attached = false; 
-            }
+            constructor(x, y) { this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.angle = 0; this.lootBag = []; this.attached = false; this.mode = 'roam'; }
             update() {
-                if (this.attached) {
-                    const target = player.tail[player.tail.length - 1];
-                    this.x += (target.x - this.x) * 0.1;
-                    this.y += (target.y - this.y) * 0.1;
-                    this.angle = player.angle; 
+                const badge = document.getElementById('echo-total-badge'); const count = this.lootBag.length; badge.innerText = count; badge.style.display = count > 0 ? 'flex' : 'none';
+                if (this.attached || this.mode === 'return') {
+                    const target = this.attached ? player.tail[player.tail.length - 1] : player;
+                    if (!this.attached) {
+                        const dist = Math.hypot(target.x - this.x, target.y - this.y);
+                        const targetA = Math.atan2(target.y - this.y, target.x - this.x);
+                        let diff = targetA - this.angle; while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
+                        this.angle += diff * 0.1; this.vx += Math.cos(targetA) * 0.8; this.vy += Math.sin(targetA) * 0.8;
+                        if(dist < 100) { this.vx *= 0.8; this.vy *= 0.8; }
+                    } else { this.x += (target.x - this.x) * 0.1; this.y += (target.y - this.y) * 0.1; this.angle = player.angle; }
                 } else {
                     let nearest = null, minDist = Infinity;
                     for(let p of planets) {
@@ -546,436 +758,467 @@
                         }
                     }
                     if(nearest) {
-                        const dist = Math.sqrt(minDist);
-                        const targetA = Math.atan2(nearest.y-this.y, nearest.x-this.x);
-                        let diff = targetA - this.angle;
-                        while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
+                        const dist = Math.sqrt(minDist); const targetA = Math.atan2(nearest.y-this.y, nearest.x-this.x);
+                        let diff = targetA - this.angle; while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
                         this.angle += diff * 0.1;
-                        if(dist < 200) {
-                            this.vx += Math.cos(targetA) * 0.5;
-                            this.vy += Math.sin(targetA) * 0.5;
-                        } else {
-                            this.vx += Math.cos(this.angle) * 0.2;
-                            this.vy += Math.sin(this.angle) * 0.2;
-                        }
-                    } else {
-                        this.angle += (Math.random()-0.5)*0.1;
-                        this.vx += Math.cos(this.angle)*0.1; this.vy += Math.sin(this.angle)*0.1;
-                    }
-                    const speed = Math.hypot(this.vx, this.vy);
-                    if(speed > 5) { this.vx *= 0.9; this.vy *= 0.9; } 
-                    this.x += this.vx * 0.5; this.y += this.vy * 0.5; // Yankı hızı yarıya düşürüldü
-
+                        if(dist < 200) { this.vx += Math.cos(targetA) * 0.5; this.vy += Math.sin(targetA) * 0.5; } 
+                        else { this.vx += Math.cos(this.angle) * 0.2; this.vy += Math.sin(this.angle) * 0.2; }
+                    } else { this.angle += (Math.random()-0.5)*0.1; this.vx += Math.cos(this.angle)*0.1; this.vy += Math.sin(this.angle)*0.1; }
+                }
+                const speedMult = 1 + (playerData.upgrades.echoSpeed * 0.15); const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
+                const MAX_ECHO_SPEED = 8 * speedMult; const currentSpeed = Math.hypot(this.vx, this.vy);
+                if(currentSpeed > MAX_ECHO_SPEED) { this.vx = (this.vx/currentSpeed) * MAX_ECHO_SPEED; this.vy = (this.vy/currentSpeed) * MAX_ECHO_SPEED; }
+                this.vx *= 0.96; this.vy *= 0.96; 
+                if (!this.attached) {
+                    this.x += this.vx; this.y += this.vy;
+                    const pickupRange = 40 * rangeMult;
                     for(let p of planets) {
                         if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
                             const d = Math.hypot(this.x-p.x, this.y-p.y);
-                            if(d < p.radius + 40) { 
+                            if(d < p.radius + pickupRange) { 
                                 p.collected = true; 
-                                
-                                if (Math.random() < 0.01 && this.lootBag.length > 0) {
-                                    createLostLootPlanet(this.x, this.y, [...this.lootBag]);
-                                    this.lootBag = []; 
-                                    showNotification({name: "YANKI GANİMETİ DÜŞÜRDÜ! MOR SİNYALİ BUL!", type:{color:'#a855f7'}});
-                                } else {
-                                    this.lootBag.push(p);
-                                }
+                                const count = Math.floor(Math.random() * 4) + 1; 
+                                for(let i=0; i<count; i++) this.lootBag.push(p); 
+                                if(echoInvOpen) renderEchoInventory(); 
                             }
                         }
                     }
                 }
             }
             draw(ctx) { 
-                const onScreen = this.x > 0 && this.x < WORLD_SIZE && this.y > 0 && this.y < WORLD_SIZE; 
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle + Math.PI/2);
-                ctx.scale(0.6, 0.6); 
-                ctx.shadowBlur = 20; ctx.shadowColor = "#67e8f9";
-                ctx.fillStyle = "rgba(10, 20, 40, 0.9)";
-                ctx.beginPath(); ctx.moveTo(0, -25);
-                ctx.lineTo(30, 30); ctx.lineTo(0, 40); ctx.lineTo(-30, 30);
-                ctx.fill();
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(0.6, 0.6); 
+                ctx.shadowBlur = 20; ctx.shadowColor = "#67e8f9"; ctx.fillStyle = "rgba(10, 20, 40, 0.9)";
+                ctx.beginPath(); ctx.moveTo(0, -25); ctx.lineTo(30, 30); ctx.lineTo(0, 40); ctx.lineTo(-30, 30); ctx.fill();
                 ctx.strokeStyle = "#67e8f9"; ctx.lineWidth = 3; ctx.stroke();
+                if(this.mode === 'return' && !this.attached) { ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI*2); ctx.strokeStyle = "rgba(103, 232, 249, 0.3)"; ctx.stroke(); }
                 ctx.restore();
-                if(this.lootBag.length > 0) {
-                    ctx.fillStyle = "#fbbf24";
-                    ctx.font = "12px Arial";
-                    ctx.fillText(`+${this.lootBag.length}`, this.x+10, this.y-10);
-                }
             }
         }
 
-        function drawEchoIndicator() {
-            if (!echoRay || echoRay.attached) return; // Bağlıysa ok gösterme
+        function spawnEcho(x, y) { echoRay = new EchoRay(x, y); document.getElementById('echo-wrapper-el').style.display = 'flex'; showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); }
 
-            const camCX = player.x; const camCY = player.y;
-            const dx = echoRay.x - camCX; const dy = echoRay.y - camCY;
-            const screenHalfW = (width / currentZoom) / 2; const screenHalfH = (height / currentZoom) / 2;
+        // --- UI & EVENTS ---
+        function updateInventoryCount() {
+            const badge = document.getElementById('inv-total-badge'); const count = collectedItems.length; badge.innerText = count; badge.style.display = count > 0 ? 'flex' : 'none';
+            document.getElementById('count-all').innerText = count;
+            document.getElementById('count-legendary').innerText = collectedItems.filter(i => i.type.id === 'legendary').length;
+            document.getElementById('count-epic').innerText = collectedItems.filter(i => i.type.id === 'epic').length;
+            document.getElementById('count-rare').innerText = collectedItems.filter(i => i.type.id === 'rare').length;
+        }
+
+        function addItemToInventory(planet) { collectedItems.push(planet); updateInventoryCount(); if(inventoryOpen) renderInventory(); }
+
+        function updateEchoDropdownUI() {
+            document.querySelectorAll('.echo-menu-item').forEach(el => el.classList.remove('active-mode'));
             
-            if (Math.abs(dx) > screenHalfW || Math.abs(dy) > screenHalfH) {
-                const angle = Math.atan2(dy, dx);
-                const borderW = screenHalfW * 0.9; const borderH = screenHalfH * 0.9;
-                let tx = Math.cos(angle) * borderW; let ty = Math.sin(angle) * borderH;
-                
-                // Okun ekran kenarına oturmasını sağla
-                let dist = Math.sqrt(tx*tx + ty*ty);
-                let factor = Math.min(borderW/Math.abs(tx), borderH/Math.abs(ty));
-                
-                tx = Math.cos(angle) * borderW * factor * 0.9;
-                ty = Math.sin(angle) * borderH * factor * 0.9;
+            let rateText = "Normal";
+            if(playerData.upgrades.echoSpeed >= 2) rateText = "Hızlı";
+            if(playerData.upgrades.echoSpeed >= 4) rateText = "Turbo";
+            document.getElementById('echo-rate-disp').innerText = "Toplama Hızı: " + rateText;
 
-                const screenX = width/2 + tx * currentZoom; 
-                const screenY = height/2 + ty * currentZoom;
-
-                ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0); 
-                ctx.translate(screenX, screenY); ctx.rotate(angle);
-                ctx.fillStyle = "#67e8f9"; ctx.shadowBlur = 10; ctx.shadowColor = "#67e8f9";
-                ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-10, 7); ctx.lineTo(-10, -7); ctx.fill();
-                ctx.restore();
-            }
+            if (!echoRay) return;
+            if (echoRay.attached) document.getElementById('menu-merge').classList.add('active-mode');
+            else if (echoRay.mode === 'return') document.getElementById('menu-return').classList.add('active-mode');
+            else document.getElementById('menu-roam').classList.add('active-mode');
         }
 
+        function setEchoMode(mode) {
+            if(!echoRay) return;
+            if (mode === 'roam' && echoRay.attached) { echoRay.attached = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); }
+            if (mode === 'return') echoRay.attached = false; 
+            echoRay.mode = mode; updateEchoDropdownUI();
+        }
+
+        function echoManualMerge() {
+            if(!echoRay) return;
+            const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+            if (dist < 350) {
+                 if (echoRay.lootBag.length > 0) {
+                    echoRay.lootBag.forEach(p => { addItemToInventory(p); player.gainXp(p.type.xp); });
+                    showNotification({name: `YANKI: ${echoRay.lootBag.length} EŞYA AKTARILDI`, type:{color:'#38bdf8'}}, "");
+                    echoRay.lootBag = []; if(echoInvOpen) renderEchoInventory();
+                }
+                audio.playEvolve(); echoRay.attached = true; echoRay.mode = 'roam'; updateEchoDropdownUI();
+            } else { showNotification({name: "YANKI ÇOK UZAK, ÇAĞIRILIYOR...", type:{color:'#fbbf24'}}, ""); setEchoMode('return'); }
+        }
+
+        function openEchoInventory() { if(!echoRay) return; echoInvOpen = true; document.getElementById('echo-inventory-overlay').classList.add('open'); renderEchoInventory(); }
+        function closeEchoInventory() { echoInvOpen = false; document.getElementById('echo-inventory-overlay').classList.remove('open'); }
+        function closeInventory() { inventoryOpen = false; document.getElementById('inventory-overlay').classList.remove('open'); }
+
+        function renderEchoInventory() {
+            if(!echoRay) return; const grid = document.getElementById('echo-inv-grid-content');
+            if(echoRay.lootBag.length === 0) { grid.innerHTML = '<div class="text-center text-cyan-500/50 mt-20">Depo boş.</div>'; return; }
+            const grouped = {}; echoRay.lootBag.forEach(item => { if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; grouped[item.name].count++; });
+            let html = `<table class="inv-table"><thead><tr><th>TÜR</th><th>İSİM</th><th>XP</th><th style="text-align:right">MİKTAR</th></tr></thead><tbody>`;
+            Object.values(grouped).sort((a, b) => b.type.xp - a.type.xp).forEach(item => { html += `<tr><td style="color:${item.type.color}">●</td><td style="color:${item.type.color}">${item.name}</td><td style="font-size:0.8rem; opacity:0.7">${item.type.xp} XP</td><td style="text-align:right">x${item.count}</td></tr>`; });
+            html += '</tbody></table>'; grid.innerHTML = html;
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inv-grid-content');
+            let filteredItems = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
+            if(filteredItems.length === 0) { grid.innerHTML = '<div class="text-center text-gray-500 mt-20">Bu kategoride eşya yok.</div>'; return; }
+            
+            const grouped = {};
+            filteredItems.forEach(item => {
+                if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 };
+                grouped[item.name].count++;
+            });
+
+            let html = `<table class="inv-table"><thead><tr><th>TÜR</th><th>İSİM</th><th>XP</th><th style="text-align:right">MİKTAR</th></tr></thead><tbody>`;
+            Object.values(grouped).sort((a, b) => b.type.xp - a.type.xp).forEach(item => {
+                html += `
+                    <tr>
+                        <td style="color:${item.type.color}">●</td>
+                        <td style="color:${item.type.color}">${item.name}</td>
+                        <td style="font-size:0.8rem; opacity:0.7">${item.type.xp} XP</td>
+                        <td style="text-align:right">x${item.count}</td>
+                    </tr>`;
+            });
+            html += '</tbody></table>';
+            grid.innerHTML = html;
+        }
+
+        function filterInventory(f) { activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.currentTarget.classList.add('active'); renderInventory(); }
+
+        // --- AI MODES ---
+        function cycleAIMode() {
+            if(!autopilot) return;
+            const modes = ['gather', 'base']; // Travel is handled automatically
+            const currIdx = modes.indexOf(aiMode);
+            aiMode = modes[(currIdx + 1) % modes.length];
+            updateAIButton();
+        }
+        
+        function updateAIButton() {
+            const btn = document.getElementById('ai-mode-btn');
+            const aiToggle = document.getElementById('btn-ai-toggle');
+            const modeBtn = document.getElementById('ai-mode-btn');
+            
+            if(!autopilot) {
+                 aiToggle.classList.remove('active'); 
+                 modeBtn.classList.remove('visible');
+                 return;
+            }
+
+            aiToggle.classList.add('active'); 
+            modeBtn.classList.add('visible');
+
+            if (aiMode === 'travel') { btn.innerText = 'SEYİR'; btn.style.color = '#ef4444'; btn.style.borderColor = '#ef4444'; }
+            else if (aiMode === 'base') { btn.innerText = 'ÜS'; btn.style.color = '#fbbf24'; btn.style.borderColor = '#fbbf24'; }
+            else { btn.innerText = 'TOPLA'; btn.style.color = 'white'; btn.style.borderColor = 'transparent'; }
+        }
+
+        // --- NEXUS LOGIC ---
+        function enterNexus() { nexusOpen = true; document.getElementById('nexus-overlay').classList.add('open'); switchNexusTab('market'); }
+        function exitNexus() { nexusOpen = false; document.getElementById('nexus-overlay').classList.remove('open'); }
+
+        function switchNexusTab(tabName) {
+            document.querySelectorAll('.nexus-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nexus-content').forEach(c => c.classList.remove('active'));
+            if(tabName === 'market') { document.querySelector('.nexus-tab:nth-child(1)').classList.add('active'); document.getElementById('tab-market').classList.add('active'); renderMarket(); } 
+            else { document.querySelector('.nexus-tab:nth-child(2)').classList.add('active'); document.getElementById('tab-upgrades').classList.add('active'); renderUpgrades(); }
+        }
+
+        function renderMarket() {
+            const grid = document.getElementById('market-grid'); grid.innerHTML = '';
+            if(collectedItems.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-gray-500 mt-10">Satılacak eşya yok.</div>'; return; }
+            const grouped = {}; collectedItems.forEach(item => { if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; grouped[item.name].count++; });
+            Object.values(grouped).forEach(item => {
+                if(item.type.value > 0) {
+                    const totalVal = item.count * item.type.value;
+                    const div = document.createElement('div'); div.className = 'market-card';
+                    div.innerHTML = `<div class="text-2xl" style="color:${item.type.color}">●</div><div class="font-bold text-white">${item.name}</div><div class="text-sm text-gray-400">x${item.count}</div><div class="text-white font-mono text-lg opacity-80">${totalVal} <span class="text-xs">KRİSTAL</span></div><button class="sell-btn" onclick="sellItem('${item.name}', ${item.type.value}, ${item.count})">SAT</button>`;
+                    grid.appendChild(div);
+                }
+            });
+        }
+
+        function sellItem(name, unitPrice, count) {
+            collectedItems = collectedItems.filter(i => i.name !== name);
+            playerData.stardust += count * unitPrice; audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
+        }
+        function sellAll() {
+            let total = 0; let toKeep = [];
+            collectedItems.forEach(item => { if(item.type.value > 0) total += item.type.value; else toKeep.push(item); });
+            if(total > 0) { collectedItems = toKeep; playerData.stardust += total; audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket(); showNotification({name: `${total} KRİSTAL KAZANILDI`, type:{color:'#fbbf24'}}, ""); }
+        }
+
+        function renderUpgrades() {
+            const pList = document.getElementById('upg-player-list'); const eList = document.getElementById('upg-echo-list'); pList.innerHTML = ''; eList.innerHTML = '';
+            const createCard = (key, data) => {
+                const currentLvl = playerData.upgrades[key]; const cost = Math.floor(data.baseCost * Math.pow(1.5, currentLvl)); const isMax = currentLvl >= data.max;
+                let pips = ''; for(let i=0; i<data.max; i++) pips += `<div class="lvl-pip ${i<currentLvl?'filled':''}"></div>`;
+                return `<div class="upgrade-item"><div class="upg-info"><h4>${data.name}</h4><p>${data.desc}</p><div class="upg-level">${pips}</div></div><button class="buy-btn" ${isMax || playerData.stardust < cost ? 'disabled' : ''} onclick="buyUpgrade('${key}')">${isMax ? 'MAX' : 'GELİŞTİR'} ${!isMax ? `<span class="cost-text">${cost} ◆</span>` : ''}</button></div>`;
+            };
+            ['playerSpeed', 'playerTurn', 'playerMagnet'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k]));
+            ['echoSpeed', 'echoRange'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k]));
+        }
+        window.buyUpgrade = function(key) {
+            const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
+            const cost = Math.floor(data.baseCost * Math.pow(1.5, currentLvl));
+            if(playerData.stardust >= cost) { playerData.stardust -= cost; playerData.upgrades[key]++; audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); }
+        };
+
+        function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
+        function showNotification(planet, suffix) { 
+            const div = document.createElement('div'); div.className='zen-notif'; 
+            const countText = suffix ? ` ${suffix}` : "";
+            div.innerHTML = `<div class="rarity-dot" style="background:${planet.type.color};"></div> ${planet.name}${countText}`; 
+            document.getElementById('notification-area').appendChild(div); setTimeout(()=>div.remove(), 4000); 
+        }
+        
         class Planet {
             constructor(x, y, type, lootContent = []) {
-                this.x = x !== undefined ? x : Math.random()*WORLD_SIZE;
-                this.y = y !== undefined ? y : Math.random()*WORLD_SIZE;
-                this.collected = false;
-                
-                if (type) {
-                    this.type = type;
-                    this.lootContent = lootContent; 
-                } else {
-                    const r = Math.random();
-                    if(r < 0.01) this.type = RARITY.TOXIC;
-                    else if(r < 0.03) this.type = RARITY.LEGENDARY;
-                    else if(r < 0.13) this.type = RARITY.EPIC;
-                    else if(r < 0.45) this.type = RARITY.RARE;
-                    else this.type = RARITY.COMMON;
-                    this.lootContent = [];
-                }
-
+                this.x = x !== undefined ? x : Math.random()*WORLD_SIZE; this.y = y !== undefined ? y : Math.random()*WORLD_SIZE; this.collected = false;
+                if (type) { this.type = type; this.lootContent = lootContent; } 
+                else { const r = Math.random(); if(r < 0.01) this.type = RARITY.TOXIC; else if(r < 0.03) this.type = RARITY.LEGENDARY; else if(r < 0.13) this.type = RARITY.EPIC; else if(r < 0.45) this.type = RARITY.RARE; else this.type = RARITY.COMMON; this.lootContent = []; }
                 this.name = this.type.id === 'lost' ? "KAYIP KARGO" : LOOT_DB[this.type.id][Math.floor(Math.random()*LOOT_DB[this.type.id].length)];
                 this.radius = this.type.id==='legendary'?120 : (this.type.id==='toxic'? 60 : (this.type.id==='lost' ? 80 : 40+Math.random()*60));
             }
-            draw(ctx, camX, camY) {
+            draw(ctx) {
                 if(this.collected) return;
-                
                 ctx.shadowBlur=50; ctx.shadowColor=this.type.color;
                 const grad = ctx.createRadialGradient(this.x-this.radius*0.3, this.y-this.radius*0.3, this.radius*0.1, this.x, this.y, this.radius);
                 grad.addColorStop(0, this.type.color); grad.addColorStop(1, "#020617");
                 ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
-                
-                if(this.type.id === 'toxic') {
-                    const t = Date.now() * 0.002;
-                    ctx.strokeStyle = "rgba(132, 204, 22, 0.15)";
-                    ctx.lineWidth = 4;
-                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 10 + Math.sin(t)*5, 0, Math.PI*2); ctx.stroke();
-                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20 + Math.sin(t+1)*8, 0, Math.PI*2); ctx.stroke();
-                }
-                if (this.type.id === 'lost') {
-                    ctx.strokeStyle = this.type.color;
-                    ctx.lineWidth = 3;
-                    const pulse = Math.sin(Date.now() * 0.005) * 10;
-                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20 + pulse, 0, Math.PI*2); ctx.stroke();
-                }
+                if(this.type.id === 'toxic') { const t = Date.now() * 0.002; ctx.strokeStyle = "rgba(132, 204, 22, 0.15)"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 10 + Math.sin(t)*5, 0, Math.PI*2); ctx.stroke(); }
+                if (this.type.id === 'lost') { ctx.strokeStyle = this.type.color; ctx.lineWidth = 3; const pulse = Math.sin(Date.now() * 0.005) * 10; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20 + pulse, 0, Math.PI*2); ctx.stroke(); }
             }
         }
-
         class Particle {
-            constructor(x, y, color) {
-                this.x = x; this.y = y; this.color = color;
-                this.vx = (Math.random()-0.5)*3; this.vy = (Math.random()-0.5)*3;
-                this.life = 1.0;
-                this.radius = Math.random() * 5 + 3; 
-                this.growth = 0.15; 
+            constructor(x, y, color) { this.x = x; this.y = y; this.color = color; this.vx = (Math.random()-0.5)*3; this.vy = (Math.random()-0.5)*3; this.life = 1.0; this.radius = Math.random() * 5 + 3; this.growth = 0.15; }
+            update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.015; this.radius += this.growth; }
+            draw(ctx) { ctx.globalAlpha = this.life * 0.6; ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
+        }
+
+        function drawTargetIndicator(targetX, targetY, color) {
+            const camCX = player.x; const camCY = player.y; const dx = targetX - camCX; const dy = targetY - camCY;
+            const screenHalfW = (width / currentZoom) / 2; const screenHalfH = (height / currentZoom) / 2;
+            if (Math.abs(dx) > screenHalfW || Math.abs(dy) > screenHalfH) {
+                const angle = Math.atan2(dy, dx); const borderW = screenHalfW * 0.9; const borderH = screenHalfH * 0.9;
+                let tx = Math.cos(angle) * borderW; let ty = Math.sin(angle) * borderH;
+                if (Math.abs(tx) > borderW) tx = Math.sign(tx) * borderW; if (Math.abs(ty) > borderH) ty = Math.sign(ty) * borderH;
+                const screenX = width/2 + tx * currentZoom; const screenY = height/2 + ty * currentZoom;
+                const distKM = Math.round(Math.hypot(dx, dy) / 100); 
+                ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(screenX, screenY); ctx.rotate(angle + Math.PI/2);
+                ctx.fillStyle = color; ctx.shadowBlur = 10; ctx.shadowColor = color; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(6, 6); ctx.lineTo(-6, 6); ctx.fill();
+                ctx.rotate(-(angle + Math.PI/2)); ctx.fillStyle = color; ctx.font = "bold 10px monospace"; ctx.fillText(distKM + "m", 10, 0);
+                ctx.restore();
             }
-            update() { 
-                this.x+=this.vx; this.y+=this.vy; 
-                this.life-=0.015; 
-                this.radius += this.growth; 
-            }
-            draw(ctx) {
-                ctx.globalAlpha = this.life * 0.6; ctx.fillStyle=this.color;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
-                ctx.globalAlpha = 1;
-            }
         }
 
-        function spawnEcho(x, y) {
-            echoRay = new EchoRay(x, y);
-            showNotification({name: "YANKI DOĞDU: SADIK YOLDAŞ", type:{color:'#67e8f9'}});
-        }
+        function drawBigMap() {
+            if(!mapOpen) return;
+            const container = document.querySelector('.big-map-container');
+            bmCanvas.width = container.clientWidth; bmCanvas.height = container.clientHeight;
+            bmCtx.clearRect(0, 0, bmCanvas.width, bmCanvas.height);
 
-        function createLostLootPlanet(x, y, items) {
-            const p = new Planet(x, y, RARITY.LOST, items);
-            planets.push(p);
-        }
+            const margin = 50;
+            const scale = Math.min((bmCanvas.width - margin*2) / WORLD_SIZE, (bmCanvas.height - margin*2) / WORLD_SIZE);
+            const offsetX = (bmCanvas.width - WORLD_SIZE * scale) / 2;
+            const offsetY = (bmCanvas.height - WORLD_SIZE * scale) / 2;
 
-        // --- UI & EVENTS ---
-        
-        function showToxicEffect() {
-            const el = document.getElementById('toxic-overlay');
-            el.classList.add('active');
-            setTimeout(() => el.classList.remove('active'), 1500);
-        }
+            bmCtx.strokeStyle = "rgba(255,255,255,0.1)"; bmCtx.lineWidth = 2;
+            bmCtx.strokeRect(offsetX, offsetY, WORLD_SIZE*scale, WORLD_SIZE*scale);
 
-        function showNotification(planet) {
-            const div = document.createElement('div'); div.className='zen-notif';
-            div.innerHTML = `<div class="rarity-dot" style="background:${planet.type.color}; box-shadow:0 0 15px ${planet.type.color}"></div> ${planet.name}`;
-            document.getElementById('notification-area').appendChild(div);
-            setTimeout(()=>div.remove(), 4000);
-        }
-
-        function addItemToInventory(planet) {
-            collectedItems.push(planet);
-            if(inventoryOpen) renderInventory();
-        }
-
-        function renderInventory() {
-            const grid = document.getElementById('inv-grid-content'); grid.innerHTML = '';
-            let items = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
-            items.sort((a, b) => b.type.xp - a.type.xp);
-            if(items.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-gray-600 mt-20">Boş.</div>'; return; }
-            items.forEach(item => {
-                const div = document.createElement('div'); div.className='item-card';
-                div.innerHTML = `<div class="item-glow" style="background:${item.type.color}"></div><div class="item-icon" style="color:${item.type.color}">●</div><div class="item-name">${item.name}</div>`;
-                grid.appendChild(div);
+            bmCtx.fillStyle = "rgba(255,255,255,0.3)";
+            planets.forEach(p => {
+                if(!p.collected) {
+                    bmCtx.beginPath(); bmCtx.arc(offsetX + p.x*scale, offsetY + p.y*scale, 2, 0, Math.PI*2); bmCtx.fill();
+                }
             });
+
+            bmCtx.fillStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 5, 0, Math.PI*2); bmCtx.fill();
+            bmCtx.strokeStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 10, 0, Math.PI*2); bmCtx.stroke();
+
+            if(echoRay) { bmCtx.fillStyle = "#67e8f9"; bmCtx.beginPath(); bmCtx.arc(offsetX + echoRay.x*scale, offsetY + echoRay.y*scale, 4, 0, Math.PI*2); bmCtx.fill(); }
+
+            bmCtx.save(); bmCtx.translate(offsetX + player.x*scale, offsetY + player.y*scale); bmCtx.rotate(player.angle + Math.PI/2);
+            bmCtx.fillStyle = "#38bdf8"; bmCtx.beginPath(); bmCtx.moveTo(0, -8); bmCtx.lineTo(6, 8); bmCtx.lineTo(-6, 8); bmCtx.fill(); bmCtx.restore();
+
+            if(manualTarget) {
+                const tx = offsetX + manualTarget.x*scale; const ty = offsetY + manualTarget.y*scale;
+                bmCtx.strokeStyle = "#ef4444"; bmCtx.setLineDash([5, 5]); bmCtx.beginPath(); bmCtx.moveTo(offsetX + player.x*scale, offsetY + player.y*scale); bmCtx.lineTo(tx, ty); bmCtx.stroke(); bmCtx.setLineDash([]);
+                bmCtx.beginPath(); bmCtx.arc(tx, ty, 5, 0, Math.PI*2); bmCtx.stroke();
+            }
         }
 
-        function filterInventory(f) {
-            activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-            event.currentTarget.classList.add('active'); renderInventory();
+        bmCanvas.addEventListener('mousedown', (e) => {
+             const rect = bmCanvas.getBoundingClientRect();
+             const clickX = e.clientX - rect.left; const clickY = e.clientY - rect.top;
+             const margin = 50;
+             const scale = Math.min((bmCanvas.width - margin*2) / WORLD_SIZE, (bmCanvas.height - margin*2) / WORLD_SIZE);
+             const offsetX = (bmCanvas.width - WORLD_SIZE * scale) / 2;
+             const offsetY = (bmCanvas.height - WORLD_SIZE * scale) / 2;
+
+             const worldX = (clickX - offsetX) / scale; const worldY = (clickY - offsetY) / scale;
+             if(worldX >= 0 && worldX <= WORLD_SIZE && worldY >= 0 && worldY <= WORLD_SIZE) {
+                 manualTarget = {x: worldX, y: worldY};
+                 autopilot = true; aiMode = 'travel';
+                 document.getElementById('btn-ai-toggle').classList.add('active');
+                 updateAIButton();
+                 showNotification({name: "ROTA OLUŞTURULDU", type:{color:'#fff'}}, "");
+             }
+        });
+        
+        function closeMap() {
+            mapOpen = false;
+            document.getElementById('big-map-overlay').classList.remove('active');
         }
 
-        // --- TIPS DÖNGÜSÜ ---
-        function startTips() {
-            const tipEl = document.getElementById('tip-text');
-            let idx = 0;
-            setInterval(() => {
-                tipEl.style.opacity = 0;
-                setTimeout(() => {
-                    idx = (idx + 1) % TIPS.length;
-                    tipEl.innerText = TIPS[idx];
-                    tipEl.style.opacity = 1;
-                }, 1000);
-            }, 5000);
-        }
-
-        // --- LOOP ---
         function init() {
-            player = new VoidRay(); audio = new ZenAudio();
+            player = new VoidRay(); nexus = new Nexus(); audio = new ZenAudio();
             planets = []; for(let i=0; i<400; i++) planets.push(new Planet());
             stars = []; for(let i=0; i<2000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
-            player.updateUI();
+            player.updateUI(); updateInventoryCount(); isPaused = false;
+        }
+
+        function startLoop() {
+            if(animationId) cancelAnimationFrame(animationId);
+            loop();
         }
 
         function loop() {
-            currentZoom += (targetZoom - currentZoom) * 0.1;
+            if(!isPaused) {
+                currentZoom += (targetZoom - currentZoom) * 0.1;
+                player.update(); if(echoRay) echoRay.update(); nexus.update();
 
-            player.update();
-            if(echoRay) echoRay.update();
-
-            if (keys.Escape) { // ESC tuşu Envanter ve Ses panelini kapatır
-                if (inventoryOpen) {
-                    inventoryOpen = false;
-                    document.getElementById('inventory-overlay').classList.remove('open');
-                }
-                if (soundPanel.classList.contains('open')) {
-                    soundPanel.classList.remove('open');
-                }
-                keys.Escape = false;
-            }
-
-            if(echoRay) {
-                const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
-                const prompt = document.getElementById('merge-prompt');
-                
-                if (echoRay.attached) {
-                     prompt.innerText = "[F] AYRIL";
-                     prompt.className = 'subtle-ghost'; 
-                     if(keys.f) { echoRay.attached = false; keys.f = false; }
-                } else {
-                    if(dist < 300) {
-                        prompt.innerText = "[F] BİRLEŞ";
-                        prompt.className = 'visible';
-                        if(keys.f) {
-                            echoRay.lootBag.forEach(p => { addItemToInventory(p); player.gainXp(p.type.xp); });
-                            echoRay.lootBag = [];
-                            audio.playEvolve();
-                            echoRay.attached = true; 
-                            keys.f = false;
-                        }
-                    } else { prompt.className = ''; }
-                }
-            } else { document.getElementById('merge-prompt').className = ''; }
-
-            ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
-            
-            ctx.fillStyle="white";
-            stars.forEach(s => {
-                let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height;
-                if(sx<0) sx+=width; if(sy<0) sy+=height;
-                ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s);
-            });
-            ctx.globalAlpha = 1;
-
-            ctx.save();
-            ctx.translate(width/2, height/2);
-            ctx.scale(currentZoom, currentZoom);
-            ctx.translate(-player.x, -player.y);
-            
-            for(let i=particles.length-1; i>=0; i--) {
-                particles[i].update(); particles[i].draw(ctx);
-                if(particles[i].life<=0) particles.splice(i,1);
-            }
-
-            planets.forEach(p => {
-                const viewW = width / currentZoom;
-                const viewH = height / currentZoom;
-                if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) {
-                   p.draw(ctx, 0, 0); 
-                }
-
-                if(!p.collected) {
-                    if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) {
-                        if(p.type.id === 'toxic') {
-                            audio.playToxic();
-                            showToxicEffect();
-                            for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16'));
-                            if(echoRay && echoRay.attached) { // Sadece bağlıyken ölür
-                                echoRay = null; echoDeathLevel = player.level;
-                                showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}});
-                                document.getElementById('merge-prompt').className = '';
-                            } else {
-                                const now = Date.now();
-                                if (now - lastToxicNotification > 2000) {
-                                    showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}});
-                                    lastToxicNotification = now;
-                                }
-                            }
-                        } else if (p.type.id === 'lost') {
-                            p.collected = true; audio.playChime({id:'legendary'});
-                            showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}});
-                            if (p.lootContent && p.lootContent.length > 0) {
-                                p.lootContent.forEach(item => { addItemToInventory(item); player.gainXp(item.type.xp); });
-                            }
-                        } else {
-                            p.collected = true; 
-                            audio.playChime(p.type.id); 
-                            showNotification(p); addItemToInventory(p); player.gainXp(p.type.xp);
-                        }
+                planets = planets.filter(p => !p.collected);
+                if (planets.length < 400) {
+                    const needed = 400 - planets.length;
+                    for(let i=0; i<needed; i++) {
+                        let px, py, d; do { px = Math.random() * WORLD_SIZE; py = Math.random() * WORLD_SIZE; d = Math.hypot(px - player.x, py - player.y); } while(d < 2000);
+                        planets.push(new Planet(px, py));
                     }
                 }
-            });
 
-            if(echoRay) echoRay.draw(ctx);
-            player.draw(ctx);
-            ctx.restore();
+                if (keys.Escape) { 
+                    if (inventoryOpen) closeInventory();
+                    else if (echoInvOpen) closeEchoInventory();
+                    else if (nexusOpen) exitNexus();
+                    else if (mapOpen) closeMap();
+                    else if (document.getElementById('sound-panel').classList.contains('open')) document.getElementById('sound-panel').classList.remove('open');
+                    else togglePause();
+                    keys.Escape = false;
+                }
 
-            drawEchoIndicator();
-            drawMiniMap();
-            requestAnimationFrame(loop);
+                if (keys.q) { 
+                    autopilot = !autopilot; 
+                    if(!autopilot) { manualTarget = null; aiMode = 'gather'; }
+                    updateAIButton();
+                    keys.q = false; 
+                }
+                if (keys.m) { mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; }
+
+                ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
+                ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
+
+                ctx.save(); ctx.translate(width/2, height/2); ctx.scale(currentZoom, currentZoom); ctx.translate(-player.x, -player.y);
+                nexus.draw(ctx);
+                for(let i=particles.length-1; i>=0; i--) { particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
+                
+                planets.forEach(p => { 
+                    const viewW = width / currentZoom; const viewH = height / currentZoom; 
+                    if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) { p.draw(ctx, 0, 0); } 
+                    if(!p.collected) { 
+                        if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) { 
+                            if(p.type.id === 'toxic') { 
+                                audio.playToxic(); showToxicEffect(); for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16')); 
+                                if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}}, ""); } 
+                                else { const now = Date.now(); if (now - lastToxicNotification > 2000) { showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}}, ""); lastToxicNotification = now; } } 
+                            } else if (p.type.id === 'lost') { 
+                                p.collected = true; audio.playChime({id:'legendary'}); showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
+                                if (p.lootContent && p.lootContent.length > 0) { p.lootContent.forEach(item => { addItemToInventory(item); player.gainXp(item.type.xp); }); } 
+                            } else { 
+                                p.collected = true; audio.playChime(p.type.id); 
+                                const lootCount = Math.floor(Math.random() * 4) + 1; 
+                                for(let i=0; i<lootCount; i++) { addItemToInventory(p); player.gainXp(p.type.xp); }
+                                showNotification(p, lootCount > 1 ? `x${lootCount}` : ""); 
+                            } 
+                        } 
+                    } 
+                });
+
+                if(echoRay) {
+                    echoRay.draw(ctx);
+                    const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                    if (!nexusOpen && !mapOpen) { 
+                        const prompt = document.getElementById('merge-prompt');
+                        if (!echoRay.attached && dist < 300) { prompt.innerText = "[F] BİRLEŞ"; prompt.className = 'visible'; if(keys.f) { echoManualMerge(); keys.f = false; } } 
+                        else if (echoRay.attached) { prompt.className = ''; if(keys.f) { echoRay.attached = false; echoRay.mode = 'roam'; updateEchoDropdownUI(); keys.f = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); } } 
+                        else { prompt.className = ''; }
+                    }
+                }
+                player.draw(ctx); ctx.restore();
+
+                if(echoRay && !echoRay.attached) drawTargetIndicator(echoRay.x, echoRay.y, "#67e8f9");
+                drawTargetIndicator(nexus.x, nexus.y, "#ffffff");
+                drawMiniMap();
+                if(mapOpen) drawBigMap();
+            }
+            animationId = requestAnimationFrame(loop);
         }
 
+        function togglePause() { isPaused = true; document.getElementById('pause-overlay').classList.add('active'); }
+        function resumeGame() { isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); }
+        function quitToMain() { document.getElementById('pause-overlay').classList.remove('active'); document.getElementById('main-menu').classList.remove('menu-hidden'); isPaused = true; if(animationId) cancelAnimationFrame(animationId); }
+
         function drawMiniMap() {
-            mmCtx.clearRect(0,0,180,180);
-            mmCtx.save(); mmCtx.beginPath(); mmCtx.arc(90,90,90,0,Math.PI*2); mmCtx.clip();
-            const scale = 180/30000; 
-            const cx = 90, cy = 90;
+            mmCtx.clearRect(0,0,180,180); mmCtx.save(); 
+            const scale = 180/30000; const cx = 90, cy = 90;
+            
+            // Draw Nexus on MM
+            const nx = (nexus.x-player.x)*scale + cx; const ny = (nexus.y-player.y)*scale + cy;
+            if(nx > 0 && nx < 180 && ny > 0 && ny < 180) {
+                 mmCtx.fillStyle = "white"; mmCtx.beginPath(); mmCtx.arc(nx, ny, 2, 0, Math.PI*2); mmCtx.fill();
+            }
+
+            if(echoRay) { 
+                const ex = (echoRay.x-player.x)*scale + cx, ey = (echoRay.y-player.y)*scale + cy; 
+                if(ex > 0 && ex < 180 && ey > 0 && ey < 180) {
+                    mmCtx.fillStyle = "#67e8f9"; mmCtx.beginPath(); mmCtx.arc(ex, ey, 2, 0, Math.PI*2); mmCtx.fill(); 
+                }
+            }
+            
             mmCtx.fillStyle = "rgba(255,255,255,0.4)";
             planets.forEach(p => {
                 if(!p.collected) {
-                    let dx = (p.x-player.x)*scale, dy = (p.y-player.y)*scale;
-                    if(dx*dx+dy*dy < 8100) {
-                        if(p.type.id === 'lost') { mmCtx.fillStyle = "#a855f7"; } 
-                        else { mmCtx.fillStyle = "rgba(255,255,255,0.4)"; }
-                        
-                        mmCtx.beginPath(); mmCtx.arc(cx+dx, cy+dy, p.type.id === 'lost' ? 5 : 2, 0, Math.PI*2); mmCtx.fill();
+                    let px = (p.x-player.x)*scale + cx; let py = (p.y-player.y)*scale + cy;
+                    if(px > 0 && px < 180 && py > 0 && py < 180) {
+                        mmCtx.fillStyle = p.type.id === 'lost' ? "#a855f7" : "rgba(255,255,255,0.4)";
+                        mmCtx.beginPath(); mmCtx.arc(px, py, 1, 0, Math.PI*2); mmCtx.fill();
                     }
                 }
             });
-            if(echoRay) {
-                let ex = (echoRay.x-player.x)*scale, ey = (echoRay.y-player.y)*scale;
-                if(ex*ex+ey*ey < 8100) {
-                    mmCtx.fillStyle = "#67e8f9"; mmCtx.beginPath(); mmCtx.arc(cx+ex, cy+ey, 4, 0, Math.PI*2); mmCtx.fill();
-                }
+            
+             if(manualTarget) {
+                const tx = (manualTarget.x-player.x)*scale + cx; const ty = (manualTarget.y-player.y)*scale + cy;
+                mmCtx.strokeStyle = "#ef4444"; mmCtx.lineWidth = 1; mmCtx.setLineDash([2, 2]); mmCtx.beginPath(); mmCtx.moveTo(cx, cy); mmCtx.lineTo(tx, ty); mmCtx.stroke(); mmCtx.setLineDash([]);
             }
+
+            // Player is always center
             mmCtx.translate(cx, cy); mmCtx.rotate(player.angle+Math.PI/2);
-            mmCtx.fillStyle="white"; mmCtx.beginPath(); mmCtx.moveTo(0,-6); mmCtx.lineTo(-5,6); mmCtx.lineTo(5,6); mmCtx.fill();
-            mmCtx.restore();
+            mmCtx.fillStyle="#38bdf8"; mmCtx.beginPath(); mmCtx.moveTo(0,-4); mmCtx.lineTo(-3,4); mmCtx.lineTo(3,4); mmCtx.fill(); mmCtx.restore();
         }
 
-        window.addEventListener('keydown', e => {
-            if(e.key === "Escape") keys.Escape = true; 
-            else if(keys.hasOwnProperty(e.key)) keys[e.key] = true;
-            else if(e.code === "Space") keys[" "] = true;
-            else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
-
-            if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); }
-            if(e.key.toLowerCase() === 'f') keys.f = true;
-            if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-                autopilot = false; updateAIBtn();
-            }
-        });
-        window.addEventListener('keyup', e => {
-            if(e.key === "Escape") keys.Escape = false;
-            else if(keys.hasOwnProperty(e.key)) keys[e.key] = false;
-            else if(e.code === "Space") keys[" "] = false;
-            else if(keys.hasOwnProperty(e.code)) keys[e.code] = false;
-            if(e.key.toLowerCase() === 'f') keys.f = false;
-        });
+        window.addEventListener('keydown', e => { if(e.code === "Space") e.preventDefault(); if(e.key === "Escape") keys.Escape = true; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; else if(e.code === "Space") keys[" "] = true; else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); } });
+        window.addEventListener('keyup', e => { if(e.key === "Escape") keys.Escape = false; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; else if(e.code === "Space") keys[" "] = false; else if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+        window.addEventListener('wheel', e => { e.preventDefault(); targetZoom += e.deltaY * -0.001; targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); }, { passive: false });
         
-        window.addEventListener('wheel', e => {
-            e.preventDefault();
-            targetZoom += e.deltaY * -0.001;
-            targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); 
-        }, { passive: false });
-
-        document.getElementById('btn-start').addEventListener('click', () => {
-            document.getElementById('main-menu').classList.add('menu-hidden');
-            init(); audio.init(); startTips(); loop();
-            document.getElementById('bgMusic').play().catch(e=>console.log(e));
-        });
-        
-        document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });
-        document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
-        
-        function updateAIBtn() {
-            const btn = document.getElementById('btn-ai-toggle');
-            if(autopilot) btn.classList.add('active'); else btn.classList.remove('active');
-        }
-        document.getElementById('btn-ai-toggle').addEventListener('click', () => {
-            autopilot = !autopilot; updateAIBtn();
-        });
-
-        // SES AYARLARI
         const soundPanel = document.getElementById('sound-panel');
         document.getElementById('btn-sound').addEventListener('click', () => soundPanel.classList.toggle('open'));
+        document.getElementById('vol-music').addEventListener('input', (e) => { const val = e.target.value / 100; const m = document.getElementById('bgMusic'); if(m) m.volume = val; document.getElementById('val-m').innerText = e.target.value + '%'; volMusic = val; });
+        document.getElementById('vol-sfx').addEventListener('input', (e) => { const val = e.target.value / 100; volSFX = val; document.getElementById('val-s').innerText = e.target.value + '%'; });
+
+        document.getElementById('btn-start').addEventListener('click', () => { document.getElementById('main-menu').classList.add('menu-hidden'); init(); audio.init(); startLoop(); document.getElementById('bgMusic').play().catch(e=>console.log(e)); });
+        document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });
+        document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
+        document.getElementById('btn-ai-toggle').addEventListener('click', () => { autopilot = !autopilot; if(!autopilot) { manualTarget=null; aiMode='gather'; } updateAIButton(); });
         
-        document.getElementById('vol-music').addEventListener('input', (e) => {
-            const val = e.target.value / 100;
-            const m = document.getElementById('bgMusic');
-            if(m) m.volume = val;
-            document.getElementById('val-m').innerText = e.target.value + '%';
-            volMusic = val;
-            if(audio && audio.bgMusic) audio.bgMusic.volume = val;
-        });
-        document.getElementById('vol-sfx').addEventListener('input', (e) => {
-            const val = e.target.value / 100;
-            volSFX = val;
-            document.getElementById('val-s').innerText = e.target.value + '%';
-        });
-
-        function resize() {
-            width = window.innerWidth; height = window.innerHeight;
-            canvas.width = width; canvas.height = height;
-            mmCanvas.width = 180; mmCanvas.height = 180;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
+        function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; mmCanvas.width = 180; mmCanvas.height = 180; bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
     </script>
 </body>
 </html>
