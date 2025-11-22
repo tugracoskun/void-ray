@@ -37,90 +37,11 @@ const TIPS = [
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar)."
 ];
 
-let volMusic = 0.5, volSFX = 0.8;
 let lastToxicNotification = 0; 
 let currentZoom = 1.0, targetZoom = 1.0;
 let isPaused = false;
 let animationId = null;
 let manualTarget = null; 
-
-// --- SES ---
-class ZenAudio {
-    constructor() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.bgMusic = document.getElementById('bgMusic');
-        this.bgMusic.volume = volMusic;
-        this.scale = [196.00, 220.00, 261.63, 293.66, 329.63, 392.00];
-        this.lastChimeTime = 0; 
-        this.lastEvolveTime = 0;
-    }
-    init() { if(this.ctx.state === 'suspended') this.ctx.resume(); }
-    
-    playChime(rarity) {
-        const now = this.ctx.currentTime;
-        if (now - this.lastChimeTime < 0.08) return;
-        this.lastChimeTime = now;
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        const freq = this.scale[Math.floor(Math.random()*this.scale.length)];
-        
-        if (rarity.id === 'lost') osc.type = 'square';
-        else if (rarity.id === 'tardigrade') osc.type = 'triangle';
-        else osc.type = rarity.id === 'legendary' ? 'triangle' : 'sine';
-        
-        osc.frequency.setValueAtTime(freq, now);
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(volSFX * 0.2, now + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 3);
-        
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(); osc.stop(now + 3.1);
-    }
-
-    // GÜNCELLENMİŞ SATIŞ SESİ (Cute Synth Blip)
-    playCash() {
-        const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(500, t);
-        osc.frequency.exponentialRampToValueAtTime(1000, t + 0.1);
-        
-        gain.gain.setValueAtTime(volSFX * 0.2, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(); osc.stop(t + 0.35);
-    }
-    
-    playEvolve() {
-        const now = this.ctx.currentTime;
-        if (now - this.lastEvolveTime < 0.5) return; 
-        this.lastEvolveTime = now;
-
-        const osc = this.ctx.createOscillator(); 
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle'; 
-        osc.frequency.setValueAtTime(100, now);
-        osc.frequency.linearRampToValueAtTime(600, now+2);
-        gain.gain.setValueAtTime(volSFX*0.3, now);
-        gain.gain.linearRampToValueAtTime(0, now+2.5);
-        osc.connect(gain); gain.connect(this.ctx.destination); 
-        osc.start(); osc.stop(now+3);
-    }
-    
-    playToxic() {
-        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime+0.4);
-        gain.gain.setValueAtTime(volSFX*0.5, this.ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.4);
-        osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+0.5);
-    }
-}
 
 // --- OYUN DEĞİŞKENLERİ ---
 const canvas = document.getElementById('gameCanvas');
@@ -984,11 +905,6 @@ function drawMiniMap() {
 window.addEventListener('keydown', e => { if(e.code === "Space") e.preventDefault(); if(e.key === "Escape") keys.Escape = true; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; else if(e.code === "Space") keys[" "] = true; else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); } });
 window.addEventListener('keyup', e => { if(e.key === "Escape") keys.Escape = false; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; else if(e.code === "Space") keys[" "] = false; else if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 window.addEventListener('wheel', e => { e.preventDefault(); targetZoom += e.deltaY * -0.001; targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); }, { passive: false });
-
-const soundPanel = document.getElementById('sound-panel');
-document.getElementById('btn-sound').addEventListener('click', () => soundPanel.classList.toggle('open'));
-document.getElementById('vol-music').addEventListener('input', (e) => { const val = e.target.value / 100; const m = document.getElementById('bgMusic'); if(m) m.volume = val; document.getElementById('val-m').innerText = e.target.value + '%'; volMusic = val; });
-document.getElementById('vol-sfx').addEventListener('input', (e) => { const val = e.target.value / 100; volSFX = val; document.getElementById('val-s').innerText = e.target.value + '%'; });
 
 document.getElementById('btn-start').addEventListener('click', () => { document.getElementById('main-menu').classList.add('menu-hidden'); init(); audio.init(); startLoop(); document.getElementById('bgMusic').play().catch(e=>console.log(e)); });
 document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });
