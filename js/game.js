@@ -6,6 +6,14 @@ let isPaused = false;
 let animationId = null;
 let manualTarget = null; 
 
+// --- CHAT SİSTEMİ ---
+let chatHistory = {
+    genel: [],
+    bilgi: [],
+    grup: []
+};
+let activeChatTab = 'genel';
+
 // --- CANVAS VE REFERANSLAR ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -208,12 +216,113 @@ window.buyUpgrade = function(key) {
 };
 
 function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
-function showNotification(planet, suffix) { 
-    const div = document.createElement('div'); div.className='zen-notif'; 
-    const countText = suffix ? ` ${suffix}` : "";
-    div.innerHTML = `<div class="rarity-dot" style="background:${planet.type.color};"></div> ${planet.name}${countText}`; 
-    document.getElementById('notification-area').appendChild(div); setTimeout(()=>div.remove(), 4000); 
+
+// --- YENİ BİLDİRİM SİSTEMİ (CHAT) ---
+function showNotification(planet, suffix) {
+    let msg = "";
+    let type = "loot";
+    const name = planet.name || "";
+
+    // Mesaj İçeriğine Göre Akıllı Formatlama
+    if (name === "ROTA OLUŞTURULDU") {
+        msg = `Sistem: Rota oluşturuldu.`;
+        type = "info";
+    } else if (name.includes("EVRİM GEÇİRİLDİ")) {
+        msg = `Sistem: ${name}`;
+        type = "info";
+    } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ")) {
+        msg = `Sistem: ${name}`;
+        type = "info";
+    } else if (name.includes("ENERJİ")) {
+         msg = `${name} ${suffix}`;
+         type = "info";
+    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ")) {
+        msg = `UYARI: ${name} ${suffix}`;
+        type = "alert";
+    } else if (name.includes("KAYIP KARGO")) {
+        msg = `Keşif: ${name} bulundu!`;
+        type = "info";
+    } else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
+        // Sadece gerçek eşyalar için "Toplandı" yaz
+        msg = `Toplandı: ${name} ${suffix}`;
+        type = "loot";
+    } else {
+        // Diğer durumlar için varsayılan
+        msg = `${name} ${suffix}`;
+        type = "info";
+    }
+    
+    addChatMessage(msg, type, 'bilgi');
 }
+
+function addChatMessage(text, type = 'system', channel = 'bilgi') {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    const msgObj = { text, type, time: timeStr };
+    
+    // Mesajı ilgili kanala ekle
+    chatHistory[channel].push(msgObj);
+    
+    // "Genel" kanalı, "Bilgi" ve "Grup" kanallarını da kapsar (Aggregator)
+    if (channel !== 'genel') {
+        chatHistory['genel'].push(msgObj);
+    }
+    
+    // Eğer şu an açık olan tab bu kanalsa veya Genel ise arayüzü güncelle
+    if (activeChatTab === channel || activeChatTab === 'genel') {
+        const chatContent = document.getElementById('chat-content');
+        const div = document.createElement('div');
+        div.className = `chat-message ${type}`;
+        div.innerHTML = `<span class="chat-timestamp">[${timeStr}]</span> ${text}`;
+        chatContent.appendChild(div);
+        chatContent.scrollTop = chatContent.scrollHeight;
+    }
+}
+
+function switchChatTab(tab) {
+    activeChatTab = tab;
+    
+    // Tab stili güncelleme
+    document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    
+    // Input alanını Bilgi kanalında gizle
+    const inputArea = document.getElementById('chat-input-area');
+    if(tab === 'bilgi') inputArea.style.display = 'none';
+    else inputArea.style.display = 'flex';
+
+    // İçeriği temizle ve yeniden doldur
+    const chatContent = document.getElementById('chat-content');
+    chatContent.innerHTML = '';
+    
+    chatHistory[tab].forEach(msg => {
+        const div = document.createElement('div');
+        div.className = `chat-message ${msg.type}`;
+        div.innerHTML = `<span class="chat-timestamp">[${msg.time}]</span> ${msg.text}`;
+        chatContent.appendChild(div);
+    });
+    chatContent.scrollTop = chatContent.scrollHeight;
+}
+
+function sendUserMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if(!msg) return;
+
+    // Şimdilik sadece sistem uyarısı ver
+    input.value = '';
+    
+    addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab); // Kendi mesajımızı gri (loot rengi) gösterelim
+    setTimeout(() => {
+        addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
+    }, 200);
+}
+
+// Chat Input Event Listeners
+document.getElementById('chat-send-btn').addEventListener('click', sendUserMessage);
+document.getElementById('chat-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') sendUserMessage();
+});
 
 function drawTargetIndicator(targetX, targetY, color) {
     const camCX = player.x; const camCY = player.y; const dx = targetX - camCX; const dy = targetY - camCY;
@@ -319,6 +428,9 @@ function init() {
     stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
     player.updateUI(); updateInventoryCount(); isPaused = false;
     startTipsCycle();
+    
+    // Chat Başlangıç Mesajı
+    addChatMessage("Sistem başlatıldı. Hoş geldin, Pilot.", "system", "genel");
 }
 
 function startTipsCycle() {
@@ -364,13 +476,19 @@ function loop() {
         }
 
         if (keys.q) { 
+            // Chat inputuna yazarken oyun kontrollerini engelle
+            if(document.activeElement === document.getElementById('chat-input')) return;
+
             autopilot = !autopilot; 
             if(!autopilot) { manualTarget = null; aiMode = 'gather'; }
             else { aiMode = 'gather'; } 
             updateAIButton();
             keys.q = false; 
         }
-        if (keys.m) { mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; }
+        if (keys.m) { 
+            if(document.activeElement === document.getElementById('chat-input')) return;
+            mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
+        }
 
         ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
         ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
@@ -418,15 +536,27 @@ function loop() {
         if (showNexusPrompt) {
             promptEl.innerText = "[E] NEXUS'A GİRİŞ YAP";
             promptEl.className = 'visible';
-            if (keys.e) { enterNexus(); keys.e = false; }
+            if (keys.e) { 
+                if(document.activeElement !== document.getElementById('chat-input')) {
+                    enterNexus(); keys.e = false; 
+                }
+            }
         } else if (echoRay && !nexusOpen && !mapOpen) {
             const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
             if (!echoRay.attached && distEcho < 300) { 
                 promptEl.innerText = "[F] BİRLEŞ"; promptEl.className = 'visible'; 
-                if(keys.f) { echoManualMerge(); keys.f = false; } 
+                if(keys.f) { 
+                    if(document.activeElement !== document.getElementById('chat-input')) {
+                        echoManualMerge(); keys.f = false; 
+                    }
+                } 
             } else if (echoRay.attached) { 
                     promptEl.className = ''; 
-                    if(keys.f) { echoRay.attached = false; echoRay.mode = 'roam'; updateEchoDropdownUI(); keys.f = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); } 
+                    if(keys.f) { 
+                        if(document.activeElement !== document.getElementById('chat-input')) {
+                            echoRay.attached = false; echoRay.mode = 'roam'; updateEchoDropdownUI(); keys.f = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); 
+                        }
+                    } 
             } else {
                 promptEl.className = '';
             }
@@ -491,9 +621,36 @@ function drawMiniMap() {
     mmCtx.restore(); // Clip restore
 }
 
-window.addEventListener('keydown', e => { if(e.code === "Space") e.preventDefault(); if(e.key === "Escape") keys.Escape = true; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; else if(e.code === "Space") keys[" "] = true; else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); } });
+window.addEventListener('keydown', e => { 
+    // Chat input aktifse tuşları engelle (Enter ve Escape hariç)
+    if(document.activeElement === document.getElementById('chat-input')) {
+        if(e.key === "Escape") {
+            document.getElementById('chat-input').blur(); // Focus'tan çık
+        }
+        return; 
+    }
+
+    if(e.code === "Space") e.preventDefault(); 
+    if(e.key === "Escape") keys.Escape = true; 
+    else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; 
+    else if(e.code === "Space") keys[" "] = true; 
+    else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
+    if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); } 
+});
+
 window.addEventListener('keyup', e => { if(e.key === "Escape") keys.Escape = false; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; else if(e.code === "Space") keys[" "] = false; else if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
-window.addEventListener('wheel', e => { e.preventDefault(); targetZoom += e.deltaY * -0.001; targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); }, { passive: false });
+
+// SCROLL EVENT (ZOOM) - CHAT ÜZERİNDEYKEN ÇALIŞMASIN
+window.addEventListener('wheel', e => { 
+    // Eğer mouse chat content üzerindeyse, varsayılan scroll davranışına izin ver ve zoom yapma
+    if (e.target.closest('#chat-content')) {
+        return; 
+    }
+    
+    e.preventDefault(); 
+    targetZoom += e.deltaY * -0.001; 
+    targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); 
+}, { passive: false });
 
 document.getElementById('btn-start').addEventListener('click', () => { document.getElementById('main-menu').classList.add('menu-hidden'); init(); audio.init(); startLoop(); document.getElementById('bgMusic').play().catch(e=>console.log(e)); });
 document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });

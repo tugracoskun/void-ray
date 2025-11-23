@@ -47,25 +47,18 @@
             <div class="key-row"><span class="key-cap">ESC</span> <span>Menü</span></div>
         </div>
 
-        <!-- GELİŞTİRİCİ ALT BİLGİSİ (GÜNCELLENDİ) -->
+        <!-- GELİŞTİRİCİ ALT BİLGİSİ -->
         <div class="dev-footer">
-            <!-- Geliştirici Linki -->
             <a href="https://github.com/tugracoskun" target="_blank" class="dev-info-item link-hover" title="Geliştirici Profilini Görüntüle">
                 <span class="dev-label">GELİŞTİRİCİ</span>
                 <span class="dev-name">@tugracoskun</span>
             </a>
-            
             <div class="dev-separator"></div>
-            
-            <!-- Repo Linki -->
             <a href="https://github.com/tugracoskun/void-ray" target="_blank" class="github-link-btn" title="GitHub Deposu">
                 <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
                 <span>KAYNAK</span>
             </a>
-
             <div class="dev-separator"></div>
-
-            <!-- Issues / İstek Linki -->
             <a href="https://github.com/tugracoskun/void-ray/issues" target="_blank" class="github-link-btn issue-btn" title="Sorun Bildir veya İstek Gönder">
                 <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 <span>DESTEK</span>
@@ -120,9 +113,26 @@
             <div><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div><input type="range" id="vol-sfx" min="0" max="100" value="80"></div>
         </div>
 
-        <div id="notification-area"></div>
         <div id="merge-prompt"></div>
 
+        <!-- CHAT PANELİ -->
+        <div id="chat-panel">
+            <div class="chat-header">
+                <div class="chat-tab active" id="tab-genel" onclick="switchChatTab('genel')">GENEL</div>
+                <div class="chat-tab" id="tab-grup" onclick="switchChatTab('grup')">GRUP</div>
+                <div class="chat-tab" id="tab-bilgi" onclick="switchChatTab('bilgi')">BİLGİ</div>
+            </div>
+            <div id="chat-content" class="chat-content">
+                <!-- Mesajlar JS ile eklenecek -->
+            </div>
+            <!-- Mesaj Giriş Alanı -->
+            <div id="chat-input-area" class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Mesaj yaz..." maxlength="64">
+                <button id="chat-send-btn">➤</button>
+            </div>
+        </div>
+
+        <!-- HIZ GÖSTERGESİ -->
         <div id="speedometer">
             <span class="speed-label">HIZ</span>
             <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
