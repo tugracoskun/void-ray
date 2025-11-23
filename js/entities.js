@@ -51,7 +51,7 @@ class VoidRay {
         document.getElementById('xp-fill').style.width = `${(this.xp/this.maxXp)*100}%`;
         document.getElementById('stardust-amount').innerText = playerData.stardust;
     }
-    update() {
+    update(dt = 16) { // dt (deltaTime) eklendi
         const spdMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
         const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
         
@@ -60,14 +60,17 @@ class VoidRay {
         
         const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
         const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
-
-        const currentSpeed = Math.hypot(this.vx, this.vy);
         
         // Enerji Tüketimi (Sinematik modda enerji harcanmaz)
         if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
-             this.energy = Math.max(0, this.energy - 0.05); 
-        } else if (currentSpeed > 2) {
-             this.energy = Math.max(0, this.energy - 0.002);
+             const cost = 0.05;
+             this.energy = Math.max(0, this.energy - cost); 
+             if(playerData.stats) playerData.stats.totalEnergySpent += cost; // İstatistik Ekle
+        } else if (Math.hypot(this.vx, this.vy) > 2) {
+             const cost = 0.002;
+             this.energy = Math.max(0, this.energy - cost);
+             // Normal hareket için çok az harcanıyor, bunu da ekleyelim
+             if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
              this.energy = Math.min(this.maxEnergy, this.energy + 0.01);
         }
@@ -89,8 +92,7 @@ class VoidRay {
 
         let targetRoll = 0; let targetWingState = 0;
 
-        // OTOPİLOT ÇAKIŞMA KONTROLÜ (YENİ)
-        // Eğer otopilot açıksa ve oyuncu yön tuşlarına basarsa, butonu yakıp söndür
+        // OTOPİLOT ÇAKIŞMA KONTROLÜ
         if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
             const aiBtn = document.getElementById('btn-ai-toggle');
             if (aiBtn && !aiBtn.classList.contains('warn-blink')) {
@@ -105,13 +107,11 @@ class VoidRay {
 
         // HAREKET MANTIĞI
         if (window.cinematicMode) {
-            // Sinematik mod: Gemi yavaşlar ve süzülür, kontrol yok
             this.vx *= 0.95; 
             this.vy *= 0.95;
-            this.wingPhase += 0.02; // Çok yavaş, sakin kanat hareketi
-            targetWingState = 0; // Kanatlar düz
+            this.wingPhase += 0.02; 
+            targetWingState = 0; 
         } else if (autopilot) {
-            // Otopilot Mantığı
             let targetX, targetY, doThrust = true;
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
@@ -155,7 +155,7 @@ class VoidRay {
                 this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
             }
         } else {
-            // MANUEL KONTROL (Sadece sinematik değilse çalışır)
+            // MANUEL KONTROL
             if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
             if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
             if (keys.w || (keys[" "] && this.energy > 0)) {
@@ -166,7 +166,6 @@ class VoidRay {
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
         }
 
-        // ... existing physics code ...
         planets.forEach(p => {
             if(!p.collected && p.type.id !== 'toxic') {
                 const dx = p.x - this.x; const dy = p.y - this.y;
@@ -182,6 +181,22 @@ class VoidRay {
 
         const speed = Math.hypot(this.vx, this.vy);
         document.getElementById('speed-val').innerText = Math.floor(speed * 10); 
+        
+        // --- STATS UPDATE (FIXED LOCATION) ---
+        // Hız hesaplandıktan ve kuvvetler uygulandıktan sonra kontrol ediyoruz
+        if (playerData.stats) {
+            if (speed > playerData.stats.maxSpeed) {
+                playerData.stats.maxSpeed = speed;
+            }
+            playerData.stats.distance += speed;
+
+            // Idle/Moving Timer
+            if (speed > 0.1) {
+                playerData.stats.timeMoving += dt;
+            } else {
+                playerData.stats.timeIdle += dt;
+            }
+        }
         
         if (speed > MAX_SPEED) { 
             this.vx = (this.vx/speed)*MAX_SPEED; 
@@ -327,6 +342,14 @@ class EchoRay {
         const speedMult = 1 + (playerData.upgrades.echoSpeed * 0.15);
         const MAX_ECHO_SPEED = 8 * speedMult; 
         const currentSpeed = Math.hypot(this.vx, this.vy);
+        
+        // --- STATS UPDATE ---
+        if (playerData.stats) {
+            if (currentSpeed > playerData.stats.echoMaxSpeed) {
+                playerData.stats.echoMaxSpeed = currentSpeed;
+            }
+        }
+
         if(currentSpeed > MAX_ECHO_SPEED) { this.vx = (this.vx/currentSpeed) * MAX_ECHO_SPEED; this.vy = (this.vy/currentSpeed) * MAX_ECHO_SPEED; }
         this.vx *= 0.96; this.vy *= 0.96; 
         

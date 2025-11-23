@@ -73,6 +73,10 @@
                 ❖ <span id="inv-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#fff; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
             </div>
             
+            <div id="btn-stats-icon" class="hud-btn" title="İstatistikler">
+                ≣
+            </div>
+            
             <div id="echo-wrapper-el" class="echo-wrapper">
                 <div id="btn-echo-icon" class="hud-btn">
                     ◎ <span id="echo-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#67e8f9; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
@@ -163,6 +167,21 @@
             </div>
             <div class="map-tip">Oto-pilot ile gitmek için haritada bir noktaya tıklayın.</div>
             <div class="absolute top-4 right-4 cursor-pointer text-white opacity-50 hover:opacity-100" onclick="closeMap()">✕</div>
+        </div>
+    </div>
+
+    <!-- İSTATİSTİK PANELİ -->
+    <div id="stats-overlay" class="overlay-base">
+        <div class="stats-window">
+            <div class="stats-header">
+                <h2 class="text-2xl font-light tracking-widest text-white">İSTATİSTİKLER</h2>
+                <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeStats()">✕</div>
+            </div>
+            <div class="stats-content">
+                <table class="stats-table" id="stats-table-content">
+                    <!-- JS ile doldurulacak -->
+                </table>
+            </div>
         </div>
     </div>
 

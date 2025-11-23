@@ -1,10 +1,27 @@
 // --- DURUM DEĞİŞKENLERİ (STATE) ---
-let playerData = { stardust: 0, upgrades: { playerSpeed: 0, playerTurn: 0, playerMagnet: 0, echoSpeed: 0, echoRange: 0, echoDurability: 0 } };
+let playerData = { 
+    stardust: 0, 
+    upgrades: { playerSpeed: 0, playerTurn: 0, playerMagnet: 0, echoSpeed: 0, echoRange: 0, echoDurability: 0 },
+    stats: { 
+        maxSpeed: 0, 
+        echoMaxSpeed: 0, 
+        totalResources: 0, 
+        distance: 0, 
+        totalStardust: 0,
+        totalSpentStardust: 0,
+        totalEnergySpent: 0,
+        timeIdle: 0,
+        timeMoving: 0,
+        timeAI: 0
+    }
+};
 let lastToxicNotification = 0; 
 let currentZoom = 1.0, targetZoom = 1.0;
 let isPaused = false;
 let animationId = null;
 let manualTarget = null; 
+let gameStartTime = 0;
+let lastFrameTime = 0;
 window.cinematicMode = false; // Sinematik mod durumu (window'a eklendi)
 
 // --- CHAT SİSTEMİ ---
@@ -26,6 +43,7 @@ const bmCtx = bmCanvas.getContext('2d');
 let width, height, player, echoRay = null, nexus = null, audio;
 let planets = [], stars = [], collectedItems = [], particles = [];
 let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false;
+let statsOpen = false; // İstatistik paneli durumu
 let activeFilter = 'all';
 
 let autopilot = false;
@@ -51,7 +69,12 @@ function updateInventoryCount() {
     document.getElementById('count-rare').innerText = collectedItems.filter(i => i.type.id === 'rare').length;
 }
 
-function addItemToInventory(planet) { collectedItems.push(planet); updateInventoryCount(); if(inventoryOpen) renderInventory(); }
+function addItemToInventory(planet) { 
+    collectedItems.push(planet); 
+    playerData.stats.totalResources++; // İstatistik güncelle
+    updateInventoryCount(); 
+    if(inventoryOpen) renderInventory(); 
+}
 
 function updateEchoDropdownUI() {
     document.querySelectorAll('.echo-menu-item').forEach(el => el.classList.remove('active-mode'));
@@ -137,11 +160,54 @@ function renderInventory() {
 
 function filterInventory(f) { activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.currentTarget.classList.add('active'); renderInventory(); }
 
+// --- ISTATISTIK PENCERESI FONKSİYONLARI ---
+function formatTime(ms) {
+    if(!ms) ms = 0;
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function openStats() {
+    statsOpen = true;
+    document.getElementById('stats-overlay').classList.add('open');
+    renderStats();
+}
+
+function closeStats() {
+    statsOpen = false;
+    document.getElementById('stats-overlay').classList.remove('open');
+}
+
+function renderStats() {
+    if(!statsOpen) return;
+    const table = document.getElementById('stats-table-content');
+    
+    const now = Date.now();
+    const gameTime = now - gameStartTime;
+
+    // Mesafe formatlama
+    const distStr = Math.floor(playerData.stats.distance / 100) + " km";
+
+    table.innerHTML = `
+        <tr><th>EVREN SÜRESİ</th><td>${formatTime(gameTime)}</td></tr>
+        <tr><th>HAREKET SÜRESİ</th><td>${formatTime(playerData.stats.timeMoving)}</td></tr>
+        <tr><th>BEKLEME SÜRESİ</th><td>${formatTime(playerData.stats.timeIdle)}</td></tr>
+        <tr><th>AI (OTOPİLOT) SÜRESİ</th><td>${formatTime(playerData.stats.timeAI)}</td></tr>
+        <tr><th>VATOZ MAX HIZ</th><td>${Math.floor(playerData.stats.maxSpeed * 10)} KM/S</td></tr>
+        <tr><th>YANKI MAX HIZ</th><td>${Math.floor(playerData.stats.echoMaxSpeed * 10)} KM/S</td></tr>
+        <tr><th>TOPLAM MESAFE</th><td>${distStr}</td></tr>
+        <tr><th>TOPLANAN KAYNAK</th><td>${playerData.stats.totalResources} ADET</td></tr>
+        <tr><th>KAZANILAN KRİSTAL</th><td>${playerData.stats.totalStardust} ◆</td></tr>
+        <tr><th>HARCANAN KRİSTAL</th><td>${playerData.stats.totalSpentStardust} ◆</td></tr>
+        <tr><th>HARCANAN ENERJİ</th><td>${Math.floor(playerData.stats.totalEnergySpent)} BİRİM</td></tr>
+    `;
+}
+
 // --- AI MODES ---
-// Not: cycleAIMode fonksiyonu artık arayüzdeki butona tıklandığında çalışacak,
-// Q tuşu kendi mantığını kullanacak ama ikisi de senkronize olmalı.
 function cycleAIMode() {
-    // Bu fonksiyon UI butonuna tıklandığında çalışır
     if(!autopilot) {
         autopilot = true;
         aiMode = 'gather';
@@ -202,12 +268,20 @@ function renderMarket() {
 
 function sellItem(name, unitPrice, count) {
     collectedItems = collectedItems.filter(i => i.name !== name);
-    playerData.stardust += count * unitPrice; audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
+    const totalEarned = count * unitPrice;
+    playerData.stardust += totalEarned; 
+    playerData.stats.totalStardust += totalEarned; // İstatistik güncelle
+    audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
 }
 function sellAll() {
     let total = 0; let toKeep = [];
     collectedItems.forEach(item => { if(item.type.value > 0) total += item.type.value; else toKeep.push(item); });
-    if(total > 0) { collectedItems = toKeep; playerData.stardust += total; audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket(); showNotification({name: `${total} KRİSTAL KAZANILDI`, type:{color:'#fbbf24'}}, ""); }
+    if(total > 0) { 
+        collectedItems = toKeep; 
+        playerData.stardust += total; 
+        playerData.stats.totalStardust += total; // İstatistik güncelle
+        audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket(); showNotification({name: `${total} KRİSTAL KAZANILDI`, type:{color:'#fbbf24'}}, ""); 
+    }
 }
 
 function renderUpgrades() {
@@ -223,7 +297,12 @@ function renderUpgrades() {
 window.buyUpgrade = function(key) {
     const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
     const cost = Math.floor(data.baseCost * Math.pow(1.5, currentLvl));
-    if(playerData.stardust >= cost) { playerData.stardust -= cost; playerData.upgrades[key]++; audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); }
+    if(playerData.stardust >= cost) { 
+        playerData.stardust -= cost; 
+        playerData.upgrades[key]++; 
+        playerData.stats.totalSpentStardust += cost; // Harcanan kristal kaydı
+        audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); 
+    }
 };
 
 function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
@@ -435,6 +514,9 @@ function closeMap() {
 function init() {
     player = new VoidRay(); nexus = new Nexus(); audio = new ZenAudio();
     planets = []; 
+    gameStartTime = Date.now(); // Oyun başlangıç zamanını kaydet
+    lastFrameTime = Date.now(); // Frame timer başlat
+    
     for(let i=0; i<1200; i++) planets.push(new Planet());
     stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
     player.updateUI(); updateInventoryCount(); isPaused = false;
@@ -471,6 +553,10 @@ function startLoop() {
 
 function loop() {
     if(!isPaused) {
+        const now = Date.now();
+        const dt = now - lastFrameTime;
+        lastFrameTime = now;
+
         // ZOOM MANTIĞI (Sinematik Mod Entegrasyonu)
         let zoomSpeed = 0.1; // Standart hız
         if (window.cinematicMode) {
@@ -482,7 +568,18 @@ function loop() {
         }
         currentZoom += (targetZoom - currentZoom) * zoomSpeed;
 
-        player.update(); if(echoRay) echoRay.update(); nexus.update();
+        player.update(dt); // DT gönder
+        if(echoRay) echoRay.update(); nexus.update();
+
+        // AI Timer update
+        if(autopilot) {
+            playerData.stats.timeAI += dt;
+        }
+
+        // İstatistik paneli açıksa güncelle
+        if(statsOpen) {
+            renderStats();
+        }
 
         planets = planets.filter(p => !p.collected);
         if (planets.length < 1200) {
@@ -498,6 +595,7 @@ function loop() {
             else if (echoInvOpen) closeEchoInventory();
             else if (nexusOpen) exitNexus();
             else if (mapOpen) closeMap();
+            else if (statsOpen) closeStats(); // İstatistik panelini kapat
             else if (document.getElementById('sound-panel').classList.contains('open')) document.getElementById('sound-panel').classList.remove('open');
             else togglePause();
             keys.Escape = false;
@@ -714,6 +812,11 @@ document.getElementById('btn-start').addEventListener('click', () => { document.
 document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });
 document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
 document.getElementById('btn-ai-toggle').addEventListener('click', () => { autopilot = !autopilot; if(!autopilot) { manualTarget=null; aiMode='gather'; } else { aiMode='gather'; } updateAIButton(); });
+
+// STATS BUTTON LISTENER
+document.getElementById('btn-stats-icon').addEventListener('click', () => {
+    openStats();
+});
 
 function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; mmCanvas.width = 180; mmCanvas.height = 180; bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
 window.addEventListener('resize', resize); resize();
