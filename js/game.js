@@ -5,6 +5,7 @@ let currentZoom = 1.0, targetZoom = 1.0;
 let isPaused = false;
 let animationId = null;
 let manualTarget = null; 
+window.cinematicMode = false; // Sinematik mod durumu (window'a eklendi)
 
 // --- CHAT SİSTEMİ ---
 let chatHistory = {
@@ -429,8 +430,15 @@ function init() {
     player.updateUI(); updateInventoryCount(); isPaused = false;
     startTipsCycle();
     
-    // Chat Başlangıç Mesajı
-    addChatMessage("Sistem başlatıldı. Hoş geldin, Pilot.", "system", "genel");
+    // SİNEMATİK BAŞLANGIÇ AYARLARI
+    currentZoom = 0.2; // Çok uzaktan başla
+    targetZoom = 1.0;  // Normale doğru git
+    window.cinematicMode = true; // Sinematik modu aç (window üzerinden global)
+
+    // Atmosferik Başlangıç Mesajları
+    addChatMessage("Sistem başlatılıyor...", "system", "genel");
+    setTimeout(() => addChatMessage("Optik sensörler kalibre ediliyor...", "info", "genel"), 1000);
+    setTimeout(() => addChatMessage("Hoş geldin, Pilot. Motorlar aktif.", "loot", "genel"), 3500);
 }
 
 function startTipsCycle() {
@@ -453,7 +461,17 @@ function startLoop() {
 
 function loop() {
     if(!isPaused) {
-        currentZoom += (targetZoom - currentZoom) * 0.1;
+        // ZOOM MANTIĞI (Sinematik Mod Entegrasyonu)
+        let zoomSpeed = 0.1; // Standart hız
+        if (window.cinematicMode) {
+            zoomSpeed = 0.02; // Sinematik modda çok daha yavaş ve akıcı zoom
+            // Hedefe çok yaklaştıysa sinematik modu bitir
+            if (Math.abs(targetZoom - currentZoom) < 0.01) {
+                window.cinematicMode = false;
+            }
+        }
+        currentZoom += (targetZoom - currentZoom) * zoomSpeed;
+
         player.update(); if(echoRay) echoRay.update(); nexus.update();
 
         planets = planets.filter(p => !p.collected);
@@ -647,6 +665,9 @@ window.addEventListener('wheel', e => {
         return; 
     }
     
+    // Sinematik modda zoom yapmayı engelle
+    if (window.cinematicMode) return;
+
     e.preventDefault(); 
     targetZoom += e.deltaY * -0.001; 
     targetZoom = Math.min(Math.max(0.5, targetZoom), 1.5); 

@@ -4,11 +4,11 @@ class Nexus {
     update() {
         this.rotation += 0.002;
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
-        // NexusOpen ve Keys değişkenleri global scope'tan (game.js) gelir
+        // Sinematik moddaysa (hareket kilitliyse) etkileşimi de engelle
         if (dist < this.radius + 200 && !nexusOpen) { 
             document.getElementById('merge-prompt').innerText = "[E] NEXUS'A GİRİŞ YAP";
             document.getElementById('merge-prompt').className = 'visible';
-            if(keys.e) { enterNexus(); keys.e = false; }
+            if(keys.e && !window.cinematicMode) { enterNexus(); keys.e = false; }
         } else if (nexusOpen || (echoRay && !echoRay.attached && Math.hypot(player.x-echoRay.x, player.y-echoRay.y) < 300)) {
             if(nexusOpen) document.getElementById('merge-prompt').className = '';
         } else {
@@ -61,7 +61,8 @@ class VoidRay {
 
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
-        if (keys[" "] && this.energy > 0) {
+        // Enerji Tüketimi (Sinematik modda enerji harcanmaz)
+        if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
              this.energy = Math.max(0, this.energy - 0.05); 
         } else if (currentSpeed > 2) {
              this.energy = Math.max(0, this.energy - 0.002);
@@ -70,7 +71,6 @@ class VoidRay {
         }
         
         if (this.energy < 10 && !lowEnergyWarned) {
-            showNotification({name: "ENERJİ KRİTİK SEVİYEDE!", type:{color:'#ef4444'}}, "");
             lowEnergyWarned = true;
         } else if (this.energy > 15) {
             lowEnergyWarned = false;
@@ -87,7 +87,15 @@ class VoidRay {
 
         let targetRoll = 0; let targetWingState = 0;
 
-        if (autopilot) {
+        // HAREKET MANTIĞI - SİNEMATİK KONTROLÜ EKLENDİ
+        if (window.cinematicMode) {
+            // Sinematik mod: Gemi yavaşlar ve süzülür, kontrol yok
+            this.vx *= 0.95; 
+            this.vy *= 0.95;
+            this.wingPhase += 0.02; // Çok yavaş, sakin kanat hareketi
+            targetWingState = 0; // Kanatlar düz
+        } else if (autopilot) {
+            // Otopilot Mantığı (Eski Kod)
             let targetX, targetY, doThrust = true;
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
@@ -131,6 +139,7 @@ class VoidRay {
                 this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
             }
         } else {
+            // MANUEL KONTROL (Sadece sinematik değilse çalışır)
             if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
             if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
             if (keys.w || (keys[" "] && this.energy > 0)) {
@@ -183,11 +192,38 @@ class VoidRay {
         let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
         grad.addColorStop(0, "rgba(56, 189, 248, 0.9)"); grad.addColorStop(1, "transparent");
         ctx.strokeStyle = grad; ctx.lineWidth = 3 * this.scale; ctx.lineCap = 'round'; ctx.stroke();
+        
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
+        
+        // MOTOR PARLAMA EFEKTİ (YENİ EKLENDİ)
+        // Sinematik mod bittiğinde (motorlar aktif olduğunda) arkada mavi bir parlama oluşur
+        if (!window.cinematicMode) {
+            const pulse = 20 + Math.sin(Date.now() * 0.01) * 10; // Nefes alan parlama efekti
+            ctx.shadowBlur = 30 + pulse;
+            ctx.shadowColor = "rgba(56, 189, 248, 0.8)"; // Parlak mavi motor ışığı
+        } else {
+            // Sinematik modda motorlar sönük
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "rgba(56, 189, 248, 0.2)";
+        }
+
         let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
-        ctx.shadowBlur = 25; ctx.shadowColor = "rgba(56, 189, 248, 0.5)"; ctx.fillStyle = "rgba(8, 15, 30, 0.95)";
+        
+        ctx.fillStyle = "rgba(8, 15, 30, 0.95)";
         ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
-        ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = "#e0f2fe"; ctx.shadowBlur = 30; ctx.shadowColor = "#0ea5e9"; ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); ctx.restore();
+        
+        // Gövde çizgileri
+        ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.stroke(); 
+        
+        // Merkez ışığı (Motor durumuna göre renk değişimi)
+        ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; // Aktif değilken koyu, aktifken parlak beyaz
+        
+        if (!window.cinematicMode) {
+            ctx.shadowBlur = 40; ctx.shadowColor = "#0ea5e9"; 
+        }
+        
+        ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
+        ctx.restore();
     }
 }
 
