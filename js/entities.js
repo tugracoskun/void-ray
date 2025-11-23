@@ -1,10 +1,15 @@
-// --- NEXUS (ÜS) ---
+/**
+ * Oyun Varlıkları (Entities)
+ * Nexus, VoidRay (Oyuncu), EchoRay (Yankı), Gezegenler ve Parçacık efektlerini içerir.
+ */
+
+// Nexus Sınıfı
 class Nexus {
     constructor() { this.x = WORLD_SIZE/2; this.y = WORLD_SIZE/2; this.radius = 300; this.rotation = 0; }
     update() {
         this.rotation += 0.002;
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
-        // Sinematik moddaysa (hareket kilitliyse) etkileşimi de engelle
+        
         if (dist < this.radius + 200 && !nexusOpen) { 
             document.getElementById('merge-prompt').innerText = "[E] NEXUS'A GİRİŞ YAP";
             document.getElementById('merge-prompt').className = 'visible';
@@ -28,18 +33,21 @@ class Nexus {
     }
 }
 
-// --- VOID RAY (OYUNCU) ---
+// VoidRay (Oyuncu) Sınıfı
 class VoidRay {
     constructor() {
-        // ... existing constructor code ...
         this.x = WORLD_SIZE/2 + 600; this.y = WORLD_SIZE/2 + 600;
         this.vx = 0; this.vy = 0; this.angle = -Math.PI/2;
         this.roll = 0; this.wingState = 0; this.wingPhase = 0;
         this.scale = 1; this.level = 1; this.xp = 0; this.maxXp = 150; 
         this.energy = 100; this.maxEnergy = 100;
         this.tail = []; for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
+        
+        // Radar Yapılandırması
+        this.scanRadius = 4000; 
+        this.radarRadius = 10000; 
     }
-    // ... existing methods ...
+    
     gainXp(amount) { this.xp += amount; if(this.xp >= this.maxXp) this.levelUp(); this.updateUI(); }
     levelUp() {
         this.level++; this.xp = 0; this.maxXp *= 1.5; this.scale += 0.1; 
@@ -51,25 +59,29 @@ class VoidRay {
         document.getElementById('xp-fill').style.width = `${(this.xp/this.maxXp)*100}%`;
         document.getElementById('stardust-amount').innerText = playerData.stardust;
     }
-    update(dt = 16) { // dt (deltaTime) eklendi
+    update(dt = 16) { 
         const spdMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
         const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
         
+        // Yükseltmelere göre değerlerin güncellenmesi
+        const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
+        
+        this.scanRadius = 4000 * magnetMult * (1 + this.scale * 0.1);
+        this.radarRadius = 10000 * magnetMult * (1 + this.scale * 0.1);
+
         const BOOST = keys[" "] ? 0.6 : 0; 
         let ACCEL = 0.2 + BOOST;
         
         const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
         const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
         
-        // Enerji Tüketimi (Sinematik modda enerji harcanmaz)
         if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
              const cost = 0.05;
              this.energy = Math.max(0, this.energy - cost); 
-             if(playerData.stats) playerData.stats.totalEnergySpent += cost; // İstatistik Ekle
+             if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
              const cost = 0.002;
              this.energy = Math.max(0, this.energy - cost);
-             // Normal hareket için çok az harcanıyor, bunu da ekleyelim
              if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
              this.energy = Math.min(this.maxEnergy, this.energy + 0.01);
@@ -92,7 +104,6 @@ class VoidRay {
 
         let targetRoll = 0; let targetWingState = 0;
 
-        // OTOPİLOT ÇAKIŞMA KONTROLÜ
         if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
             const aiBtn = document.getElementById('btn-ai-toggle');
             if (aiBtn && !aiBtn.classList.contains('warn-blink')) {
@@ -105,7 +116,6 @@ class VoidRay {
             }
         }
 
-        // HAREKET MANTIĞI
         if (window.cinematicMode) {
             this.vx *= 0.95; 
             this.vy *= 0.95;
@@ -155,7 +165,6 @@ class VoidRay {
                 this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
             }
         } else {
-            // MANUEL KONTROL
             if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
             if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
             if (keys.w || (keys[" "] && this.energy > 0)) {
@@ -182,15 +191,13 @@ class VoidRay {
         const speed = Math.hypot(this.vx, this.vy);
         document.getElementById('speed-val').innerText = Math.floor(speed * 10); 
         
-        // --- STATS UPDATE (FIXED LOCATION) ---
-        // Hız hesaplandıktan ve kuvvetler uygulandıktan sonra kontrol ediyoruz
+        // İstatistiklerin Güncellenmesi
         if (playerData.stats) {
             if (speed > playerData.stats.maxSpeed) {
                 playerData.stats.maxSpeed = speed;
             }
             playerData.stats.distance += speed;
 
-            // Idle/Moving Timer
             if (speed > 0.1) {
                 playerData.stats.timeMoving += dt;
             } else {
@@ -218,7 +225,7 @@ class VoidRay {
         }
         document.getElementById('coords').innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
     }
-    // ... existing draw method ...
+    
     draw(ctx) {
         ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
         for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
@@ -228,11 +235,11 @@ class VoidRay {
         
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
         
-        // MOTOR PARLAMA EFEKTİ
+        // Motor Görsel Efektleri
         if (!window.cinematicMode) {
-            const pulse = 20 + Math.sin(Date.now() * 0.01) * 10; // Nefes alan parlama efekti
+            const pulse = 20 + Math.sin(Date.now() * 0.01) * 10; 
             ctx.shadowBlur = 30 + pulse;
-            ctx.shadowColor = "rgba(56, 189, 248, 0.8)"; // Parlak mavi motor ışığı
+            ctx.shadowColor = "rgba(56, 189, 248, 0.8)"; 
         } else {
             ctx.shadowBlur = 10;
             ctx.shadowColor = "rgba(56, 189, 248, 0.2)";
@@ -256,16 +263,24 @@ class VoidRay {
     }
 }
 
-// ... existing EchoRay, Planet, Particle classes ...
-// --- ECHO RAY (YANKI) ---
+// EchoRay (Yankı) Sınıfı
 class EchoRay {
     constructor(x, y) { 
         this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.angle = 0; 
         this.lootBag = []; this.attached = false; this.mode = 'roam'; 
         this.energy = 100;
         this.energyDisplayTimer = 0; 
+        // Radar Yapılandırması
+        this.scanRadius = 4000;
+        this.radarRadius = 10000;
     }
     update() {
+        const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
+        
+        // Yükseltmelere göre değerlerin güncellenmesi
+        this.scanRadius = 4000 * rangeMult;
+        this.radarRadius = 10000 * rangeMult;
+
         const durabilityMult = 1 + (playerData.upgrades.echoDurability * 0.5);
         const drain = 0.005 / durabilityMult; 
         
@@ -343,7 +358,7 @@ class EchoRay {
         const MAX_ECHO_SPEED = 8 * speedMult; 
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
-        // --- STATS UPDATE ---
+        // İstatistiklerin Güncellenmesi
         if (playerData.stats) {
             if (currentSpeed > playerData.stats.echoMaxSpeed) {
                 playerData.stats.echoMaxSpeed = currentSpeed;
@@ -403,7 +418,7 @@ class EchoRay {
     }
 }
 
-// --- GEZEGEN/OBJE ---
+// Planet (Gezegen/Nesne) Sınıfı
 class Planet {
     constructor(x, y, type, lootContent = []) {
         this.x = x !== undefined ? x : Math.random()*WORLD_SIZE; this.y = y !== undefined ? y : Math.random()*WORLD_SIZE; this.collected = false;
@@ -413,7 +428,7 @@ class Planet {
             if(r < 0.01) this.type = RARITY.TOXIC; 
             else if(r < 0.05) this.type = RARITY.LEGENDARY; 
             else if(r < 0.15) this.type = RARITY.EPIC;
-            else if(r < 0.17) this.type = RARITY.TARDIGRADE; // %2 şans
+            else if(r < 0.17) this.type = RARITY.TARDIGRADE; 
             else if(r < 0.50) this.type = RARITY.RARE; 
             else this.type = RARITY.COMMON; 
             this.lootContent = []; 
@@ -421,8 +436,27 @@ class Planet {
         this.name = this.type.id === 'lost' ? "KAYIP KARGO" : LOOT_DB[this.type.id][Math.floor(Math.random()*LOOT_DB[this.type.id].length)];
         this.radius = this.type.id==='legendary'?120 : (this.type.id==='toxic'? 60 : (this.type.id==='lost' ? 80 : (this.type.id === 'tardigrade' ? 50 : 40+Math.random()*60)));
     }
-    draw(ctx) {
+    
+    // Çizim Fonksiyonu
+    draw(ctx, visibility = 2) {
         if(this.collected) return;
+        if(visibility === 0) return; 
+
+        // Radar Menzili (Kısmi Görünürlük)
+        if(visibility === 1) {
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)"; 
+            ctx.beginPath(); 
+            ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI*2); 
+            ctx.fill();
+            
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; 
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            return; 
+        }
+
+        // Tarama Menzili (Tam Görünürlük)
         ctx.shadowBlur=50; ctx.shadowColor=this.type.color;
         const grad = ctx.createRadialGradient(this.x-this.radius*0.3, this.y-this.radius*0.3, this.radius*0.1, this.x, this.y, this.radius);
         grad.addColorStop(0, this.type.color); grad.addColorStop(1, "#020617");
@@ -438,7 +472,7 @@ class Planet {
     }
 }
 
-// --- PARTİKÜL ---
+// Particle (Parçacık) Sınıfı
 class Particle {
     constructor(x, y, color) { this.x = x; this.y = y; this.color = color; this.vx = (Math.random()-0.5)*3; this.vy = (Math.random()-0.5)*3; this.life = 1.0; this.radius = Math.random() * 5 + 3; this.growth = 0.15; }
     update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.015; this.radius += this.growth; }

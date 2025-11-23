@@ -1,4 +1,9 @@
-// --- DURUM DEĞİŞKENLERİ (STATE) ---
+/**
+ * Void Ray - Ana Oyun Döngüsü ve Yönetimi
+ * Oyun durumu, kullanıcı arayüzü, olay dinleyicileri ve render işlemleri burada yönetilir.
+ */
+
+// Oyun Durumu ve Değişkenler
 let playerData = { 
     stardust: 0, 
     upgrades: { playerSpeed: 0, playerTurn: 0, playerMagnet: 0, echoSpeed: 0, echoRange: 0, echoDurability: 0 },
@@ -15,6 +20,7 @@ let playerData = {
         timeAI: 0
     }
 };
+
 let lastToxicNotification = 0; 
 let currentZoom = 1.0, targetZoom = 1.0;
 let isPaused = false;
@@ -22,9 +28,9 @@ let animationId = null;
 let manualTarget = null; 
 let gameStartTime = 0;
 let lastFrameTime = 0;
-window.cinematicMode = false; // Sinematik mod durumu (window'a eklendi)
+window.cinematicMode = false; 
 
-// --- CHAT SİSTEMİ ---
+// Sohbet ve Bildirim Sistemi
 let chatHistory = {
     genel: [],
     bilgi: [],
@@ -32,7 +38,7 @@ let chatHistory = {
 };
 let activeChatTab = 'genel';
 
-// --- CANVAS VE REFERANSLAR ---
+// Canvas ve Bağlam Referansları
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const mmCanvas = document.getElementById('minimap-canvas');
@@ -43,9 +49,10 @@ const bmCtx = bmCanvas.getContext('2d');
 let width, height, player, echoRay = null, nexus = null, audio;
 let planets = [], stars = [], collectedItems = [], particles = [];
 let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false;
-let statsOpen = false; // İstatistik paneli durumu
+let statsOpen = false;
 let activeFilter = 'all';
 
+// Otopilot Durumu
 let autopilot = false;
 let aiMode = 'gather';
 let echoDeathLevel = 0;
@@ -53,16 +60,20 @@ let lowEnergyWarned = false;
 
 const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, Escape:false };
 
-// --- YARDIMCI FONKSİYONLAR (SPAWNER) ---
+// Yardımcı Fonksiyonlar
 function spawnEcho(x, y) { 
     echoRay = new EchoRay(x, y); 
     document.getElementById('echo-wrapper-el').style.display = 'flex'; 
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
 }
 
-// --- UI YÖNETİMİ ---
+// Arayüz (UI) Yönetimi
 function updateInventoryCount() {
-    const badge = document.getElementById('inv-total-badge'); const count = collectedItems.length; badge.innerText = count; badge.style.display = count > 0 ? 'flex' : 'none';
+    const badge = document.getElementById('inv-total-badge'); 
+    const count = collectedItems.length; 
+    badge.innerText = count; 
+    badge.style.display = count > 0 ? 'flex' : 'none';
+    
     document.getElementById('count-all').innerText = count;
     document.getElementById('count-legendary').innerText = collectedItems.filter(i => i.type.id === 'legendary').length;
     document.getElementById('count-epic').innerText = collectedItems.filter(i => i.type.id === 'epic').length;
@@ -71,7 +82,7 @@ function updateInventoryCount() {
 
 function addItemToInventory(planet) { 
     collectedItems.push(planet); 
-    playerData.stats.totalResources++; // İstatistik güncelle
+    playerData.stats.totalResources++; 
     updateInventoryCount(); 
     if(inventoryOpen) renderInventory(); 
 }
@@ -93,14 +104,19 @@ function updateEchoDropdownUI() {
 
 function setEchoMode(mode) {
     if(!echoRay) return;
-    if (mode === 'roam' && echoRay.attached) { echoRay.attached = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); }
+    if (mode === 'roam' && echoRay.attached) { 
+        echoRay.attached = false; 
+        showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); 
+    }
     if (mode === 'return') echoRay.attached = false; 
-    echoRay.mode = mode; updateEchoDropdownUI();
+    echoRay.mode = mode; 
+    updateEchoDropdownUI();
 }
 
 function echoManualMerge() {
     if(!echoRay) return;
     const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+    
     if (dist < 350) {
          if (echoRay.lootBag.length > 0) {
             echoRay.lootBag.forEach(p => { 
@@ -108,18 +124,27 @@ function echoManualMerge() {
                     player.energy = Math.min(player.energy + 50, player.maxEnergy);
                     showNotification({name: "YANKI: TARDİGRAD GETİRDİ (+%50 ENERJİ)", type:{color:'#C7C0AE'}}, "");
                 } else {
-                    addItemToInventory(p); player.gainXp(p.type.xp); 
+                    addItemToInventory(p); 
+                    player.gainXp(p.type.xp); 
                 }
             });
             if(echoRay.lootBag.filter(p=>p.type.id!=='tardigrade').length > 0) {
                 showNotification({name: `YANKI: EŞYALAR AKTARILDI`, type:{color:'#38bdf8'}}, "");
             }
-            echoRay.lootBag = []; if(echoInvOpen) renderEchoInventory();
+            echoRay.lootBag = []; 
+            if(echoInvOpen) renderEchoInventory();
         }
-        audio.playEvolve(); echoRay.attached = true; echoRay.mode = 'roam'; updateEchoDropdownUI();
-    } else { showNotification({name: "YANKI ÇOK UZAK, ÇAĞIRILIYOR...", type:{color:'#fbbf24'}}, ""); setEchoMode('return'); }
+        audio.playEvolve(); 
+        echoRay.attached = true; 
+        echoRay.mode = 'roam'; 
+        updateEchoDropdownUI();
+    } else { 
+        showNotification({name: "YANKI ÇOK UZAK, ÇAĞIRILIYOR...", type:{color:'#fbbf24'}}, ""); 
+        setEchoMode('return'); 
+    }
 }
 
+// Envanter ve Pencere Yönetimi
 function openEchoInventory() { if(!echoRay) return; echoInvOpen = true; document.getElementById('echo-inventory-overlay').classList.add('open'); renderEchoInventory(); }
 function closeEchoInventory() { echoInvOpen = false; document.getElementById('echo-inventory-overlay').classList.remove('open'); }
 function closeInventory() { inventoryOpen = false; document.getElementById('inventory-overlay').classList.remove('open'); }
@@ -160,7 +185,7 @@ function renderInventory() {
 
 function filterInventory(f) { activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.currentTarget.classList.add('active'); renderInventory(); }
 
-// --- ISTATISTIK PENCERESI FONKSİYONLARI ---
+// İstatistik Paneli İşlemleri
 function formatTime(ms) {
     if(!ms) ms = 0;
     const totalSeconds = Math.floor(ms / 1000);
@@ -187,8 +212,6 @@ function renderStats() {
     
     const now = Date.now();
     const gameTime = now - gameStartTime;
-
-    // Mesafe formatlama
     const distStr = Math.floor(playerData.stats.distance / 100) + " km";
 
     table.innerHTML = `
@@ -206,7 +229,7 @@ function renderStats() {
     `;
 }
 
-// --- AI MODES ---
+// Otopilot Mod Kontrolü
 function cycleAIMode() {
     if(!autopilot) {
         autopilot = true;
@@ -214,7 +237,7 @@ function cycleAIMode() {
     } else {
         if (aiMode === 'gather') aiMode = 'base';
         else if (aiMode === 'base') autopilot = false;
-        else aiMode = 'gather'; // Travel modundaysa gather'a dön
+        else aiMode = 'gather';
     }
     updateAIButton();
 }
@@ -224,7 +247,6 @@ function updateAIButton() {
     const aiToggle = document.getElementById('btn-ai-toggle');
     const modeBtn = document.getElementById('ai-mode-btn');
     
-    // Uyarı sınıfını temizle (durum değiştiğinde)
     aiToggle.classList.remove('warn-blink');
 
     if(!autopilot) {
@@ -241,7 +263,7 @@ function updateAIButton() {
     else { btn.innerText = 'TOPLA'; btn.style.color = 'white'; btn.style.borderColor = 'transparent'; }
 }
 
-// --- NEXUS LOGIC ---
+// Nexus (Üs) Mantığı ve Ticaret
 function enterNexus() { nexusOpen = true; document.getElementById('nexus-overlay').classList.add('open'); switchNexusTab('market'); }
 function exitNexus() { nexusOpen = false; document.getElementById('nexus-overlay').classList.remove('open'); }
 
@@ -270,7 +292,7 @@ function sellItem(name, unitPrice, count) {
     collectedItems = collectedItems.filter(i => i.name !== name);
     const totalEarned = count * unitPrice;
     playerData.stardust += totalEarned; 
-    playerData.stats.totalStardust += totalEarned; // İstatistik güncelle
+    playerData.stats.totalStardust += totalEarned;
     audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
 }
 function sellAll() {
@@ -279,7 +301,7 @@ function sellAll() {
     if(total > 0) { 
         collectedItems = toKeep; 
         playerData.stardust += total; 
-        playerData.stats.totalStardust += total; // İstatistik güncelle
+        playerData.stats.totalStardust += total;
         audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket(); showNotification({name: `${total} KRİSTAL KAZANILDI`, type:{color:'#fbbf24'}}, ""); 
     }
 }
@@ -300,20 +322,19 @@ window.buyUpgrade = function(key) {
     if(playerData.stardust >= cost) { 
         playerData.stardust -= cost; 
         playerData.upgrades[key]++; 
-        playerData.stats.totalSpentStardust += cost; // Harcanan kristal kaydı
+        playerData.stats.totalSpentStardust += cost;
         audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); 
     }
 };
 
 function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
 
-// --- YENİ BİLDİRİM SİSTEMİ (CHAT) ---
+// Bildirim Sistemi
 function showNotification(planet, suffix) {
     let msg = "";
     let type = "loot";
     const name = planet.name || "";
 
-    // Mesaj İçeriğine Göre Akıllı Formatlama
     if (name === "ROTA OLUŞTURULDU") {
         msg = `Sistem: Rota oluşturuldu.`;
         type = "info";
@@ -333,11 +354,9 @@ function showNotification(planet, suffix) {
         msg = `Keşif: ${name} bulundu!`;
         type = "info";
     } else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
-        // Sadece gerçek eşyalar için "Toplandı" yaz
         msg = `Toplandı: ${name} ${suffix}`;
         type = "loot";
     } else {
-        // Diğer durumlar için varsayılan
         msg = `${name} ${suffix}`;
         type = "info";
     }
@@ -350,15 +369,12 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
     const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     const msgObj = { text, type, time: timeStr };
     
-    // Mesajı ilgili kanala ekle
     chatHistory[channel].push(msgObj);
     
-    // "Genel" kanalı, "Bilgi" ve "Grup" kanallarını da kapsar (Aggregator)
     if (channel !== 'genel') {
         chatHistory['genel'].push(msgObj);
     }
     
-    // Eğer şu an açık olan tab bu kanalsa veya Genel ise arayüzü güncelle
     if (activeChatTab === channel || activeChatTab === 'genel') {
         const chatContent = document.getElementById('chat-content');
         const div = document.createElement('div');
@@ -372,16 +388,13 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
 function switchChatTab(tab) {
     activeChatTab = tab;
     
-    // Tab stili güncelleme
     document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
     document.getElementById(`tab-${tab}`).classList.add('active');
     
-    // Input alanını Bilgi kanalında gizle
     const inputArea = document.getElementById('chat-input-area');
     if(tab === 'bilgi') inputArea.style.display = 'none';
     else inputArea.style.display = 'flex';
 
-    // İçeriği temizle ve yeniden doldur
     const chatContent = document.getElementById('chat-content');
     chatContent.innerHTML = '';
     
@@ -399,16 +412,15 @@ function sendUserMessage() {
     const msg = input.value.trim();
     if(!msg) return;
 
-    // Şimdilik sadece sistem uyarısı ver
     input.value = '';
     
-    addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab); // Kendi mesajımızı gri (loot rengi) gösterelim
+    addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
     setTimeout(() => {
         addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
     }, 200);
 }
 
-// Chat Input Event Listeners
+// Sohbet Girdisi Olay Dinleyicileri
 document.getElementById('chat-send-btn').addEventListener('click', sendUserMessage);
 document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if(e.key === 'Enter') sendUserMessage();
@@ -430,6 +442,7 @@ function drawTargetIndicator(targetX, targetY, color) {
     }
 }
 
+// Radar ve Harita Çizimleri (Büyük Harita)
 function drawBigMap() {
     if(!mapOpen) return;
     const container = document.querySelector('.big-map-container');
@@ -444,14 +457,97 @@ function drawBigMap() {
     bmCtx.strokeStyle = "rgba(255,255,255,0.1)"; bmCtx.lineWidth = 2;
     bmCtx.strokeRect(offsetX, offsetY, WORLD_SIZE*scale, WORLD_SIZE*scale);
 
-    bmCtx.fillStyle = "rgba(255,255,255,0.3)";
+    const px = offsetX + player.x * scale;
+    const py = offsetY + player.y * scale;
+    
+    // Oyuncu Radarı Çizimi
+    bmCtx.beginPath(); 
+    bmCtx.arc(px, py, player.radarRadius * scale, 0, Math.PI*2); 
+    
+    // Parlama Efekti (Glow)
+    bmCtx.shadowBlur = 10;
+    bmCtx.shadowColor = "rgba(251, 191, 36, 0.8)"; // Turuncu glow
+    
+    bmCtx.strokeStyle = "rgba(251, 191, 36, 0.6)"; // Daha ince, parlak turuncu
+    bmCtx.lineWidth = 1; 
+    bmCtx.setLineDash([5, 5]); // Teknik görünüm için kesik çizgi
+    bmCtx.stroke();
+    bmCtx.setLineDash([]);
+    
+    bmCtx.fillStyle = "rgba(251, 191, 36, 0.03)"; 
+    bmCtx.fill();
+    
+    bmCtx.shadowBlur = 0;
+
+    // Oyuncu Tarama Alanı (İç Çember)
+    bmCtx.beginPath(); 
+    bmCtx.arc(px, py, player.scanRadius * scale, 0, Math.PI*2); 
+    
+    bmCtx.shadowBlur = 15;
+    bmCtx.shadowColor = "rgba(16, 185, 129, 0.8)"; // Yeşil glow
+    
+    bmCtx.strokeStyle = "rgba(16, 185, 129, 0.8)"; 
+    bmCtx.lineWidth = 1;
+    bmCtx.stroke();
+    bmCtx.fillStyle = "rgba(16, 185, 129, 0.05)"; 
+    bmCtx.fill();
+    
+    bmCtx.shadowBlur = 0;
+
+    // Yankı Radarı Çizimi (Eğer Varsa)
+    if(echoRay) {
+        const ex = offsetX + echoRay.x * scale;
+        const ey = offsetY + echoRay.y * scale;
+        
+        // Dış Çember (Turuncu)
+        bmCtx.beginPath(); 
+        bmCtx.arc(ex, ey, echoRay.radarRadius * scale, 0, Math.PI*2); 
+        
+        bmCtx.shadowBlur = 10;
+        bmCtx.shadowColor = "rgba(251, 191, 36, 0.8)";
+        bmCtx.strokeStyle = "rgba(251, 191, 36, 0.6)";
+        bmCtx.lineWidth = 1;
+        bmCtx.setLineDash([5, 5]);
+        bmCtx.stroke();
+        bmCtx.setLineDash([]);
+        bmCtx.fillStyle = "rgba(251, 191, 36, 0.03)";
+        bmCtx.fill();
+        
+        // İç Çember (Yeşil)
+        bmCtx.beginPath(); 
+        bmCtx.arc(ex, ey, echoRay.scanRadius * scale, 0, Math.PI*2); 
+        
+        bmCtx.shadowBlur = 15;
+        bmCtx.shadowColor = "rgba(16, 185, 129, 0.8)";
+        bmCtx.strokeStyle = "rgba(16, 185, 129, 0.8)";
+        bmCtx.lineWidth = 1;
+        bmCtx.stroke();
+        bmCtx.fillStyle = "rgba(16, 185, 129, 0.05)";
+        bmCtx.fill();
+        
+        bmCtx.shadowBlur = 0;
+    }
+
+    // Gezegenlerin Haritada Gösterimi
     planets.forEach(p => {
         if(!p.collected) {
+            const visibility = getPlanetVisibility(p, player, echoRay);
+            if (visibility === 0) return; 
+
             bmCtx.beginPath(); 
-            // Tardigrad için özel renk
-            if (p.type.id === 'tardigrade') bmCtx.fillStyle = "#C7C0AE";
-            else bmCtx.fillStyle = "rgba(255,255,255,0.3)";
-            bmCtx.arc(offsetX + p.x*scale, offsetY + p.y*scale, 2, 0, Math.PI*2); bmCtx.fill();
+            
+            if (visibility === 1) {
+                bmCtx.fillStyle = "rgba(255,255,255,0.3)"; // Kısmi Görünürlük
+            } else {
+                if (p.type.id === 'tardigrade') bmCtx.fillStyle = "#C7C0AE";
+                else if (p.type.id === 'lost') bmCtx.fillStyle = "#a855f7";
+                else if (p.type.id === 'toxic') bmCtx.fillStyle = "#84cc16";
+                else bmCtx.fillStyle = "rgba(255,255,255,0.8)";
+            }
+            
+            const drawRadius = Math.max(1.5, 2 * scale); 
+            bmCtx.arc(offsetX + p.x*scale, offsetY + p.y*scale, drawRadius, 0, Math.PI*2); 
+            bmCtx.fill();
         }
     });
 
@@ -488,21 +584,19 @@ bmCanvas.addEventListener('mousedown', (e) => {
         }
 });
 
-// CLICK LISTENER FOR ECHO ENERGY BAR
+// Yankı Enerji Göstergesi Tıklama Olayı
 canvas.addEventListener('mousedown', (e) => {
     if (!echoRay) return;
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     
-    // Convert echo world pos to screen pos
     const screenX = (echoRay.x - player.x) * currentZoom + width/2;
     const screenY = (echoRay.y - player.y) * currentZoom + height/2;
     
-    // Simple distance check (40px radius)
     const dist = Math.hypot(mx - screenX, my - screenY);
     if (dist < 40 * currentZoom) {
-        echoRay.energyDisplayTimer = 240; // ~4 seconds at 60fps
+        echoRay.energyDisplayTimer = 240; 
     }
 });
 
@@ -514,20 +608,18 @@ function closeMap() {
 function init() {
     player = new VoidRay(); nexus = new Nexus(); audio = new ZenAudio();
     planets = []; 
-    gameStartTime = Date.now(); // Oyun başlangıç zamanını kaydet
-    lastFrameTime = Date.now(); // Frame timer başlat
+    gameStartTime = Date.now(); 
+    lastFrameTime = Date.now(); 
     
     for(let i=0; i<1200; i++) planets.push(new Planet());
     stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
     player.updateUI(); updateInventoryCount(); isPaused = false;
     startTipsCycle();
     
-    // SİNEMATİK BAŞLANGIÇ AYARLARI
-    currentZoom = 0.2; // Çok uzaktan başla
-    targetZoom = 1.0;  // Normale doğru git
-    window.cinematicMode = true; // Sinematik modu aç (window üzerinden global)
+    currentZoom = 0.2; 
+    targetZoom = 1.0;  
+    window.cinematicMode = true; 
 
-    // Atmosferik Başlangıç Mesajları
     addChatMessage("Sistem başlatılıyor...", "system", "genel");
     setTimeout(() => addChatMessage("Optik sensörler kalibre ediliyor...", "info", "genel"), 1000);
     setTimeout(() => addChatMessage("Hoş geldin, Pilot. Motorlar aktif.", "loot", "genel"), 3500);
@@ -551,32 +643,54 @@ function startLoop() {
     loop();
 }
 
+// Yardımcı: Görünürlük Hesaplama
+function getPlanetVisibility(p, player, echo) {
+    let visibility = 0; // 0: Gizli
+
+    const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
+    
+    if (dPlayer < player.scanRadius) {
+        return 2; // Tam Görünür
+    }
+    else if (dPlayer < player.radarRadius) {
+        visibility = 1; // Kısmi Görünür
+    }
+
+    if (echo) {
+        const dEcho = Math.hypot(echo.x - p.x, echo.y - p.y);
+        if (dEcho < echo.scanRadius) {
+            return 2; 
+        } else if (dEcho < echo.radarRadius) {
+            if (visibility < 1) visibility = 1; 
+        }
+    }
+
+    return visibility;
+}
+
 function loop() {
     if(!isPaused) {
         const now = Date.now();
         const dt = now - lastFrameTime;
         lastFrameTime = now;
 
-        // ZOOM MANTIĞI (Sinematik Mod Entegrasyonu)
-        let zoomSpeed = 0.1; // Standart hız
+        // Kamera ve Zoom Kontrolü
+        let zoomSpeed = 0.1;
         if (window.cinematicMode) {
-            zoomSpeed = 0.02; // Sinematik modda çok daha yavaş ve akıcı zoom
-            // Hedefe çok yaklaştıysa sinematik modu bitir
+            zoomSpeed = 0.02;
             if (Math.abs(targetZoom - currentZoom) < 0.01) {
                 window.cinematicMode = false;
             }
         }
         currentZoom += (targetZoom - currentZoom) * zoomSpeed;
 
-        player.update(dt); // DT gönder
+        player.update(dt);
         if(echoRay) echoRay.update(); nexus.update();
 
-        // AI Timer update
         if(autopilot) {
             playerData.stats.timeAI += dt;
         }
 
-        // İstatistik paneli açıksa güncelle
         if(statsOpen) {
             renderStats();
         }
@@ -595,14 +709,13 @@ function loop() {
             else if (echoInvOpen) closeEchoInventory();
             else if (nexusOpen) exitNexus();
             else if (mapOpen) closeMap();
-            else if (statsOpen) closeStats(); // İstatistik panelini kapat
+            else if (statsOpen) closeStats();
             else if (document.getElementById('sound-panel').classList.contains('open')) document.getElementById('sound-panel').classList.remove('open');
             else togglePause();
             keys.Escape = false;
         }
 
         if (keys.q) { 
-            // Chat inputuna yazarken oyun kontrollerini engelle
             if(document.activeElement === document.getElementById('chat-input')) return;
 
             autopilot = !autopilot; 
@@ -623,9 +736,33 @@ function loop() {
         nexus.draw(ctx);
         for(let i=particles.length-1; i>=0; i--) { particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
         
+        // Oyun Dünyası Radar Çizimi
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; 
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.scanRadius, 0, Math.PI*2); ctx.stroke();
+        
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; 
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radarRadius, 0, Math.PI*2); ctx.stroke();
+
+        if(echoRay) {
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; 
+            ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.scanRadius, 0, Math.PI*2); ctx.stroke();
+            
+            ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; 
+            ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
+        }
+
+        // Gezegenlerin Çizilmesi ve Etkileşim
         planets.forEach(p => { 
+            const visibility = getPlanetVisibility(p, player, echoRay);
+            
+            if (visibility === 0) return;
+
             const viewW = width / currentZoom; const viewH = height / currentZoom; 
-            if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) { p.draw(ctx, 0, 0); } 
+            if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) { 
+                p.draw(ctx, visibility); 
+            } 
+            
             if(!p.collected) { 
                 if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) { 
                     if(p.type.id === 'toxic') { 
@@ -654,7 +791,7 @@ function loop() {
         if(echoRay) echoRay.draw(ctx);
         player.draw(ctx); ctx.restore();
         
-        // NEXUS VE ECHO PROMPT MANTIĞI
+        // Etkileşim İpuçları (Nexus/Yankı)
         const promptEl = document.getElementById('merge-prompt');
         const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
         let showNexusPrompt = (distNexus < nexus.radius + 300) && !nexusOpen;
@@ -704,54 +841,91 @@ function quitToMain() { document.getElementById('pause-overlay').classList.remov
 
 function drawMiniMap() {
     mmCtx.clearRect(0,0,180,180); 
-    // Yuvarlak maskeleme
+    
     mmCtx.save(); 
     mmCtx.beginPath(); mmCtx.arc(90,90,90,0,Math.PI*2); mmCtx.clip();
     
-    const scale = 180/30000; const cx = 90, cy = 90;
-    
-    // Draw Nexus on MM
-    const nx = (nexus.x-player.x)*scale + cx; const ny = (nexus.y-player.y)*scale + cy;
-    if(nx > 0 && nx < 180 && ny > 0 && ny < 180) {
-            mmCtx.fillStyle = "white"; mmCtx.beginPath(); mmCtx.arc(nx, ny, 2, 0, Math.PI*2); mmCtx.fill();
-    }
+    mmCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    mmCtx.fill();
 
-    if(echoRay) { 
-        const ex = (echoRay.x-player.x)*scale + cx, ey = (echoRay.y-player.y)*scale + cy; 
-        if(ex > 0 && ex < 180 && ey > 0 && ey < 180) {
-            mmCtx.fillStyle = "#67e8f9"; mmCtx.beginPath(); mmCtx.arc(ex, ey, 2, 0, Math.PI*2); mmCtx.fill(); 
+    // Radar menziline göre dinamik ölçekleme
+    const mmRadius = 90;
+    const scale = mmRadius / player.radarRadius; 
+    const cx = 90, cy = 90;
+    
+    // Mini Harita Radar Çizimi
+    const scanPixelRadius = player.scanRadius * scale;
+    mmCtx.lineWidth = 1;
+    mmCtx.strokeStyle = "rgba(16, 185, 129, 0.4)"; 
+    mmCtx.setLineDash([3, 3]); 
+    mmCtx.beginPath(); mmCtx.arc(cx, cy, scanPixelRadius, 0, Math.PI*2); mmCtx.stroke();
+    mmCtx.setLineDash([]);
+
+    if(echoRay) {
+        const ex = (echoRay.x - player.x) * scale + cx;
+        const ey = (echoRay.y - player.y) * scale + cy;
+        
+        const distToEcho = Math.hypot(ex - cx, ey - cy);
+        if (distToEcho < mmRadius) {
+            mmCtx.fillStyle = "#67e8f9"; 
+            mmCtx.beginPath(); mmCtx.arc(ex, ey, 3, 0, Math.PI*2); mmCtx.fill(); 
         }
     }
+
+    const nx = (nexus.x-player.x)*scale + cx; const ny = (nexus.y-player.y)*scale + cy;
+    if(Math.hypot(nx-cx, ny-cy) < mmRadius) {
+            mmCtx.fillStyle = "white"; mmCtx.beginPath(); mmCtx.arc(nx, ny, 4, 0, Math.PI*2); mmCtx.fill();
+    }
     
-    mmCtx.fillStyle = "rgba(255,255,255,0.4)";
     planets.forEach(p => {
         if(!p.collected) {
             let px = (p.x-player.x)*scale + cx; let py = (p.y-player.y)*scale + cy;
-            if(px > 0 && px < 180 && py > 0 && py < 180) {
-                if(p.type.id === 'lost') mmCtx.fillStyle = "#a855f7";
-                else if(p.type.id === 'tardigrade') mmCtx.fillStyle = "#C7C0AE";
-                else mmCtx.fillStyle = "rgba(255,255,255,0.4)";
-                mmCtx.beginPath(); mmCtx.arc(px, py, 1, 0, Math.PI*2); mmCtx.fill();
+            
+            if(Math.hypot(px-cx, py-cy) < mmRadius) {
+                
+                const visibility = getPlanetVisibility(p, player, echoRay);
+                
+                if (visibility === 1) {
+                    mmCtx.fillStyle = "rgba(255,255,255,0.3)"; 
+                } else if (visibility === 2) {
+                    if(p.type.id === 'lost') mmCtx.fillStyle = "#a855f7";
+                    else if(p.type.id === 'tardigrade') mmCtx.fillStyle = "#C7C0AE";
+                    else if(p.type.id === 'toxic') mmCtx.fillStyle = "#84cc16";
+                    else mmCtx.fillStyle = "rgba(255,255,255,0.8)"; 
+                } else {
+                    return; 
+                }
+                
+                mmCtx.beginPath(); mmCtx.arc(px, py, 1.5, 0, Math.PI*2); mmCtx.fill();
             }
         }
     });
     
-        if(manualTarget) {
+    if(manualTarget) {
         const tx = (manualTarget.x-player.x)*scale + cx; const ty = (manualTarget.y-player.y)*scale + cy;
-        mmCtx.strokeStyle = "#ef4444"; mmCtx.lineWidth = 1; mmCtx.setLineDash([2, 2]); mmCtx.beginPath(); mmCtx.moveTo(cx, cy); mmCtx.lineTo(tx, ty); mmCtx.stroke(); mmCtx.setLineDash([]);
+        const distToTarget = Math.hypot(tx-cx, ty-cy);
+        const angle = Math.atan2(ty-cy, tx-cx);
+        
+        mmCtx.strokeStyle = "#ef4444"; mmCtx.lineWidth = 1; mmCtx.setLineDash([2, 2]); 
+        mmCtx.beginPath(); 
+        mmCtx.moveTo(cx, cy); 
+        
+        const drawDist = Math.min(distToTarget, mmRadius);
+        mmCtx.lineTo(cx + Math.cos(angle)*drawDist, cy + Math.sin(angle)*drawDist);
+        mmCtx.stroke(); 
+        mmCtx.setLineDash([]);
     }
 
-    // Player is always center
     mmCtx.translate(cx, cy); mmCtx.rotate(player.angle+Math.PI/2);
-    mmCtx.fillStyle="#38bdf8"; mmCtx.beginPath(); mmCtx.moveTo(0,-4); mmCtx.lineTo(-3,4); mmCtx.lineTo(3,4); mmCtx.fill(); mmCtx.restore();
-    mmCtx.restore(); // Clip restore
+    mmCtx.fillStyle="#38bdf8"; mmCtx.beginPath(); mmCtx.moveTo(0,-5); mmCtx.lineTo(-4,5); mmCtx.lineTo(4,5); mmCtx.fill(); 
+    
+    mmCtx.restore(); 
 }
 
 window.addEventListener('keydown', e => { 
-    // Chat input aktifse tuşları engelle (Enter ve Escape hariç)
     if(document.activeElement === document.getElementById('chat-input')) {
         if(e.key === "Escape") {
-            document.getElementById('chat-input').blur(); // Focus'tan çık
+            document.getElementById('chat-input').blur(); 
         }
         return; 
     }
@@ -762,19 +936,15 @@ window.addEventListener('keydown', e => {
     else if(e.code === "Space") keys[" "] = true; 
     else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     
-    // Q TUŞU MANTIĞI (GÜNCELLENDİ)
     if(e.key.toLowerCase() === 'q') { 
         if (!autopilot) {
-            // 1. Basım: AI Aç (Topla Modu)
             autopilot = true;
             aiMode = 'gather';
             addChatMessage("Otopilot: Toplama protokolü devreye alındı.", "info", "genel");
         } else if (aiMode === 'gather' || aiMode === 'travel') {
-            // 2. Basım: Üs Moduna Geç
             aiMode = 'base';
             addChatMessage("Otopilot: Üsse dönüş rotası hesaplanıyor.", "info", "genel");
         } else {
-            // 3. Basım: AI Kapat
             autopilot = false;
             manualTarget = null;
             addChatMessage("Otopilot: Devre dışı. Manuel kontrol aktif.", "system", "genel");
@@ -793,14 +963,12 @@ window.addEventListener('keydown', e => {
 
 window.addEventListener('keyup', e => { if(e.key === "Escape") keys.Escape = false; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; else if(e.code === "Space") keys[" "] = false; else if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// SCROLL EVENT (ZOOM) - CHAT ÜZERİNDEYKEN ÇALIŞMASIN
+// Fare Tekerleği ile Zoom Kontrolü
 window.addEventListener('wheel', e => { 
-    // Eğer mouse chat content üzerindeyse, varsayılan scroll davranışına izin ver ve zoom yapma
     if (e.target.closest('#chat-content')) {
         return; 
     }
     
-    // Sinematik modda zoom yapmayı engelle
     if (window.cinematicMode) return;
 
     e.preventDefault(); 
@@ -813,7 +981,7 @@ document.getElementById('btn-inv-icon').addEventListener('click', () => { invent
 document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
 document.getElementById('btn-ai-toggle').addEventListener('click', () => { autopilot = !autopilot; if(!autopilot) { manualTarget=null; aiMode='gather'; } else { aiMode='gather'; } updateAIButton(); });
 
-// STATS BUTTON LISTENER
+// İstatistik Butonu Dinleyicisi
 document.getElementById('btn-stats-icon').addEventListener('click', () => {
     openStats();
 });
