@@ -623,11 +623,8 @@ function drawBigMap() {
             if (visibility === 1) {
                 bmCtx.fillStyle = "rgba(255,255,255,0.3)"; // Radar Sinyali (Gri)
             } else {
-                // Tam Görünür (Renkli)
-                if (p.type.id === 'tardigrade') bmCtx.fillStyle = "#C7C0AE";
-                else if (p.type.id === 'lost') bmCtx.fillStyle = "#a855f7";
-                else if (p.type.id === 'toxic') bmCtx.fillStyle = "#84cc16";
-                else bmCtx.fillStyle = "rgba(255,255,255,0.8)";
+                // Tam Görünür (Renkli) - ARTIK TÜR RENGİNİ KULLANIYOR
+                bmCtx.fillStyle = p.type.color; 
             }
             
             const drawRadius = Math.max(1.5, 2 * scale); 
@@ -991,10 +988,8 @@ function drawMiniMap() {
                 if (visibility === 1) {
                     mmCtx.fillStyle = "rgba(255,255,255,0.3)"; 
                 } else if (visibility === 2) {
-                    if(p.type.id === 'lost') mmCtx.fillStyle = "#a855f7";
-                    else if(p.type.id === 'tardigrade') mmCtx.fillStyle = "#C7C0AE";
-                    else if(p.type.id === 'toxic') mmCtx.fillStyle = "#84cc16";
-                    else mmCtx.fillStyle = "rgba(255,255,255,0.8)"; 
+                    // Tam Görünür - TÜR RENGİ
+                    mmCtx.fillStyle = p.type.color; 
                 } else {
                     return; 
                 }
