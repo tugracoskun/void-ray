@@ -31,6 +31,7 @@ class Nexus {
 // --- VOID RAY (OYUNCU) ---
 class VoidRay {
     constructor() {
+        // ... existing constructor code ...
         this.x = WORLD_SIZE/2 + 600; this.y = WORLD_SIZE/2 + 600;
         this.vx = 0; this.vy = 0; this.angle = -Math.PI/2;
         this.roll = 0; this.wingState = 0; this.wingPhase = 0;
@@ -38,6 +39,7 @@ class VoidRay {
         this.energy = 100; this.maxEnergy = 100;
         this.tail = []; for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
     }
+    // ... existing methods ...
     gainXp(amount) { this.xp += amount; if(this.xp >= this.maxXp) this.levelUp(); this.updateUI(); }
     levelUp() {
         this.level++; this.xp = 0; this.maxXp *= 1.5; this.scale += 0.1; 
@@ -87,7 +89,21 @@ class VoidRay {
 
         let targetRoll = 0; let targetWingState = 0;
 
-        // HAREKET MANTIĞI - SİNEMATİK KONTROLÜ EKLENDİ
+        // OTOPİLOT ÇAKIŞMA KONTROLÜ (YENİ)
+        // Eğer otopilot açıksa ve oyuncu yön tuşlarına basarsa, butonu yakıp söndür
+        if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
+            const aiBtn = document.getElementById('btn-ai-toggle');
+            if (aiBtn && !aiBtn.classList.contains('warn-blink')) {
+                aiBtn.classList.add('warn-blink');
+            }
+        } else {
+            const aiBtn = document.getElementById('btn-ai-toggle');
+            if (aiBtn && aiBtn.classList.contains('warn-blink')) {
+                aiBtn.classList.remove('warn-blink');
+            }
+        }
+
+        // HAREKET MANTIĞI
         if (window.cinematicMode) {
             // Sinematik mod: Gemi yavaşlar ve süzülür, kontrol yok
             this.vx *= 0.95; 
@@ -95,7 +111,7 @@ class VoidRay {
             this.wingPhase += 0.02; // Çok yavaş, sakin kanat hareketi
             targetWingState = 0; // Kanatlar düz
         } else if (autopilot) {
-            // Otopilot Mantığı (Eski Kod)
+            // Otopilot Mantığı
             let targetX, targetY, doThrust = true;
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
@@ -150,6 +166,7 @@ class VoidRay {
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
         }
 
+        // ... existing physics code ...
         planets.forEach(p => {
             if(!p.collected && p.type.id !== 'toxic') {
                 const dx = p.x - this.x; const dy = p.y - this.y;
@@ -186,6 +203,7 @@ class VoidRay {
         }
         document.getElementById('coords').innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
     }
+    // ... existing draw method ...
     draw(ctx) {
         ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
         for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
@@ -195,14 +213,12 @@ class VoidRay {
         
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
         
-        // MOTOR PARLAMA EFEKTİ (YENİ EKLENDİ)
-        // Sinematik mod bittiğinde (motorlar aktif olduğunda) arkada mavi bir parlama oluşur
+        // MOTOR PARLAMA EFEKTİ
         if (!window.cinematicMode) {
             const pulse = 20 + Math.sin(Date.now() * 0.01) * 10; // Nefes alan parlama efekti
             ctx.shadowBlur = 30 + pulse;
             ctx.shadowColor = "rgba(56, 189, 248, 0.8)"; // Parlak mavi motor ışığı
         } else {
-            // Sinematik modda motorlar sönük
             ctx.shadowBlur = 10;
             ctx.shadowColor = "rgba(56, 189, 248, 0.2)";
         }
@@ -212,11 +228,9 @@ class VoidRay {
         ctx.fillStyle = "rgba(8, 15, 30, 0.95)";
         ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
         
-        // Gövde çizgileri
         ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.stroke(); 
         
-        // Merkez ışığı (Motor durumuna göre renk değişimi)
-        ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; // Aktif değilken koyu, aktifken parlak beyaz
+        ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; 
         
         if (!window.cinematicMode) {
             ctx.shadowBlur = 40; ctx.shadowColor = "#0ea5e9"; 
@@ -227,6 +241,7 @@ class VoidRay {
     }
 }
 
+// ... existing EchoRay, Planet, Particle classes ...
 // --- ECHO RAY (YANKI) ---
 class EchoRay {
     constructor(x, y) { 

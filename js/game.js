@@ -138,11 +138,18 @@ function renderInventory() {
 function filterInventory(f) { activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.currentTarget.classList.add('active'); renderInventory(); }
 
 // --- AI MODES ---
+// Not: cycleAIMode fonksiyonu artık arayüzdeki butona tıklandığında çalışacak,
+// Q tuşu kendi mantığını kullanacak ama ikisi de senkronize olmalı.
 function cycleAIMode() {
-    if(!autopilot) return;
-    const modes = ['gather', 'base']; // Travel is handled automatically
-    const currIdx = modes.indexOf(aiMode);
-    aiMode = modes[(currIdx + 1) % modes.length];
+    // Bu fonksiyon UI butonuna tıklandığında çalışır
+    if(!autopilot) {
+        autopilot = true;
+        aiMode = 'gather';
+    } else {
+        if (aiMode === 'gather') aiMode = 'base';
+        else if (aiMode === 'base') autopilot = false;
+        else aiMode = 'gather'; // Travel modundaysa gather'a dön
+    }
     updateAIButton();
 }
 
@@ -151,6 +158,9 @@ function updateAIButton() {
     const aiToggle = document.getElementById('btn-ai-toggle');
     const modeBtn = document.getElementById('ai-mode-btn');
     
+    // Uyarı sınıfını temizle (durum değiştiğinde)
+    aiToggle.classList.remove('warn-blink');
+
     if(!autopilot) {
             aiToggle.classList.remove('active'); 
             modeBtn.classList.remove('visible');
@@ -653,6 +663,33 @@ window.addEventListener('keydown', e => {
     else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; 
     else if(e.code === "Space") keys[" "] = true; 
     else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
+    
+    // Q TUŞU MANTIĞI (GÜNCELLENDİ)
+    if(e.key.toLowerCase() === 'q') { 
+        if (!autopilot) {
+            // 1. Basım: AI Aç (Topla Modu)
+            autopilot = true;
+            aiMode = 'gather';
+            addChatMessage("Otopilot: Toplama protokolü devreye alındı.", "info", "genel");
+        } else if (aiMode === 'gather' || aiMode === 'travel') {
+            // 2. Basım: Üs Moduna Geç
+            aiMode = 'base';
+            addChatMessage("Otopilot: Üsse dönüş rotası hesaplanıyor.", "info", "genel");
+        } else {
+            // 3. Basım: AI Kapat
+            autopilot = false;
+            manualTarget = null;
+            addChatMessage("Otopilot: Devre dışı. Manuel kontrol aktif.", "system", "genel");
+        }
+        updateAIButton();
+        keys.q = false; 
+    }
+
+    if(e.key.toLowerCase() === 'm') { 
+        if(document.activeElement === document.getElementById('chat-input')) return;
+        mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
+    }
+    
     if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); } 
 });
 
