@@ -1,11 +1,20 @@
 /**
- * Oyun Varlıkları (Entities)
- * Nexus, VoidRay (Oyuncu), EchoRay (Yankı), Gezegenler ve Parçacık efektlerini içerir.
+ * Void Ray - Varlık Sınıfları
+ * * Bu dosya oyun dünyasındaki tüm etkileşimli nesnelerin (Oyuncu, Yankı, Gezegenler)
+ * sınıflarını ve mantığını içerir.
  */
 
-// Nexus Sınıfı
+// -------------------------------------------------------------------------
+// NEXUS (ÜS) SINIFI
+// -------------------------------------------------------------------------
 class Nexus {
-    constructor() { this.x = WORLD_SIZE/2; this.y = WORLD_SIZE/2; this.radius = 300; this.rotation = 0; }
+    constructor() { 
+        this.x = WORLD_SIZE/2; 
+        this.y = WORLD_SIZE/2; 
+        this.radius = 300; 
+        this.rotation = 0; 
+    }
+    
     update() {
         this.rotation += 0.002;
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
@@ -20,6 +29,7 @@ class Nexus {
              document.getElementById('merge-prompt').className = '';
         }
     }
+    
     draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
         ctx.beginPath(); ctx.arc(0,0, this.radius, 0, Math.PI*2);
@@ -33,39 +43,61 @@ class Nexus {
     }
 }
 
-// VoidRay (Oyuncu) Sınıfı
+// -------------------------------------------------------------------------
+// VOID RAY (OYUNCU) SINIFI
+// -------------------------------------------------------------------------
 class VoidRay {
     constructor() {
-        this.x = WORLD_SIZE/2 + 600; this.y = WORLD_SIZE/2 + 600;
-        this.vx = 0; this.vy = 0; this.angle = -Math.PI/2;
-        this.roll = 0; this.wingState = 0; this.wingPhase = 0;
-        this.scale = 1; this.level = 1; this.xp = 0; this.maxXp = 150; 
-        this.energy = 100; this.maxEnergy = 100;
-        this.tail = []; for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
+        this.x = WORLD_SIZE/2 + 600; 
+        this.y = WORLD_SIZE/2 + 600;
+        this.vx = 0; 
+        this.vy = 0; 
+        this.angle = -Math.PI/2;
+        this.roll = 0; 
+        this.wingState = 0; 
+        this.wingPhase = 0;
+        this.scale = 1; 
+        this.level = 1; 
+        this.xp = 0; 
+        this.maxXp = 150; 
+        this.energy = 100; 
+        this.maxEnergy = 100;
+        this.tail = []; 
+        for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
         
-        // Radar Yapılandırması
-        this.scanRadius = 4000; 
-        this.radarRadius = 10000; 
+        // Radar Algılama Menzilleri
+        this.scanRadius = 4000; // Tam Görüş (Yeşil)
+        this.radarRadius = 10000; // Kısmi Görüş (Turuncu)
     }
     
-    gainXp(amount) { this.xp += amount; if(this.xp >= this.maxXp) this.levelUp(); this.updateUI(); }
+    gainXp(amount) { 
+        this.xp += amount; 
+        if(this.xp >= this.maxXp) this.levelUp(); 
+        this.updateUI(); 
+    }
+    
     levelUp() {
-        this.level++; this.xp = 0; this.maxXp *= 1.5; this.scale += 0.1; 
-        audio.playEvolve(); showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
+        this.level++; 
+        this.xp = 0; 
+        this.maxXp *= 1.5; 
+        this.scale += 0.1; 
+        audio.playEvolve(); 
+        showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
     }
+    
     updateUI() {
         document.getElementById('level-val').innerText = this.level;
         document.getElementById('xp-fill').style.width = `${(this.xp/this.maxXp)*100}%`;
         document.getElementById('stardust-amount').innerText = playerData.stardust;
     }
+    
     update(dt = 16) { 
         const spdMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
         const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
-        
-        // Yükseltmelere göre değerlerin güncellenmesi
         const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
         
+        // Radar menzillerini yükseltmelere göre güncelle
         this.scanRadius = 4000 * magnetMult * (1 + this.scale * 0.1);
         this.radarRadius = 10000 * magnetMult * (1 + this.scale * 0.1);
 
@@ -75,6 +107,7 @@ class VoidRay {
         const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
         const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
         
+        // Enerji Yönetimi
         if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
              const cost = 0.05;
              this.energy = Math.max(0, this.energy - cost); 
@@ -104,6 +137,7 @@ class VoidRay {
 
         let targetRoll = 0; let targetWingState = 0;
 
+        // Uyarı Işıkları
         if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
             const aiBtn = document.getElementById('btn-ai-toggle');
             if (aiBtn && !aiBtn.classList.contains('warn-blink')) {
@@ -116,6 +150,7 @@ class VoidRay {
             }
         }
 
+        // Hareket Mantığı
         if (window.cinematicMode) {
             this.vx *= 0.95; 
             this.vy *= 0.95;
@@ -175,6 +210,7 @@ class VoidRay {
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
         }
 
+        // Çekim Alanı Fiziği
         planets.forEach(p => {
             if(!p.collected && p.type.id !== 'toxic') {
                 const dx = p.x - this.x; const dy = p.y - this.y;
@@ -191,7 +227,7 @@ class VoidRay {
         const speed = Math.hypot(this.vx, this.vy);
         document.getElementById('speed-val').innerText = Math.floor(speed * 10); 
         
-        // İstatistiklerin Güncellenmesi
+        // İstatistik Güncellemeleri
         if (playerData.stats) {
             if (speed > playerData.stats.maxSpeed) {
                 playerData.stats.maxSpeed = speed;
@@ -214,6 +250,8 @@ class VoidRay {
         this.x += this.vx; this.y += this.vy;
 
         this.roll += (targetRoll - this.roll) * 0.05; this.wingState += (targetWingState - this.wingState) * 0.1;
+        
+        // Kuyruk Efekti
         let targetX = this.x - Math.cos(this.angle) * 20 * this.scale;
         let targetY = this.y - Math.sin(this.angle) * 20 * this.scale;
         this.tail[0].x += (targetX - this.tail[0].x) * 0.5; this.tail[0].y += (targetY - this.tail[0].y) * 0.5;
@@ -235,7 +273,6 @@ class VoidRay {
         
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
         
-        // Motor Görsel Efektleri
         if (!window.cinematicMode) {
             const pulse = 20 + Math.sin(Date.now() * 0.01) * 10; 
             ctx.shadowBlur = 30 + pulse;
@@ -263,21 +300,30 @@ class VoidRay {
     }
 }
 
-// EchoRay (Yankı) Sınıfı
+// -------------------------------------------------------------------------
+// ECHO RAY (YANKI) SINIFI
+// -------------------------------------------------------------------------
 class EchoRay {
     constructor(x, y) { 
-        this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.angle = 0; 
-        this.lootBag = []; this.attached = false; this.mode = 'roam'; 
+        this.x = x; 
+        this.y = y; 
+        this.vx = 0; 
+        this.vy = 0; 
+        this.angle = 0; 
+        this.lootBag = []; 
+        this.attached = false; 
+        this.mode = 'roam'; 
         this.energy = 100;
         this.energyDisplayTimer = 0; 
+        
         // Radar Yapılandırması
         this.scanRadius = 4000;
         this.radarRadius = 10000;
     }
+    
     update() {
         const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
         
-        // Yükseltmelere göre değerlerin güncellenmesi
         this.scanRadius = 4000 * rangeMult;
         this.radarRadius = 10000 * rangeMult;
 
@@ -358,7 +404,6 @@ class EchoRay {
         const MAX_ECHO_SPEED = 8 * speedMult; 
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
-        // İstatistiklerin Güncellenmesi
         if (playerData.stats) {
             if (currentSpeed > playerData.stats.echoMaxSpeed) {
                 playerData.stats.echoMaxSpeed = currentSpeed;
@@ -391,6 +436,7 @@ class EchoRay {
             }
         }
     }
+    
     draw(ctx) { 
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(0.6, 0.6); 
         
@@ -418,12 +464,19 @@ class EchoRay {
     }
 }
 
-// Planet (Gezegen/Nesne) Sınıfı
+// -------------------------------------------------------------------------
+// GEZEGEN VE NESNE SINIFI
+// -------------------------------------------------------------------------
 class Planet {
     constructor(x, y, type, lootContent = []) {
-        this.x = x !== undefined ? x : Math.random()*WORLD_SIZE; this.y = y !== undefined ? y : Math.random()*WORLD_SIZE; this.collected = false;
-        if (type) { this.type = type; this.lootContent = lootContent; } 
-        else { 
+        this.x = x !== undefined ? x : Math.random()*WORLD_SIZE; 
+        this.y = y !== undefined ? y : Math.random()*WORLD_SIZE; 
+        this.collected = false;
+        
+        if (type) { 
+            this.type = type; 
+            this.lootContent = lootContent; 
+        } else { 
             const r = Math.random(); 
             if(r < 0.01) this.type = RARITY.TOXIC; 
             else if(r < 0.05) this.type = RARITY.LEGENDARY; 
@@ -437,12 +490,16 @@ class Planet {
         this.radius = this.type.id==='legendary'?120 : (this.type.id==='toxic'? 60 : (this.type.id==='lost' ? 80 : (this.type.id === 'tardigrade' ? 50 : 40+Math.random()*60)));
     }
     
-    // Çizim Fonksiyonu
+    /**
+     * Gezegeni çizer. Görünürlük durumuna göre stil değiştirir.
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} visibility - 0: Gizli, 1: Radar (Gri), 2: Tarama (Renkli)
+     */
     draw(ctx, visibility = 2) {
         if(this.collected) return;
-        if(visibility === 0) return; 
+        if(visibility === 0) return; // Radar Dışı
 
-        // Radar Menzili (Kısmi Görünürlük)
+        // Radar Teması (Kısmi Görüş)
         if(visibility === 1) {
             ctx.shadowBlur = 0;
             ctx.fillStyle = "rgba(255, 255, 255, 0.15)"; 
@@ -456,7 +513,7 @@ class Planet {
             return; 
         }
 
-        // Tarama Menzili (Tam Görünürlük)
+        // Normal Görünüm (Tam Görüş)
         ctx.shadowBlur=50; ctx.shadowColor=this.type.color;
         const grad = ctx.createRadialGradient(this.x-this.radius*0.3, this.y-this.radius*0.3, this.radius*0.1, this.x, this.y, this.radius);
         grad.addColorStop(0, this.type.color); grad.addColorStop(1, "#020617");
@@ -472,9 +529,34 @@ class Planet {
     }
 }
 
-// Particle (Parçacık) Sınıfı
+// -------------------------------------------------------------------------
+// PARÇACIK EFEKTLERİ SINIFI
+// -------------------------------------------------------------------------
 class Particle {
-    constructor(x, y, color) { this.x = x; this.y = y; this.color = color; this.vx = (Math.random()-0.5)*3; this.vy = (Math.random()-0.5)*3; this.life = 1.0; this.radius = Math.random() * 5 + 3; this.growth = 0.15; }
-    update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.015; this.radius += this.growth; }
-    draw(ctx) { ctx.globalAlpha = this.life * 0.6; ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
+    constructor(x, y, color) { 
+        this.x = x; 
+        this.y = y; 
+        this.color = color; 
+        this.vx = (Math.random()-0.5)*3; 
+        this.vy = (Math.random()-0.5)*3; 
+        this.life = 1.0; 
+        this.radius = Math.random() * 5 + 3; 
+        this.growth = 0.15; 
+    }
+    
+    update() { 
+        this.x+=this.vx; 
+        this.y+=this.vy; 
+        this.life-=0.015; 
+        this.radius += this.growth; 
+    }
+    
+    draw(ctx) { 
+        ctx.globalAlpha = this.life * 0.6; 
+        ctx.fillStyle=this.color; 
+        ctx.beginPath(); 
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); 
+        ctx.fill(); 
+        ctx.globalAlpha = 1; 
+    }
 }

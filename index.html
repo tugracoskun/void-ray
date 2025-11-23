@@ -155,6 +155,39 @@
     <div id="big-map-overlay">
         <div class="big-map-container">
             <canvas id="big-map-canvas"></canvas>
+            
+            <!-- RADAR BİLGİ BUTONU -->
+            <div class="radar-info-wrapper">
+                <div class="radar-info-icon">?</div>
+                <div class="radar-info-tooltip">
+                    <h4 class="text-white font-bold mb-2 border-b border-white/20 pb-1 tracking-widest text-sm">RADAR SİSTEMİ</h4>
+                    
+                    <div class="radar-legend-item">
+                        <div class="r-dot scan"></div>
+                        <div>
+                            <span class="r-title text-emerald-400">TARAMA ALANI (Yeşil)</span>
+                            <p class="r-desc">Tam Görüş. Kaynakların türü ve içeriği net olarak tespit edilir.</p>
+                        </div>
+                    </div>
+
+                    <div class="radar-legend-item">
+                        <div class="r-dot radar"></div>
+                        <div>
+                            <span class="r-title text-amber-400">RADAR ALANI (Turuncu)</span>
+                            <p class="r-desc">Kısmi Görüş. Nesneler sadece belirsiz sinyal olarak görünür.</p>
+                        </div>
+                    </div>
+
+                    <div class="radar-legend-item">
+                        <div class="r-dot unknown"></div>
+                        <div>
+                            <span class="r-title text-gray-400">BİLİNMEYEN BÖLGE</span>
+                            <p class="r-desc">Kapsama alanı dışı. Hiçbir veri alınamaz.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="big-map-info-overlay">
                 <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
                 <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
@@ -163,6 +196,7 @@
                 <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
                 <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
                 <div class="legend-item"><div class="l-dot" style="background:#C7C0AE;"></div> Tardigrad (+Enerji)</div>
+                <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> Kayıp Kargo</div>
                 <div class="legend-item"><div class="l-dot" style="border:1px dashed #ef4444;"></div> Hedef</div>
             </div>
             <div class="map-tip">Oto-pilot ile gitmek için haritada bir noktaya tıklayın.</div>

@@ -1,12 +1,23 @@
 /**
- * Void Ray - Ana Oyun Döngüsü ve Yönetimi
- * Oyun durumu, kullanıcı arayüzü, olay dinleyicileri ve render işlemleri burada yönetilir.
+ * Void Ray - Oyun Motoru ve Durum Yönetimi
+ * * Bu dosya oyunun ana döngüsünü, durum yönetimini, harita çizimlerini
+ * ve kullanıcı etkileşimlerini kontrol eder.
  */
 
-// Oyun Durumu ve Değişkenler
+// -------------------------------------------------------------------------
+// GLOBAL DEĞİŞKENLER VE OYUN DURUMU
+// -------------------------------------------------------------------------
+
 let playerData = { 
     stardust: 0, 
-    upgrades: { playerSpeed: 0, playerTurn: 0, playerMagnet: 0, echoSpeed: 0, echoRange: 0, echoDurability: 0 },
+    upgrades: { 
+        playerSpeed: 0, 
+        playerTurn: 0, 
+        playerMagnet: 0, 
+        echoSpeed: 0, 
+        echoRange: 0, 
+        echoDurability: 0 
+    },
     stats: { 
         maxSpeed: 0, 
         echoMaxSpeed: 0, 
@@ -30,7 +41,7 @@ let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
 
-// Sohbet ve Bildirim Sistemi
+// İletişim Sistemi (Loglar ve Mesajlar)
 let chatHistory = {
     genel: [],
     bilgi: [],
@@ -38,7 +49,7 @@ let chatHistory = {
 };
 let activeChatTab = 'genel';
 
-// Canvas ve Bağlam Referansları
+// Grafik Bağlamları (Canvas Contexts)
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const mmCanvas = document.getElementById('minimap-canvas');
@@ -46,28 +57,42 @@ const mmCtx = mmCanvas.getContext('2d');
 const bmCanvas = document.getElementById('big-map-canvas');
 const bmCtx = bmCanvas.getContext('2d');
 
-let width, height, player, echoRay = null, nexus = null, audio;
+// Varlıklar ve Koleksiyonlar
+let width, height;
+let player, echoRay = null, nexus = null, audio;
 let planets = [], stars = [], collectedItems = [], particles = [];
+
+// Arayüz Durumları
 let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false;
 let statsOpen = false;
 let activeFilter = 'all';
 
-// Otopilot Durumu
+// Otopilot ve Yapay Zeka
 let autopilot = false;
-let aiMode = 'gather';
+let aiMode = 'gather'; // 'gather' | 'base' | 'travel'
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
+// Tuş Kontrolleri
 const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, Escape:false };
 
-// Yardımcı Fonksiyonlar
+// -------------------------------------------------------------------------
+// YARDIMCI FONKSİYONLAR
+// -------------------------------------------------------------------------
+
+/**
+ * Belirtilen koordinatlarda yeni bir Yankı (EchoRay) oluşturur.
+ */
 function spawnEcho(x, y) { 
     echoRay = new EchoRay(x, y); 
     document.getElementById('echo-wrapper-el').style.display = 'flex'; 
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
 }
 
-// Arayüz (UI) Yönetimi
+// -------------------------------------------------------------------------
+// ARAYÜZ (UI) YÖNETİMİ
+// -------------------------------------------------------------------------
+
 function updateInventoryCount() {
     const badge = document.getElementById('inv-total-badge'); 
     const count = collectedItems.length; 
@@ -96,9 +121,10 @@ function updateEchoDropdownUI() {
     document.getElementById('echo-rate-disp').innerText = "Toplama Hızı: " + rateText;
 
     if (!echoRay) return;
+    
     if (echoRay.attached) document.getElementById('menu-merge').classList.add('active-mode');
     else if (echoRay.mode === 'return') document.getElementById('menu-return').classList.add('active-mode');
-    else if (echoRay.mode === 'recharge') { }
+    else if (echoRay.mode === 'recharge') { /* Şarj durumu özel bir menü gerektirmez */ }
     else document.getElementById('menu-roam').classList.add('active-mode');
 }
 
@@ -113,11 +139,15 @@ function setEchoMode(mode) {
     updateEchoDropdownUI();
 }
 
+/**
+ * Oyuncu ve Yankı yeterince yakınsa birleşme işlemini gerçekleştirir.
+ */
 function echoManualMerge() {
     if(!echoRay) return;
     const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
     
     if (dist < 350) {
+         // Yankı üzerindeki eşyaları oyuncuya aktar
          if (echoRay.lootBag.length > 0) {
             echoRay.lootBag.forEach(p => { 
                 if(p.type.id === 'tardigrade') {
@@ -134,6 +164,7 @@ function echoManualMerge() {
             echoRay.lootBag = []; 
             if(echoInvOpen) renderEchoInventory();
         }
+        
         audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
@@ -144,24 +175,42 @@ function echoManualMerge() {
     }
 }
 
-// Envanter ve Pencere Yönetimi
+// Pencere Açma/Kapama İşlemleri
 function openEchoInventory() { if(!echoRay) return; echoInvOpen = true; document.getElementById('echo-inventory-overlay').classList.add('open'); renderEchoInventory(); }
 function closeEchoInventory() { echoInvOpen = false; document.getElementById('echo-inventory-overlay').classList.remove('open'); }
 function closeInventory() { inventoryOpen = false; document.getElementById('inventory-overlay').classList.remove('open'); }
 
 function renderEchoInventory() {
-    if(!echoRay) return; const grid = document.getElementById('echo-inv-grid-content');
-    if(echoRay.lootBag.length === 0) { grid.innerHTML = '<div class="text-center text-cyan-500/50 mt-20">Depo boş.</div>'; return; }
-    const grouped = {}; echoRay.lootBag.forEach(item => { if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; grouped[item.name].count++; });
+    if(!echoRay) return; 
+    const grid = document.getElementById('echo-inv-grid-content');
+    
+    if(echoRay.lootBag.length === 0) { 
+        grid.innerHTML = '<div class="text-center text-cyan-500/50 mt-20">Depo boş.</div>'; 
+        return; 
+    }
+    
+    const grouped = {}; 
+    echoRay.lootBag.forEach(item => { 
+        if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; 
+        grouped[item.name].count++; 
+    });
+    
     let html = `<table class="inv-table"><thead><tr><th>TÜR</th><th>İSİM</th><th>XP</th><th style="text-align:right">MİKTAR</th></tr></thead><tbody>`;
-    Object.values(grouped).sort((a, b) => b.type.xp - a.type.xp).forEach(item => { html += `<tr><td style="color:${item.type.color}">●</td><td style="color:${item.type.color}">${item.name}</td><td style="font-size:0.8rem; opacity:0.7">${item.type.xp} XP</td><td style="text-align:right">x${item.count}</td></tr>`; });
-    html += '</tbody></table>'; grid.innerHTML = html;
+    Object.values(grouped).sort((a, b) => b.type.xp - a.type.xp).forEach(item => { 
+        html += `<tr><td style="color:${item.type.color}">●</td><td style="color:${item.type.color}">${item.name}</td><td style="font-size:0.8rem; opacity:0.7">${item.type.xp} XP</td><td style="text-align:right">x${item.count}</td></tr>`; 
+    });
+    html += '</tbody></table>'; 
+    grid.innerHTML = html;
 }
 
 function renderInventory() {
     const grid = document.getElementById('inv-grid-content');
     let filteredItems = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
-    if(filteredItems.length === 0) { grid.innerHTML = '<div class="text-center text-gray-500 mt-20">Bu kategoride eşya yok.</div>'; return; }
+    
+    if(filteredItems.length === 0) { 
+        grid.innerHTML = '<div class="text-center text-gray-500 mt-20">Bu kategoride eşya yok.</div>'; 
+        return; 
+    }
     
     const grouped = {};
     filteredItems.forEach(item => {
@@ -183,9 +232,17 @@ function renderInventory() {
     grid.innerHTML = html;
 }
 
-function filterInventory(f) { activeFilter = f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.currentTarget.classList.add('active'); renderInventory(); }
+function filterInventory(f) { 
+    activeFilter = f; 
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); 
+    event.currentTarget.classList.add('active'); 
+    renderInventory(); 
+}
 
-// İstatistik Paneli İşlemleri
+// -------------------------------------------------------------------------
+// İSTATİSTİK PANELİ
+// -------------------------------------------------------------------------
+
 function formatTime(ms) {
     if(!ms) ms = 0;
     const totalSeconds = Math.floor(ms / 1000);
@@ -229,7 +286,10 @@ function renderStats() {
     `;
 }
 
-// Otopilot Mod Kontrolü
+// -------------------------------------------------------------------------
+// OTOPİLOT VE AI YÖNETİMİ
+// -------------------------------------------------------------------------
+
 function cycleAIMode() {
     if(!autopilot) {
         autopilot = true;
@@ -247,6 +307,7 @@ function updateAIButton() {
     const aiToggle = document.getElementById('btn-ai-toggle');
     const modeBtn = document.getElementById('ai-mode-btn');
     
+    // Manuel müdahale uyarısını temizle
     aiToggle.classList.remove('warn-blink');
 
     if(!autopilot) {
@@ -258,12 +319,25 @@ function updateAIButton() {
     aiToggle.classList.add('active'); 
     modeBtn.classList.add('visible');
 
-    if (aiMode === 'travel') { btn.innerText = 'SEYİR'; btn.style.color = '#ef4444'; btn.style.borderColor = '#ef4444'; }
-    else if (aiMode === 'base') { btn.innerText = 'ÜS'; btn.style.color = '#fbbf24'; btn.style.borderColor = '#fbbf24'; }
-    else { btn.innerText = 'TOPLA'; btn.style.color = 'white'; btn.style.borderColor = 'transparent'; }
+    if (aiMode === 'travel') { 
+        btn.innerText = 'SEYİR'; 
+        btn.style.color = '#ef4444'; 
+        btn.style.borderColor = '#ef4444'; 
+    } else if (aiMode === 'base') { 
+        btn.innerText = 'ÜS'; 
+        btn.style.color = '#fbbf24'; 
+        btn.style.borderColor = '#fbbf24'; 
+    } else { 
+        btn.innerText = 'TOPLA'; 
+        btn.style.color = 'white'; 
+        btn.style.borderColor = 'transparent'; 
+    }
 }
 
-// Nexus (Üs) Mantığı ve Ticaret
+// -------------------------------------------------------------------------
+// NEXUS (ÜS) VE PAZAR SİSTEMİ
+// -------------------------------------------------------------------------
+
 function enterNexus() { nexusOpen = true; document.getElementById('nexus-overlay').classList.add('open'); switchNexusTab('market'); }
 function exitNexus() { nexusOpen = false; document.getElementById('nexus-overlay').classList.remove('open'); }
 
@@ -295,6 +369,7 @@ function sellItem(name, unitPrice, count) {
     playerData.stats.totalStardust += totalEarned;
     audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
 }
+
 function sellAll() {
     let total = 0; let toKeep = [];
     collectedItems.forEach(item => { if(item.type.value > 0) total += item.type.value; else toKeep.push(item); });
@@ -316,6 +391,7 @@ function renderUpgrades() {
     ['playerSpeed', 'playerTurn', 'playerMagnet'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k]));
     ['echoSpeed', 'echoRange', 'echoDurability'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k]));
 }
+
 window.buyUpgrade = function(key) {
     const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
     const cost = Math.floor(data.baseCost * Math.pow(1.5, currentLvl));
@@ -329,7 +405,10 @@ window.buyUpgrade = function(key) {
 
 function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
 
-// Bildirim Sistemi
+// -------------------------------------------------------------------------
+// BİLDİRİM VE SOHBET SİSTEMİ
+// -------------------------------------------------------------------------
+
 function showNotification(planet, suffix) {
     let msg = "";
     let type = "loot";
@@ -371,6 +450,7 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
     
     chatHistory[channel].push(msgObj);
     
+    // "Genel" kanalı tüm mesajları toplar
     if (channel !== 'genel') {
         chatHistory['genel'].push(msgObj);
     }
@@ -420,21 +500,29 @@ function sendUserMessage() {
     }, 200);
 }
 
-// Sohbet Girdisi Olay Dinleyicileri
 document.getElementById('chat-send-btn').addEventListener('click', sendUserMessage);
 document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if(e.key === 'Enter') sendUserMessage();
 });
 
+// -------------------------------------------------------------------------
+// HARİTA VE RADAR ÇİZİMİ
+// -------------------------------------------------------------------------
+
+/**
+ * Ekran kenarında hedef göstergesi çizer.
+ */
 function drawTargetIndicator(targetX, targetY, color) {
     const camCX = player.x; const camCY = player.y; const dx = targetX - camCX; const dy = targetY - camCY;
     const screenHalfW = (width / currentZoom) / 2; const screenHalfH = (height / currentZoom) / 2;
+    
     if (Math.abs(dx) > screenHalfW || Math.abs(dy) > screenHalfH) {
         const angle = Math.atan2(dy, dx); const borderW = screenHalfW * 0.9; const borderH = screenHalfH * 0.9;
         let tx = Math.cos(angle) * borderW; let ty = Math.sin(angle) * borderH;
         if (Math.abs(tx) > borderW) tx = Math.sign(tx) * borderW; if (Math.abs(ty) > borderH) ty = Math.sign(ty) * borderH;
         const screenX = width/2 + tx * currentZoom; const screenY = height/2 + ty * currentZoom;
         const distKM = Math.round(Math.hypot(dx, dy) / 100); 
+        
         ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(screenX, screenY); ctx.rotate(angle + Math.PI/2);
         ctx.fillStyle = color; ctx.shadowBlur = 10; ctx.shadowColor = color; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(6, 6); ctx.lineTo(-6, 6); ctx.fill();
         ctx.rotate(-(angle + Math.PI/2)); ctx.fillStyle = color; ctx.font = "bold 10px monospace"; ctx.fillText(distKM + "m", 10, 0);
@@ -442,7 +530,6 @@ function drawTargetIndicator(targetX, targetY, color) {
     }
 }
 
-// Radar ve Harita Çizimleri (Büyük Harita)
 function drawBigMap() {
     if(!mapOpen) return;
     const container = document.querySelector('.big-map-container');
@@ -454,52 +541,49 @@ function drawBigMap() {
     const offsetX = (bmCanvas.width - WORLD_SIZE * scale) / 2;
     const offsetY = (bmCanvas.height - WORLD_SIZE * scale) / 2;
 
+    // Harita Sınırları
     bmCtx.strokeStyle = "rgba(255,255,255,0.1)"; bmCtx.lineWidth = 2;
     bmCtx.strokeRect(offsetX, offsetY, WORLD_SIZE*scale, WORLD_SIZE*scale);
 
     const px = offsetX + player.x * scale;
     const py = offsetY + player.y * scale;
     
-    // Oyuncu Radarı Çizimi
+    // --- Oyuncu Radarı ---
+    // Dış Çember (Turuncu - Radar/Kısmi Görüş)
     bmCtx.beginPath(); 
     bmCtx.arc(px, py, player.radarRadius * scale, 0, Math.PI*2); 
     
-    // Parlama Efekti (Glow)
     bmCtx.shadowBlur = 10;
-    bmCtx.shadowColor = "rgba(251, 191, 36, 0.8)"; // Turuncu glow
-    
-    bmCtx.strokeStyle = "rgba(251, 191, 36, 0.6)"; // Daha ince, parlak turuncu
+    bmCtx.shadowColor = "rgba(251, 191, 36, 0.8)"; 
+    bmCtx.strokeStyle = "rgba(251, 191, 36, 0.6)"; 
     bmCtx.lineWidth = 1; 
-    bmCtx.setLineDash([5, 5]); // Teknik görünüm için kesik çizgi
+    bmCtx.setLineDash([5, 5]); 
     bmCtx.stroke();
     bmCtx.setLineDash([]);
     
     bmCtx.fillStyle = "rgba(251, 191, 36, 0.03)"; 
     bmCtx.fill();
-    
     bmCtx.shadowBlur = 0;
 
-    // Oyuncu Tarama Alanı (İç Çember)
+    // İç Çember (Yeşil - Tarama/Tam Görüş)
     bmCtx.beginPath(); 
     bmCtx.arc(px, py, player.scanRadius * scale, 0, Math.PI*2); 
     
     bmCtx.shadowBlur = 15;
-    bmCtx.shadowColor = "rgba(16, 185, 129, 0.8)"; // Yeşil glow
-    
+    bmCtx.shadowColor = "rgba(16, 185, 129, 0.8)"; 
     bmCtx.strokeStyle = "rgba(16, 185, 129, 0.8)"; 
     bmCtx.lineWidth = 1;
     bmCtx.stroke();
     bmCtx.fillStyle = "rgba(16, 185, 129, 0.05)"; 
     bmCtx.fill();
-    
     bmCtx.shadowBlur = 0;
 
-    // Yankı Radarı Çizimi (Eğer Varsa)
+    // --- Yankı Radarı ---
     if(echoRay) {
         const ex = offsetX + echoRay.x * scale;
         const ey = offsetY + echoRay.y * scale;
         
-        // Dış Çember (Turuncu)
+        // Dış Çember
         bmCtx.beginPath(); 
         bmCtx.arc(ex, ey, echoRay.radarRadius * scale, 0, Math.PI*2); 
         
@@ -513,7 +597,7 @@ function drawBigMap() {
         bmCtx.fillStyle = "rgba(251, 191, 36, 0.03)";
         bmCtx.fill();
         
-        // İç Çember (Yeşil)
+        // İç Çember
         bmCtx.beginPath(); 
         bmCtx.arc(ex, ey, echoRay.scanRadius * scale, 0, Math.PI*2); 
         
@@ -528,17 +612,18 @@ function drawBigMap() {
         bmCtx.shadowBlur = 0;
     }
 
-    // Gezegenlerin Haritada Gösterimi
+    // Gezegen Çizimi
     planets.forEach(p => {
         if(!p.collected) {
             const visibility = getPlanetVisibility(p, player, echoRay);
-            if (visibility === 0) return; 
+            if (visibility === 0) return; // Görünmez
 
             bmCtx.beginPath(); 
             
             if (visibility === 1) {
-                bmCtx.fillStyle = "rgba(255,255,255,0.3)"; // Kısmi Görünürlük
+                bmCtx.fillStyle = "rgba(255,255,255,0.3)"; // Radar Sinyali (Gri)
             } else {
+                // Tam Görünür (Renkli)
                 if (p.type.id === 'tardigrade') bmCtx.fillStyle = "#C7C0AE";
                 else if (p.type.id === 'lost') bmCtx.fillStyle = "#a855f7";
                 else if (p.type.id === 'toxic') bmCtx.fillStyle = "#84cc16";
@@ -551,14 +636,17 @@ function drawBigMap() {
         }
     });
 
+    // Sabit Varlıklar
     bmCtx.fillStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 5, 0, Math.PI*2); bmCtx.fill();
     bmCtx.strokeStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 10, 0, Math.PI*2); bmCtx.stroke();
 
     if(echoRay) { bmCtx.fillStyle = "#67e8f9"; bmCtx.beginPath(); bmCtx.arc(offsetX + echoRay.x*scale, offsetY + echoRay.y*scale, 4, 0, Math.PI*2); bmCtx.fill(); }
 
+    // Oyuncu Yönü
     bmCtx.save(); bmCtx.translate(offsetX + player.x*scale, offsetY + player.y*scale); bmCtx.rotate(player.angle + Math.PI/2);
     bmCtx.fillStyle = "#38bdf8"; bmCtx.beginPath(); bmCtx.moveTo(0, -8); bmCtx.lineTo(6, 8); bmCtx.lineTo(-6, 8); bmCtx.fill(); bmCtx.restore();
 
+    // Hedef Çizgisi
     if(manualTarget) {
         const tx = offsetX + manualTarget.x*scale; const ty = offsetY + manualTarget.y*scale;
         bmCtx.strokeStyle = "#ef4444"; bmCtx.setLineDash([5, 5]); bmCtx.beginPath(); bmCtx.moveTo(offsetX + player.x*scale, offsetY + player.y*scale); bmCtx.lineTo(tx, ty); bmCtx.stroke(); bmCtx.setLineDash([]);
@@ -584,7 +672,6 @@ bmCanvas.addEventListener('mousedown', (e) => {
         }
 });
 
-// Yankı Enerji Göstergesi Tıklama Olayı
 canvas.addEventListener('mousedown', (e) => {
     if (!echoRay) return;
     const rect = canvas.getBoundingClientRect();
@@ -605,14 +692,22 @@ function closeMap() {
     document.getElementById('big-map-overlay').classList.remove('active');
 }
 
+// -------------------------------------------------------------------------
+// OYUN DÖNGÜSÜ VE BAŞLATMA
+// -------------------------------------------------------------------------
+
 function init() {
     player = new VoidRay(); nexus = new Nexus(); audio = new ZenAudio();
     planets = []; 
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
+    // Gezegenleri Oluştur
     for(let i=0; i<1200; i++) planets.push(new Planet());
+    
+    // Arka Plan Yıldızları
     stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
+    
     player.updateUI(); updateInventoryCount(); isPaused = false;
     startTipsCycle();
     
@@ -620,6 +715,7 @@ function init() {
     targetZoom = 1.0;  
     window.cinematicMode = true; 
 
+    // Başlangıç Mesajları
     addChatMessage("Sistem başlatılıyor...", "system", "genel");
     setTimeout(() => addChatMessage("Optik sensörler kalibre ediliyor...", "info", "genel"), 1000);
     setTimeout(() => addChatMessage("Hoş geldin, Pilot. Motorlar aktif.", "loot", "genel"), 3500);
@@ -643,9 +739,12 @@ function startLoop() {
     loop();
 }
 
-// Yardımcı: Görünürlük Hesaplama
+/**
+ * Verilen bir gezegenin görünürlük durumunu hesaplar.
+ * @returns {number} 0: Gizli, 1: Radar (Kısmi), 2: Tarama (Tam)
+ */
 function getPlanetVisibility(p, player, echo) {
-    let visibility = 0; // 0: Gizli
+    let visibility = 0;
 
     const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
     
@@ -674,7 +773,7 @@ function loop() {
         const dt = now - lastFrameTime;
         lastFrameTime = now;
 
-        // Kamera ve Zoom Kontrolü
+        // Kamera ve Zoom
         let zoomSpeed = 0.1;
         if (window.cinematicMode) {
             zoomSpeed = 0.02;
@@ -684,6 +783,7 @@ function loop() {
         }
         currentZoom += (targetZoom - currentZoom) * zoomSpeed;
 
+        // Güncellemeler
         player.update(dt);
         if(echoRay) echoRay.update(); nexus.update();
 
@@ -695,6 +795,7 @@ function loop() {
             renderStats();
         }
 
+        // Toplanmamış gezegenleri filtrele ve gerekirse yenilerini ekle
         planets = planets.filter(p => !p.collected);
         if (planets.length < 1200) {
             const needed = 1200 - planets.length;
@@ -704,6 +805,7 @@ function loop() {
             }
         }
 
+        // Tuş Kontrolleri (Menü Açma/Kapama)
         if (keys.Escape) { 
             if (inventoryOpen) closeInventory();
             else if (echoInvOpen) closeEchoInventory();
@@ -729,6 +831,7 @@ function loop() {
             mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
         }
 
+        // Ana Çizimler
         ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
         ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
 
@@ -752,7 +855,7 @@ function loop() {
             ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
         }
 
-        // Gezegenlerin Çizilmesi ve Etkileşim
+        // Gezegenlerin Çizilmesi ve Etkileşim Kontrolü
         planets.forEach(p => { 
             const visibility = getPlanetVisibility(p, player, echoRay);
             
@@ -791,7 +894,6 @@ function loop() {
         if(echoRay) echoRay.draw(ctx);
         player.draw(ctx); ctx.restore();
         
-        // Etkileşim İpuçları (Nexus/Yankı)
         const promptEl = document.getElementById('merge-prompt');
         const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
         let showNexusPrompt = (distNexus < nexus.radius + 300) && !nexusOpen;
@@ -835,6 +937,7 @@ function loop() {
     animationId = requestAnimationFrame(loop);
 }
 
+// Olay Dinleyicileri (Event Listeners)
 function togglePause() { isPaused = true; document.getElementById('pause-overlay').classList.add('active'); }
 function resumeGame() { isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); }
 function quitToMain() { document.getElementById('pause-overlay').classList.remove('active'); document.getElementById('main-menu').classList.remove('menu-hidden'); isPaused = true; if(animationId) cancelAnimationFrame(animationId); }
@@ -853,7 +956,7 @@ function drawMiniMap() {
     const scale = mmRadius / player.radarRadius; 
     const cx = 90, cy = 90;
     
-    // Mini Harita Radar Çizimi
+    // Tarama Çemberi
     const scanPixelRadius = player.scanRadius * scale;
     mmCtx.lineWidth = 1;
     mmCtx.strokeStyle = "rgba(16, 185, 129, 0.4)"; 
@@ -963,7 +1066,6 @@ window.addEventListener('keydown', e => {
 
 window.addEventListener('keyup', e => { if(e.key === "Escape") keys.Escape = false; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; else if(e.code === "Space") keys[" "] = false; else if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// Fare Tekerleği ile Zoom Kontrolü
 window.addEventListener('wheel', e => { 
     if (e.target.closest('#chat-content')) {
         return; 
@@ -981,7 +1083,6 @@ document.getElementById('btn-inv-icon').addEventListener('click', () => { invent
 document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
 document.getElementById('btn-ai-toggle').addEventListener('click', () => { autopilot = !autopilot; if(!autopilot) { manualTarget=null; aiMode='gather'; } else { aiMode='gather'; } updateAIButton(); });
 
-// İstatistik Butonu Dinleyicisi
 document.getElementById('btn-stats-icon').addEventListener('click', () => {
     openStats();
 });
