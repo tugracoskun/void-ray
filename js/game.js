@@ -1,7 +1,7 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
  * * Bu dosya oyunun ana döngüsünü, durum yönetimini ve
- * kullanıcı etkileşimlerini kontrol eder.
+ * * kullanıcı etkileşimlerini kontrol eder.
  */
 
 // -------------------------------------------------------------------------
@@ -52,7 +52,6 @@ let chatHistory = {
 let activeChatTab = 'genel';
 
 // Grafik Bağlamları (Canvas Contexts)
-// NOT: Bu değişkenler maps.js tarafından da kullanılır
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const mmCanvas = document.getElementById('minimap-canvas');
@@ -67,7 +66,7 @@ let planets = [], stars = [], collectedItems = [], particles = [];
 let centralStorage = [];
 
 // Arayüz Durumları
-let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false, storageOpen = false; // storageOpen eklendi
+let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false, storageOpen = false;
 let statsOpen = false;
 let activeFilter = 'all';
 
@@ -106,8 +105,6 @@ function spawnEcho(x, y) {
 
 /**
  * Eşyaları merkez depoya aktarır (OTOMATİK İŞLEM İÇİN).
- * @param {Array} sourceArray - Boşaltılacak dizi (collectedItems veya lootBag)
- * @param {String} sourceName - Kaynağın ismi (Log için)
  */
 function depositToStorage(sourceArray, sourceName) {
     if (sourceArray.length === 0) return;
@@ -128,7 +125,7 @@ function depositToStorage(sourceArray, sourceName) {
 }
 
 // -------------------------------------------------------------------------
-// STORAGE UI MANTIĞI (YENİ)
+// STORAGE UI MANTIĞI
 // -------------------------------------------------------------------------
 
 function openStorage() {
@@ -236,7 +233,6 @@ window.withdrawItem = function(name) {
 window.withdrawAllFromStorage = function() {
     const cap = getPlayerCapacity();
     let moved = 0;
-    // Depodaki her şeyi gemiye sığdığı kadar al
     while(centralStorage.length > 0 && collectedItems.length < cap) {
         collectedItems.push(centralStorage.pop());
         moved++;
@@ -739,8 +735,6 @@ document.getElementById('chat-input').addEventListener('keydown', (e) => {
 // HARİTA İŞLEMLERİ (ARTIK maps.js'de)
 // -------------------------------------------------------------------------
 
-// Harita tıklama dinleyicileri init() içinde initMapListeners() ile çağrılır.
-
 canvas.addEventListener('mousedown', (e) => {
     if (!echoRay) return;
     const rect = canvas.getBoundingClientRect();
@@ -777,8 +771,18 @@ function init() {
     player.updateUI(); updateInventoryCount(); isPaused = false;
     startTipsCycle();
     
-    // HARİTA ETKİLEŞİMLERİNİ BAŞLAT
-    initMapListeners();
+    // HARİTA DİNLEYİCİSİ (Callback ile state yönetimi)
+    const bmCanvasEl = document.getElementById('big-map-canvas');
+    if (bmCanvasEl && typeof initMapListeners === 'function') {
+        initMapListeners(bmCanvasEl, WORLD_SIZE, (worldX, worldY) => {
+            manualTarget = {x: worldX, y: worldY};
+            autopilot = true;
+            aiMode = 'travel';
+            document.getElementById('btn-ai-toggle').classList.add('active');
+            updateAIButton();
+            showNotification({name: "ROTA OLUŞTURULDU", type:{color:'#fff'}}, "");
+        });
+    }
 
     currentZoom = 0.2; 
     targetZoom = 1.0;  
@@ -871,6 +875,7 @@ function loop() {
             mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
         }
 
+        // Ana Çizim
         ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
         ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
 
@@ -897,7 +902,7 @@ function loop() {
         }
 
         planets.forEach(p => { 
-            // maps.js içindeki fonksiyon
+            // maps.js içindeki visibility fonksiyonu
             const visibility = getPlanetVisibility(p, player, echoRay);
             
             if (visibility === 0) return;
@@ -1009,12 +1014,21 @@ function loop() {
                 promptEl.className = '';
         }
 
-        if(echoRay && !echoRay.attached) drawTargetIndicator(echoRay.x, echoRay.y, "#67e8f9");
-        drawTargetIndicator(nexus.x, nexus.y, "#ffffff");
-        drawTargetIndicator(repairStation.x, repairStation.y, "#10b981");
-        drawTargetIndicator(storageCenter.x, storageCenter.y, "#a855f7");
-        drawMiniMap(); // maps.js
-        if(mapOpen) drawBigMap(); // maps.js
+        // Harita İndikatörlerini Çiz (Dependency Injection)
+        if(echoRay && !echoRay.attached) {
+            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, echoRay, "#67e8f9");
+        }
+        drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, nexus, "#ffffff");
+        drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, repairStation, "#10b981");
+        drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, storageCenter, "#a855f7");
+
+        // Haritaları Çiz (Dependency Injection)
+        const entities = { player, echoRay, nexus, repairStation, storageCenter, planets };
+        const state = { manualTarget };
+        
+        drawMiniMap(mmCtx, entities, state);
+        if(mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
+
     } else {
         // Paused logic
     }
@@ -1026,13 +1040,11 @@ function togglePause() { isPaused = true; document.getElementById('pause-overlay
 function resumeGame() { isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); }
 function quitToMain() { 
     document.getElementById('pause-overlay').classList.remove('active'); 
-    document.getElementById('death-screen').classList.remove('active'); // Ölüm ekranını da kapat
+    document.getElementById('death-screen').classList.remove('active'); 
     document.getElementById('main-menu').classList.remove('menu-hidden'); 
     isPaused = true; 
     if(animationId) cancelAnimationFrame(animationId); 
 }
-
-// Harita çizim fonksiyonları buradan kaldırıldı ve maps.js'e taşındı.
 
 window.addEventListener('keydown', e => { 
     if(document.activeElement === document.getElementById('chat-input')) {
