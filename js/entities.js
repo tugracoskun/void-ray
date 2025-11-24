@@ -426,7 +426,7 @@ class EchoRay {
                             if(p.type.id === 'tardigrade') {
                                 this.lootBag.push(p);
                             } else {
-                                const count = Math.floor(Math.random() * 4) + 1; 
+                                const count = GameRules.calculateLootCount(); 
                                 for(let i=0; i<count; i++) this.lootBag.push(p); 
                             }
                             if(echoInvOpen) renderEchoInventory(); 
