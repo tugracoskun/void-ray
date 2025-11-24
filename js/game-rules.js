@@ -1,10 +1,43 @@
 /**
  * Void Ray - Oyun Kuralları ve Mantığı
  * * Bu dosya, oyunun dengesini etkileyen olasılık hesaplamaları,
- * * kaynak dağılımları ve diğer çekirdek mekanik kurallarını içerir.
+ * * kaynak dağılımları, harita konumları ve ekonomik formülleri içerir.
  */
 
 const GameRules = {
+    // --- HARİTA YAPILANDIRMASI ---
+    LOCATIONS: {
+        NEXUS:          { x: 3000, y: 3000 },
+        REPAIR_STATION: { x: 3600, y: 3200 },
+        PLAYER_START:   { x: 3000, y: 3800 },
+        PLAYER_RESPAWN: { x: 3600, y: 3200 } // Genelde tamir istasyonunda doğar
+    },
+
+    // --- EKONOMİ VE GELİŞİM ---
+    // Geliştirme maliyet çarpanı (Her seviyede fiyat 1.5 katına çıkar)
+    UPGRADE_COST_MULTIPLIER: 1.5,
+    
+    // Level atlamak için gereken XP çarpanı (Her levelde zorluk 1.5 kat artar)
+    LEVEL_XP_MULTIPLIER: 1.5,
+
+    /**
+     * Bir geliştirmenin o anki seviyesine göre maliyetini hesaplar.
+     * @param {number} baseCost - Başlangıç maliyeti
+     * @param {number} currentLevel - Mevcut seviye
+     */
+    calculateUpgradeCost: function(baseCost, currentLevel) {
+        return Math.floor(baseCost * Math.pow(this.UPGRADE_COST_MULTIPLIER, currentLevel));
+    },
+
+    /**
+     * Bir sonraki level için gereken toplam XP'yi hesaplar.
+     * @param {number} currentMaxXp - Şu anki seviye için gereken XP
+     */
+    calculateNextLevelXp: function(currentMaxXp) {
+        return Math.floor(currentMaxXp * this.LEVEL_XP_MULTIPLIER);
+    },
+
+    // --- GANİMET SİSTEMİ ---
     // Kaynak Düşme Olasılıkları (Ağırlıklı Dağılım)
     // Toplam: 100 birim üzerinden hesaplanmıştır.
     LOOT_DISTRIBUTION: [

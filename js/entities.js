@@ -9,8 +9,8 @@
 // -------------------------------------------------------------------------
 class Nexus {
     constructor() { 
-        this.x = 3000; 
-        this.y = 3000; 
+        this.x = GameRules.LOCATIONS.NEXUS.x; 
+        this.y = GameRules.LOCATIONS.NEXUS.y; 
         this.radius = 300; 
         this.rotation = 0; 
     }
@@ -44,19 +44,19 @@ class Nexus {
 }
 
 // -------------------------------------------------------------------------
-// REPAIR STATION (TAMİR İSTASYONU) SINIFI - YENİ
+// REPAIR STATION (TAMİR İSTASYONU) SINIFI
 // -------------------------------------------------------------------------
 class RepairStation {
     constructor() {
-        this.x = 3600;
-        this.y = 3200;
+        this.x = GameRules.LOCATIONS.REPAIR_STATION.x;
+        this.y = GameRules.LOCATIONS.REPAIR_STATION.y;
         this.radius = 150;
         this.rotation = 0;
     }
 
     update() {
         this.rotation -= 0.005;
-        // Oyuncu yakındaysa can yenile (Opsiyonel)
+        // Oyuncu yakındaysa can yenile
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
         if (dist < 300 && player.health < player.maxHealth) {
             player.health = Math.min(player.maxHealth, player.health + 0.5);
@@ -92,8 +92,8 @@ class RepairStation {
 // -------------------------------------------------------------------------
 class VoidRay {
     constructor() {
-        this.x = 3000; 
-        this.y = 3800;
+        this.x = GameRules.LOCATIONS.PLAYER_START.x; 
+        this.y = GameRules.LOCATIONS.PLAYER_START.y;
         this.vx = 0; 
         this.vy = 0; 
         this.angle = -Math.PI/2;
@@ -107,19 +107,16 @@ class VoidRay {
         this.energy = 100; 
         this.maxEnergy = 100;
         
-        // Can Sistemi - YENİ
         this.health = 100;
         this.maxHealth = 100;
         
-        // Sınır Kontrol Sistemi - YENİ
         this.outOfBoundsTimer = 0; 
         
         this.tail = []; 
         for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
         
-        // Radar Algılama Menzilleri
-        this.scanRadius = 4000; // Tam Görüş (Yeşil)
-        this.radarRadius = 10000; // Kısmi Görüş (Turuncu)
+        this.scanRadius = 4000;
+        this.radarRadius = 10000; 
     }
     
     gainXp(amount) { 
@@ -131,7 +128,7 @@ class VoidRay {
     levelUp() {
         this.level++; 
         this.xp = 0; 
-        this.maxXp *= 1.5; 
+        this.maxXp = GameRules.calculateNextLevelXp(this.maxXp);
         this.scale += 0.1; 
         this.maxHealth += 20; // Seviye atlayınca can artışı
         this.health = this.maxHealth; // Canı fulle
@@ -171,9 +168,8 @@ class VoidRay {
         this.vx = 0;
         this.vy = 0;
         this.outOfBoundsTimer = 0;
-
-        this.x = 3600; 
-        this.y = 3200;
+        this.x = GameRules.LOCATIONS.PLAYER_RESPAWN.x; 
+        this.y = GameRules.LOCATIONS.PLAYER_RESPAWN.y;
         
         // Arayüzü Temizle
         document.getElementById('death-screen').classList.remove('active');
@@ -242,7 +238,7 @@ class VoidRay {
             document.getElementById('radiation-warning').style.display = 'none';
         }
 
-        // Enerji Yönetimi (Radyasyon haricinde normal kullanım)
+        // Enerji Yönetimi
         if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
                 const cost = 0.05;
                 this.energy = Math.max(0, this.energy - cost); 

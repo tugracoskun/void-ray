@@ -384,7 +384,9 @@ function sellAll() {
 function renderUpgrades() {
     const pList = document.getElementById('upg-player-list'); const eList = document.getElementById('upg-echo-list'); pList.innerHTML = ''; eList.innerHTML = '';
     const createCard = (key, data) => {
-        const currentLvl = playerData.upgrades[key]; const cost = Math.floor(data.baseCost * Math.pow(1.5, currentLvl)); const isMax = currentLvl >= data.max;
+        const currentLvl = playerData.upgrades[key]; 
+        const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
+        const isMax = currentLvl >= data.max;
         let pips = ''; for(let i=0; i<data.max; i++) pips += `<div class="lvl-pip ${i<currentLvl?'filled':''}"></div>`;
         return `<div class="upgrade-item"><div class="upg-info"><h4>${data.name}</h4><p>${data.desc}</p><div class="upg-level">${pips}</div></div><button class="buy-btn" ${isMax || playerData.stardust < cost ? 'disabled' : ''} onclick="buyUpgrade('${key}')">${isMax ? 'MAX' : 'GELİŞTİR'} ${!isMax ? `<span class="cost-text">${cost} ◆</span>` : ''}</button></div>`;
     };
@@ -394,7 +396,7 @@ function renderUpgrades() {
 
 window.buyUpgrade = function(key) {
     const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
-    const cost = Math.floor(data.baseCost * Math.pow(1.5, currentLvl));
+    const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
     if(playerData.stardust >= cost) { 
         playerData.stardust -= cost; 
         playerData.upgrades[key]++; 
@@ -1117,3 +1119,4 @@ document.getElementById('btn-stats-icon').addEventListener('click', () => {
 
 function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; mmCanvas.width = 180; mmCanvas.height = 180; bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
 window.addEventListener('resize', resize); resize();
+}
