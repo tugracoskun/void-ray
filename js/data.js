@@ -41,3 +41,35 @@ const TIPS = [
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
     "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın."
 ];
+
+// --- HARİTA VE GÖRÜNÜM AYARLARI ---
+const MAP_CONFIG = {
+    minimap: {
+        size: 180,           // Piksel cinsinden boyut
+        bg: "rgba(0, 0, 0, 0.8)",
+        border: "rgba(255,255,255,0.1)",
+        scanColor: "rgba(16, 185, 129, 0.4)", // Yeşilimsi
+        radius: 90           // size / 2
+    },
+    bigmap: {
+        bgOverlay: "rgba(0,0,0,0.4)",
+        gridColor: "rgba(255,255,255,0.1)",
+        margin: 50
+    },
+    colors: {
+        player: "#38bdf8",     // Açık Mavi
+        nexus: "#ffffff",      // Beyaz
+        repair: "#10b981",     // Yeşil
+        storage: "#a855f7",    // Mor
+        echo: "#67e8f9",       // Turkuaz
+        target: "#ef4444",     // Kırmızı
+        scanArea: "rgba(16, 185, 129, 0.05)",
+        radarArea: "rgba(251, 191, 36, 0.03)",
+        radarStroke: "rgba(251, 191, 36, 0.6)"
+    },
+    zoom: {
+        min: 0.5,
+        max: 1.5,
+        speed: 0.001
+    }
+};
