@@ -880,7 +880,8 @@ function loop() {
                         player.gainXp(p.type.xp);
                     } else { 
                         p.collected = true; audio.playChime(p.type); 
-                        const lootCount = Math.floor(Math.random() * 4) + 1; 
+                        // GameRules üzerinden loot sayısı hesapla
+                        const lootCount = GameRules.calculateLootCount(); 
                         for(let i=0; i<lootCount; i++) { addItemToInventory(p); player.gainXp(p.type.xp); }
                         showNotification(p, lootCount > 1 ? `x${lootCount}` : ""); 
                     } 
