@@ -331,7 +331,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
     position: relative;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
-#energy-bar-container {
+#energy-bar-container, #health-bar-container {
     width: 100%; height: 3px;
     background: rgba(255,255,255,0.1);
     margin-top: 0px; 
@@ -343,6 +343,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
     box-shadow: 0 0 8px #38bdf8;
     transition: width 0.2s linear, background 0.3s;
 }
+#health-bar-fill {
+    height: 100%; background: #10b981; width: 100%;
+    box-shadow: 0 0 8px #10b981;
+    transition: width 0.2s linear, background 0.3s;
+}
+
 .coords { font-family: monospace; font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
 
 /* OVERLAYS BASE */
@@ -465,7 +471,41 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
 #toxic-overlay.active { background: radial-gradient(circle, transparent 40%, rgba(132, 204, 22, 0.3) 100%); animation: toxicPulse 1.5s infinite alternate; }
 @keyframes toxicPulse { 0% { opacity: 0.4; } 100% { opacity: 0.8; } }
 
-/* --- UYARI ANİMASYONU (YENİ) --- */
+/* --- RADYASYON EFEKTİ VE UYARI (YENİ) --- */
+#radiation-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: 45;
+    background: radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0) 100%);
+    transition: background 0.5s ease;
+}
+#radiation-overlay.active {
+    background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.4) 100%);
+    animation: radiationPulse 1s infinite alternate;
+}
+@keyframes radiationPulse {
+    0% { opacity: 0.3; box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.2); }
+    100% { opacity: 0.8; box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.5); }
+}
+
+#radiation-warning {
+    position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+    color: #ef4444; text-align: center;
+    pointer-events: none; z-index: 60;
+    display: none;
+}
+#radiation-warning div {
+    font-size: 2rem; font-weight: 800; letter-spacing: 5px;
+    animation: blinkRedText 0.5s infinite alternate;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+}
+#radiation-warning .rad-icon { font-size: 4rem; margin-bottom: 10px; }
+#radiation-warning .rad-sub { font-size: 1rem; color: #fca5a5; font-weight: 400; letter-spacing: 2px; margin-top: 5px; }
+
+@keyframes blinkRedText {
+    0% { opacity: 0.5; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1.05); }
+}
+
+/* --- UYARI ANİMASYONU --- */
 @keyframes blinkRed {
     0%, 100% { 
         box-shadow: 0 0 0 rgba(239, 68, 68, 0); 
@@ -578,3 +618,30 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
     line-height: 1.3;
     margin: 0;
 }
+
+/* --- DEATH SCREEN (YENİ) --- */
+#death-screen {
+    position: absolute; inset: 0;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 200;
+    color: #ef4444;
+    animation: fadeInDeath 2s ease;
+}
+#death-screen.active { display: flex; }
+
+@keyframes fadeInDeath { from { opacity: 0; } to { opacity: 1; } }
+
+.death-title { font-size: 4rem; letter-spacing: 10px; font-weight: 800; text-shadow: 0 0 30px #ef4444; margin-bottom: 10px; }
+.death-sub { font-size: 1.5rem; color: #fca5a5; letter-spacing: 5px; margin-bottom: 40px; opacity: 0.8; }
+.death-info { font-family: monospace; color: #94a3b8; animation: pulse 2s infinite; }
+
+/* --- DAMAGE OVERLAY (YENİ) --- */
+#damage-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: 48;
+    background: radial-gradient(circle, transparent 60%, rgba(220, 38, 38, 0.5) 100%);
+    opacity: 0; transition: opacity 0.1s;
+}
+#damage-overlay.active { opacity: 1; }

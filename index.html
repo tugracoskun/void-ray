@@ -14,7 +14,24 @@
         <source src="uploaded:Crater.mp3" type="audio/mpeg">
     </audio>
     
+    <!-- EFEKT KATMANLARI -->
     <div id="toxic-overlay"></div>
+    <div id="radiation-overlay"></div>
+    <div id="damage-overlay"></div> <!-- Yeni: Hasar alınca kırmızı yanıp sönme -->
+    
+    <!-- UYARILAR -->
+    <div id="radiation-warning">
+        <div class="rad-icon">⚠</div>
+        <div>RADYASYON ALANI</div>
+        <div class="rad-sub">GERİ DÖN YOKSA GEMİ PARÇALANACAK</div>
+    </div>
+
+    <!-- ÖLÜM EKRANI -->
+    <div id="death-screen">
+        <div class="death-title">SİNYAL KAYBEDİLDİ</div>
+        <div class="death-sub">GEMİ GÖVDE BÜTÜNLÜĞÜNÜ YİTİRDİ</div>
+        <div class="death-info">Tamir İstasyonunda yeniden yapılandırılıyor...</div>
+    </div>
     
     <!-- PAUSE / ESC MENU -->
     <div id="pause-overlay">
@@ -39,7 +56,7 @@
 
         <div class="controls-grid">
             <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Hareket</span></div>
-            <div class="key-row"><span class="key-cap">E</span> <span>Nexus Etkileşim</span></div>
+            <div class="key-row"><span class="key-cap">E</span> <span>Etkileşim</span></div>
             <div class="key-row"><span class="key-cap">F</span> <span>Yankı Birleş</span></div>
             <div class="key-row"><span class="key-cap">Q</span> <span>AI Modu</span></div>
             <div class="key-row"><span class="key-cap">I</span> <span>Envanter</span></div>
@@ -142,16 +159,25 @@
             <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
         </div>
 
+        <!-- MİNİ HARİTA VE BARLAR -->
         <div id="minimap-wrapper">
             <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
+            
+            <!-- ENERJİ BARI (Mavi) -->
             <div id="energy-bar-container" title="Enerji">
                 <div id="energy-bar-fill"></div>
             </div>
+            
+            <!-- CAN BARI (Kırmızı/Yeşil) - YENİ EKLENDİ -->
+            <div id="health-bar-container" title="Gövde Dayanıklılığı">
+                <div id="health-bar-fill"></div>
+            </div>
+
             <div class="coords" id="coords">0000 : 0000</div>
         </div>
     </div>
 
-    <!-- BIG MAP OVERLAY -->
+    <!-- DİĞER PENCERELER -->
     <div id="big-map-overlay">
         <div class="big-map-container">
             <canvas id="big-map-canvas"></canvas>
@@ -192,10 +218,11 @@
                 <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
                 <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
                 <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #fff;"></div> NEXUS</div>
+                <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div> <!-- YENİ -->
                 <div class="legend-item"><div class="l-dot" style="background:#67e8f9;"></div> YANKI</div>
                 <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
                 <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
-                <div class="legend-item"><div class="l-dot" style="background:#C7C0AE;"></div> Tardigrad (+Enerji)</div>
+                <div class="legend-item"><div class="l-dot" style="background:#C7C0AE;"></div> Tardigrad</div>
                 <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> Kayıp Kargo</div>
                 <div class="legend-item"><div class="l-dot" style="border:1px dashed #ef4444;"></div> Hedef</div>
             </div>
@@ -219,7 +246,7 @@
         </div>
     </div>
 
-    <!-- ENVANTER (Tablo Görünümü) -->
+    <!-- ENVANTER -->
     <div id="inventory-overlay" class="overlay-base">
         <div class="inv-window">
             <div style="display:flex; flex:1; overflow:hidden;">
@@ -241,7 +268,7 @@
         </div>
     </div>
     
-    <!-- YANKI ENVANTERI (Tablo Görünümü) -->
+    <!-- YANKI ENVANTERI -->
     <div id="echo-inventory-overlay" class="overlay-base">
         <div class="inv-window" style="border-color: var(--echo-color); height: 500px; width: 700px;">
             <div class="inv-content" style="background: rgba(0,0,0,0.3); padding: 20px;">
@@ -254,7 +281,7 @@
         </div>
     </div>
 
-    <!-- NEXUS (BASE) EKRANI -->
+    <!-- NEXUS EKRANI -->
     <div id="nexus-overlay" class="overlay-base">
         <div class="nexus-window">
             <div class="nexus-header">

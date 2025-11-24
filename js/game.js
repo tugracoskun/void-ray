@@ -59,7 +59,7 @@ const bmCtx = bmCanvas.getContext('2d');
 
 // Varlıklar ve Koleksiyonlar
 let width, height;
-let player, echoRay = null, nexus = null, audio;
+let player, echoRay = null, nexus = null, repairStation = null, audio; // repairStation eklendi
 let planets = [], stars = [], collectedItems = [], particles = [];
 
 // Arayüz Durumları
@@ -637,6 +637,11 @@ function drawBigMap() {
     bmCtx.fillStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 5, 0, Math.PI*2); bmCtx.fill();
     bmCtx.strokeStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 10, 0, Math.PI*2); bmCtx.stroke();
 
+    // Tamir İstasyonu (YENİ)
+    if(repairStation) {
+        bmCtx.fillStyle = "#10b981"; bmCtx.beginPath(); bmCtx.arc(offsetX + repairStation.x*scale, offsetY + repairStation.y*scale, 4, 0, Math.PI*2); bmCtx.fill();
+    }
+
     if(echoRay) { bmCtx.fillStyle = "#67e8f9"; bmCtx.beginPath(); bmCtx.arc(offsetX + echoRay.x*scale, offsetY + echoRay.y*scale, 4, 0, Math.PI*2); bmCtx.fill(); }
 
     // Oyuncu Yönü
@@ -694,7 +699,10 @@ function closeMap() {
 // -------------------------------------------------------------------------
 
 function init() {
-    player = new VoidRay(); nexus = new Nexus(); audio = new ZenAudio();
+    player = new VoidRay(); 
+    nexus = new Nexus(); 
+    repairStation = new RepairStation(); // YENİ: Tamir istasyonu oluşturuldu
+    audio = new ZenAudio();
     planets = []; 
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
@@ -782,7 +790,9 @@ function loop() {
 
         // Güncellemeler
         player.update(dt);
-        if(echoRay) echoRay.update(); nexus.update();
+        if(echoRay) echoRay.update(); 
+        nexus.update();
+        repairStation.update(); // YENİ
 
         if(autopilot) {
             playerData.stats.timeAI += dt;
@@ -834,6 +844,7 @@ function loop() {
 
         ctx.save(); ctx.translate(width/2, height/2); ctx.scale(currentZoom, currentZoom); ctx.translate(-player.x, -player.y);
         nexus.draw(ctx);
+        repairStation.draw(ctx); // YENİ
         for(let i=particles.length-1; i>=0; i--) { particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
         
         // Oyun Dünyası Radar Çizimi
@@ -868,7 +879,12 @@ function loop() {
                     if(p.type.id === 'toxic') { 
                         audio.playToxic(); showToxicEffect(); for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16')); 
                         if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}}, ""); } 
-                        else { const now = Date.now(); if (now - lastToxicNotification > 2000) { showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}}, ""); lastToxicNotification = now; } } 
+                        else { 
+                            const now = Date.now(); 
+                            if (now - lastToxicNotification > 2000) { showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}}, ""); lastToxicNotification = now; } 
+                            // YENİ: Zehirli gaz can azaltır
+                            player.takeDamage(5);
+                        } 
                     } else if (p.type.id === 'lost') { 
                         p.collected = true; audio.playChime({id:'legendary'}); showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
                         if (p.lootContent && p.lootContent.length > 0) { p.lootContent.forEach(item => { addItemToInventory(item); player.gainXp(item.type.xp); }); } 
@@ -929,8 +945,12 @@ function loop() {
 
         if(echoRay && !echoRay.attached) drawTargetIndicator(echoRay.x, echoRay.y, "#67e8f9");
         drawTargetIndicator(nexus.x, nexus.y, "#ffffff");
+        drawTargetIndicator(repairStation.x, repairStation.y, "#10b981"); // YENİ: Tamir istasyonu hedefi
         drawMiniMap();
         if(mapOpen) drawBigMap();
+    } else {
+        // Oyun duraklatılmış olsa bile, eğer ölüm ekranı aktifse animasyon veya çizimi devam ettirmeliyiz ki ekran siyah kalmasın.
+        // Ancak basitlik için şimdilik sadece requestAnimationFrame çağırıyoruz.
     }
     animationId = requestAnimationFrame(loop);
 }
@@ -938,7 +958,13 @@ function loop() {
 // Olay Dinleyicileri (Event Listeners)
 function togglePause() { isPaused = true; document.getElementById('pause-overlay').classList.add('active'); }
 function resumeGame() { isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); }
-function quitToMain() { document.getElementById('pause-overlay').classList.remove('active'); document.getElementById('main-menu').classList.remove('menu-hidden'); isPaused = true; if(animationId) cancelAnimationFrame(animationId); }
+function quitToMain() { 
+    document.getElementById('pause-overlay').classList.remove('active'); 
+    document.getElementById('death-screen').classList.remove('active'); // Ölüm ekranını da kapat
+    document.getElementById('main-menu').classList.remove('menu-hidden'); 
+    isPaused = true; 
+    if(animationId) cancelAnimationFrame(animationId); 
+}
 
 function drawMiniMap() {
     mmCtx.clearRect(0,0,180,180); 
@@ -976,6 +1002,12 @@ function drawMiniMap() {
     const nx = (nexus.x-player.x)*scale + cx; const ny = (nexus.y-player.y)*scale + cy;
     if(Math.hypot(nx-cx, ny-cy) < mmRadius) {
             mmCtx.fillStyle = "white"; mmCtx.beginPath(); mmCtx.arc(nx, ny, 4, 0, Math.PI*2); mmCtx.fill();
+    }
+
+    // Tamir İstasyonu (Minimap)
+    const rx = (repairStation.x-player.x)*scale + cx; const ry = (repairStation.y-player.y)*scale + cy;
+    if(Math.hypot(rx-cx, ry-cy) < mmRadius) {
+            mmCtx.fillStyle = "#10b981"; mmCtx.beginPath(); mmCtx.arc(rx, ry, 3, 0, Math.PI*2); mmCtx.fill();
     }
     
     planets.forEach(p => {

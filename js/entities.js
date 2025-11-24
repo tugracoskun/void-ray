@@ -44,6 +44,50 @@ class Nexus {
 }
 
 // -------------------------------------------------------------------------
+// REPAIR STATION (TAMİR İSTASYONU) SINIFI - YENİ
+// -------------------------------------------------------------------------
+class RepairStation {
+    constructor() {
+        this.x = 2000; // Haritanın sol üst köşesine yakın
+        this.y = 2000;
+        this.radius = 150;
+        this.rotation = 0;
+    }
+
+    update() {
+        this.rotation -= 0.005;
+        // Oyuncu yakındaysa can yenile (Opsiyonel)
+        const dist = Math.hypot(player.x - this.x, player.y - this.y);
+        if (dist < 300 && player.health < player.maxHealth) {
+            player.health = Math.min(player.maxHealth, player.health + 0.5);
+        }
+    }
+
+    draw(ctx) {
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+        
+        // İstasyon Çizimi
+        ctx.shadowBlur = 20; ctx.shadowColor = "#10b981";
+        ctx.strokeStyle = "#10b981"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI*2); ctx.stroke();
+        
+        // Dönen Kollar
+        for(let i=0; i<3; i++) {
+            ctx.rotate((Math.PI*2)/3);
+            ctx.fillStyle = "#064e3b"; ctx.fillRect(60, -10, 40, 20);
+            ctx.fillStyle = "#34d399"; ctx.fillRect(90, -10, 10, 20);
+        }
+        
+        // Merkez
+        ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0,0, 40, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#10b981"; ctx.font = "bold 20px monospace"; ctx.textAlign = "center"; 
+        ctx.fillText("+", 0, 7);
+        
+        ctx.restore();
+    }
+}
+
+// -------------------------------------------------------------------------
 // VOID RAY (OYUNCU) SINIFI
 // -------------------------------------------------------------------------
 class VoidRay {
@@ -62,6 +106,14 @@ class VoidRay {
         this.maxXp = 150; 
         this.energy = 100; 
         this.maxEnergy = 100;
+        
+        // Can Sistemi - YENİ
+        this.health = 100;
+        this.maxHealth = 100;
+        
+        // Sınır Kontrol Sistemi - YENİ
+        this.outOfBoundsTimer = 0; 
+        
         this.tail = []; 
         for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
         
@@ -81,9 +133,57 @@ class VoidRay {
         this.xp = 0; 
         this.maxXp *= 1.5; 
         this.scale += 0.1; 
+        this.maxHealth += 20; // Seviye atlayınca can artışı
+        this.health = this.maxHealth; // Canı fulle
         audio.playEvolve(); 
         showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
+    }
+    
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+        
+        // Görsel Hasar Efekti
+        const dmgOverlay = document.getElementById('damage-overlay');
+        dmgOverlay.classList.add('active');
+        setTimeout(() => dmgOverlay.classList.remove('active'), 200);
+
+        if (this.health <= 0) {
+            this.die();
+        }
+    }
+
+    die() {
+        // Ölüm Ekranını Göster
+        document.getElementById('death-screen').classList.add('active');
+        isPaused = true; // Oyunu dondur (kısmen, arka planda işlem dönebilir ama input almayacağız)
+        
+        // 3 Saniye sonra yeniden doğ
+        setTimeout(() => {
+            this.respawn();
+        }, 3000);
+    }
+
+    respawn() {
+        // Durumu Sıfırla
+        this.health = this.maxHealth;
+        this.energy = this.maxEnergy;
+        this.vx = 0;
+        this.vy = 0;
+        this.outOfBoundsTimer = 0;
+        
+        // Sol Üstteki Tamir İstasyonuna Taşı
+        this.x = 2000; 
+        this.y = 2000;
+        
+        // Arayüzü Temizle
+        document.getElementById('death-screen').classList.remove('active');
+        document.getElementById('radiation-overlay').classList.remove('active');
+        document.getElementById('radiation-warning').style.display = 'none';
+        
+        // Oyunu Devam Ettir
+        isPaused = false;
+        showNotification({name: "SİSTEMLER YENİDEN BAŞLATILDI", type:{color:'#10b981'}}, "");
     }
     
     updateUI() {
@@ -107,17 +207,54 @@ class VoidRay {
         const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
         const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
         
-        // Enerji Yönetimi
-        if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
-             const cost = 0.05;
-             this.energy = Math.max(0, this.energy - cost); 
-             if(playerData.stats) playerData.stats.totalEnergySpent += cost;
-        } else if (Math.hypot(this.vx, this.vy) > 2) {
-             const cost = 0.002;
-             this.energy = Math.max(0, this.energy - cost);
-             if(playerData.stats) playerData.stats.totalEnergySpent += cost;
+        // --- RADYASYON VE SINIR KONTROLÜ (GÜNCELLENDİ) ---
+        const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
+        
+        if (isOutOfBounds) {
+            this.outOfBoundsTimer++;
+            
+            // 1. Hasar: Enerji yerine CAN azalıyor
+            const damage = 0.2 + (this.outOfBoundsTimer * 0.005); // Zamanla artan hasar
+            this.takeDamage(damage);
+
+            // 2. Geri İtme Kuvveti (Pushback)
+            // Eğer 2 saniyeden fazla (yaklaşık 120 frame) dışarıdaysa, merkeze doğru itmeye başla
+            if (this.outOfBoundsTimer > 120) {
+                const centerX = WORLD_SIZE / 2;
+                const centerY = WORLD_SIZE / 2;
+                const angleToCenter = Math.atan2(centerY - this.y, centerX - this.x);
+                
+                // Geri itme kuvveti zamanla artar
+                const pushForce = 0.5 + (this.outOfBoundsTimer * 0.002); 
+                
+                this.vx += Math.cos(angleToCenter) * pushForce;
+                this.vy += Math.sin(angleToCenter) * pushForce;
+            }
+
+            // Görsel Uyarılar
+            document.getElementById('radiation-overlay').classList.add('active');
+            document.getElementById('radiation-warning').style.display = 'block';
+            
         } else {
-             this.energy = Math.min(this.maxEnergy, this.energy + 0.01);
+            // Sınır içine dönüldü, sayacı yavaşça düşür (hemen sıfırlama, gir-çık yapılmasın)
+            this.outOfBoundsTimer = Math.max(0, this.outOfBoundsTimer - 5);
+            
+            document.getElementById('radiation-overlay').classList.remove('active');
+            document.getElementById('radiation-warning').style.display = 'none';
+        }
+
+        // Enerji Yönetimi (Radyasyon haricinde normal kullanım)
+        if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
+                const cost = 0.05;
+                this.energy = Math.max(0, this.energy - cost); 
+                if(playerData.stats) playerData.stats.totalEnergySpent += cost;
+        } else if (Math.hypot(this.vx, this.vy) > 2) {
+                const cost = 0.002;
+                this.energy = Math.max(0, this.energy - cost);
+                if(playerData.stats) playerData.stats.totalEnergySpent += cost;
+        } else {
+                // Sınır içindeysek enerji yenilenir
+                if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + 0.01);
         }
         
         if (this.energy < 10 && !lowEnergyWarned) {
@@ -130,10 +267,19 @@ class VoidRay {
             ACCEL = 0.2; 
         }
 
-        const bar = document.getElementById('energy-bar-fill');
-        bar.style.width = (this.energy/this.maxEnergy*100) + '%';
-        if(this.energy < 20) bar.style.background = '#ef4444';
-        else bar.style.background = '#38bdf8';
+        // BAR GÜNCELLEMELERİ
+        const energyBar = document.getElementById('energy-bar-fill');
+        energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
+        if(this.energy < 20) energyBar.style.background = '#ef4444';
+        else energyBar.style.background = '#38bdf8';
+
+        // Can Barı Güncellemesi
+        const healthBar = document.getElementById('health-bar-fill');
+        const healthPct = (this.health / this.maxHealth) * 100;
+        healthBar.style.width = healthPct + '%';
+        if (healthPct < 30) healthBar.style.background = '#ef4444'; // Kırmızı
+        else if (healthPct < 60) healthBar.style.background = '#f59e0b'; // Turuncu
+        else healthBar.style.background = '#10b981'; // Yeşil
 
         let targetRoll = 0; let targetWingState = 0;
 
@@ -328,7 +474,13 @@ class EchoRay {
         this.radarRadius = 10000 * rangeMult;
 
         const durabilityMult = 1 + (playerData.upgrades.echoDurability * 0.5);
-        const drain = 0.005 / durabilityMult; 
+        let drain = 0.005 / durabilityMult; 
+
+        // --- YANKI SINIR KONTROLÜ ---
+        const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
+        if (isOutOfBounds) {
+            drain = 0.5; // Radyasyon altında pil çok hızlı biter
+        }
         
         if (this.mode !== 'recharge') {
             this.energy = Math.max(0, this.energy - drain);
@@ -345,7 +497,11 @@ class EchoRay {
                 if(echoInvOpen) renderEchoInventory();
             } else {
                 this.mode = 'recharge';
-                showNotification({name: "YANKI: ENERJİ BİTTİ, ÜSSE DÖNÜYOR", type:{color:'#fbbf24'}}, "");
+                if(isOutOfBounds) {
+                    showNotification({name: "YANKI: RADYASYON HASARI ALIYOR! ÜSSE DÖNÜYOR", type:{color:'#ef4444'}}, "");
+                } else {
+                    showNotification({name: "YANKI: ENERJİ BİTTİ, ÜSSE DÖNÜYOR", type:{color:'#fbbf24'}}, "");
+                }
                 updateEchoDropdownUI();
             }
         }
