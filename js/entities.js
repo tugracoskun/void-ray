@@ -72,15 +72,6 @@ class StorageCenter {
         ctx.setLineDash([10, 5]);
         ctx.strokeRect(-80, -80, 160, 160);
         ctx.setLineDash([]);
-
-        // Text
-        ctx.save();
-        ctx.rotate(-this.rotation); // Yazıyı düz tut
-        ctx.fillStyle = "#e9d5ff";
-        ctx.font = "bold 20px monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("DEPO", 0, 8);
-        ctx.restore();
         
         ctx.restore();
     }
