@@ -596,20 +596,69 @@ function sellAll() {
 }
 
 function renderUpgrades() {
-    const pList = document.getElementById('upg-player-list'); const eList = document.getElementById('upg-echo-list'); pList.innerHTML = ''; eList.innerHTML = '';
-    const createCard = (key, data) => {
+    const pList = document.getElementById('upg-player-list'); 
+    const eList = document.getElementById('upg-echo-list'); 
+    pList.innerHTML = ''; 
+    eList.innerHTML = '';
+    
+    const createCard = (key, data, isEcho = false) => {
         const currentLvl = playerData.upgrades[key]; 
         const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
         const isMax = currentLvl >= data.max;
+        
+        // YANKI BAĞLANTI KONTROLÜ
+        let isDisabled = isMax || playerData.stardust < cost;
+        let btnText = isMax ? 'MAX' : 'GELİŞTİR';
+        let btnClass = 'buy-btn';
+
+        // YANKI DURUMLARINI AYRIŞTIRMA
+        if (isEcho) {
+             if (!echoRay) {
+                // Yankı henüz hiç doğmadı
+                isDisabled = true;
+                btnText = 'YANKI YOK';
+                btnClass += ' disabled-echo'; 
+             } else if (!echoRay.attached) {
+                // Yankı var ama bağlı değil (Bağımsız uçuyor veya sabit duruyor)
+                isDisabled = true;
+                btnText = 'BAĞLI DEĞİL';
+                btnClass += ' disabled-echo';
+             }
+        }
+
         let pips = ''; for(let i=0; i<data.max; i++) pips += `<div class="lvl-pip ${i<currentLvl?'filled':''}"></div>`;
-        return `<div class="upgrade-item"><div class="upg-info"><h4>${data.name}</h4><p>${data.desc}</p><div class="upg-level">${pips}</div></div><button class="buy-btn" ${isMax || playerData.stardust < cost ? 'disabled' : ''} onclick="buyUpgrade('${key}')">${isMax ? 'MAX' : 'GELİŞTİR'} ${!isMax ? `<span class="cost-text">${cost} ◆</span>` : ''}</button></div>`;
+        
+        return `
+        <div class="upgrade-item">
+            <div class="upg-info">
+                <h4>${data.name}</h4>
+                <p>${data.desc}</p>
+                <div class="upg-level">${pips}</div>
+            </div>
+            <button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="buyUpgrade('${key}')">
+                ${btnText} ${(!isMax && btnText !== 'YANKI YOK' && btnText !== 'BAĞLI DEĞİL') ? `<span class="cost-text">${cost} ◆</span>` : ''}
+            </button>
+        </div>`;
     };
     
-    ['playerSpeed', 'playerTurn', 'playerMagnet', 'playerCapacity'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k]));
-    ['echoSpeed', 'echoRange', 'echoDurability', 'echoCapacity'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k]));
+    ['playerSpeed', 'playerTurn', 'playerMagnet', 'playerCapacity'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k], false));
+    ['echoSpeed', 'echoRange', 'echoDurability', 'echoCapacity'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k], true));
 }
 
 window.buyUpgrade = function(key) {
+    // YANKI KONTROLÜ
+    if (key.startsWith('echo')) {
+        if (!echoRay) {
+             showNotification({name: "YANKI MEVCUT DEĞİL!", type:{color:'#ef4444'}}, "");
+             return;
+        }
+        if (!echoRay.attached) {
+            showNotification({name: "YANKI BAĞLI DEĞİL!", type:{color:'#ef4444'}}, "Yükseltme için birleşin.");
+            audio.playToxic(); 
+            return;
+        }
+    }
+
     const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
     const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
     if(playerData.stardust >= cost) { 
