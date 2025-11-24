@@ -524,6 +524,9 @@ class EchoRay {
         this.energyDisplayTimer = 0; 
         this.fullNotified = false;
         
+        // Animasyon Değişkenleri (YENİ)
+        this.wingPhase = 0; // Kanat çırpma animasyonu için
+        
         // Radar Yapılandırması
         this.scanRadius = 4000;
         this.radarRadius = 10000;
@@ -661,6 +664,13 @@ class EchoRay {
         const MAX_ECHO_SPEED = 8 * speedMult; 
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
+        // Harekete göre kanat çırpma
+        if (currentSpeed > 0.5) {
+            this.wingPhase += 0.2;
+        } else {
+            this.wingPhase += 0.05;
+        }
+
         if (playerData.stats) {
             if (currentSpeed > playerData.stats.echoMaxSpeed) {
                 playerData.stats.echoMaxSpeed = currentSpeed;
@@ -706,25 +716,65 @@ class EchoRay {
     }
     
     draw(ctx) { 
-        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(0.6, 0.6); 
+        ctx.save(); 
+        ctx.translate(this.x, this.y); 
+        ctx.rotate(this.angle + Math.PI/2); 
+        // Mevcut büyüklüğünü koruması için 0.6 scale
+        ctx.scale(0.6, 0.6); 
         
         if (this.mode === 'recharge' && Math.hypot(this.x - nexus.x, this.y - nexus.y) < 150) {
              const pulse = 0.5 + Math.sin(Date.now() * 0.005) * 0.5; 
              ctx.shadowBlur = 30 + pulse * 30; 
-             ctx.shadowColor = "#67e8f9"; 
-             ctx.fillStyle = `rgba(103, 232, 249, ${0.5 + pulse * 0.5})`; 
+             ctx.shadowColor = "#cbd5e1"; // Gri parıltı
+             ctx.fillStyle = `rgba(203, 213, 225, ${0.5 + pulse * 0.5})`; 
         } else {
-             ctx.shadowBlur = 20; ctx.shadowColor = "#67e8f9"; ctx.fillStyle = "rgba(10, 20, 40, 0.9)";
+             ctx.shadowBlur = 20; 
+             ctx.shadowColor = "#94a3b8"; // Slate-400 (Uzay Grisi)
         }
         
-        ctx.beginPath(); ctx.moveTo(0, -25); ctx.lineTo(30, 30); ctx.lineTo(0, 40); ctx.lineTo(-30, 30); ctx.fill();
-        ctx.strokeStyle = "#67e8f9"; ctx.lineWidth = 3; ctx.stroke();
-        if(this.mode === 'return' && !this.attached) { ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI*2); ctx.strokeStyle = "rgba(103, 232, 249, 0.3)"; ctx.stroke(); }
+        // --- YENİ YANKI ÇİZİMİ (VATOZ STİLİ - UZAY GRİSİ) ---
         
+        // Kanat animasyonu değerleri
+        let wingTipY = 20; // Standart kanat ucu Y
+        let wingTipX = 60; // Standart kanat ucu X
+        let wingFlap = Math.sin(this.wingPhase) * 5; // Hafif kanat çırpma
+        
+        // Gövde (Koyu Uzay Grisi)
+        ctx.fillStyle = "rgba(30, 41, 59, 0.95)"; // Slate-800
+        
+        ctx.beginPath(); 
+        ctx.moveTo(0, -30); 
+        // Sağ Kanat Eğrisi
+        ctx.bezierCurveTo(15, -10, wingTipX, wingTipY+wingFlap, 40, 40); 
+        ctx.bezierCurveTo(20, 30, 10, 40, 0, 50); 
+        // Sol Kanat Eğrisi (Simetrik)
+        ctx.bezierCurveTo(-10, 40, -20, 30, -40, 40); 
+        ctx.bezierCurveTo(-wingTipX, wingTipY+wingFlap, -15, -10, 0, -30); 
+        ctx.fill();
+        
+        // Kenar Çizgileri (Açık Gri / Metalik)
+        ctx.strokeStyle = "#cbd5e1"; // Slate-300
+        ctx.lineWidth = 2; 
+        ctx.stroke(); 
+        
+        // Lamba / Göz (Daha parlak beyaz/gri)
+        ctx.fillStyle = "#f1f5f9"; // Slate-100
+        
+        if (this.mode !== 'recharge') {
+             ctx.shadowBlur = 40; 
+             ctx.shadowColor = "#cbd5e1"; 
+        }
+        
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill(); 
+
+        // Enerji Barı (Mevcut haliyle kalabilir veya griye uyarlanabilir)
+        // Mavi kalması görsel olarak enerji olduğunu daha iyi belli eder.
         if (this.energyDisplayTimer > 0) {
             ctx.globalAlpha = Math.min(1, this.energyDisplayTimer / 30); 
             ctx.fillStyle = "#334155"; ctx.fillRect(-20, -40, 40, 4);
-            ctx.fillStyle = "#67e8f9"; ctx.fillRect(-20, -40, 40 * (this.energy/100), 4);
+            // Enerji rengini biraz daha metalik maviye kaydırabiliriz veya aynı bırakabiliriz
+            ctx.fillStyle = "#7dd3fc"; // Sky-300 (Mevcut renge yakın)
+            ctx.fillRect(-20, -40, 40 * (this.energy/100), 4);
             ctx.globalAlpha = 1;
         }
         
