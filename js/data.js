@@ -25,9 +25,12 @@ const UPGRADES = {
     playerSpeed: { name: "İyon Motorları", desc: "Maksimum uçuş hızı.", baseCost: 100, max: 5 },
     playerTurn:  { name: "Manevra İticileri", desc: "Dönüş kabiliyeti.", baseCost: 150, max: 5 },
     playerMagnet:{ name: "Çekim Alanı", desc: "Eşya toplama mesafesi.", baseCost: 200, max: 5 },
+    playerCapacity: { name: "Kargo Genişletme", desc: "Envanter kapasitesini artırır (+10).", baseCost: 300, max: 5 }, // YENİ
+    
     echoSpeed:   { name: "Yankı Hızı", desc: "Yankı'nın uçuş hızı.", baseCost: 150, max: 5 },
     echoRange:   { name: "Sensör Ağı", desc: "Yankı'nın toplama çapı.", baseCost: 250, max: 5 },
-    echoDurability: { name: "Yankı Bataryası", desc: "Enerji tüketim verimliliği.", baseCost: 200, max: 5 }
+    echoDurability: { name: "Yankı Bataryası", desc: "Enerji tüketim verimliliği.", baseCost: 200, max: 5 },
+    echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesi (+5).", baseCost: 250, max: 5 } // YENİ
 };
 
 const TIPS = [
@@ -35,5 +38,6 @@ const TIPS = [
     "Yankı, Nexus istasyonunda enerjisini yenileyebilir.",
     "Mor sinyaller değerli kayıp kargoları işaret eder.",
     "Zehirli bölgelerden (Yeşil) uzak durun, enerji tüketir.",
-    "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar)."
+    "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
+    "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın."
 ];

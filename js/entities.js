@@ -15,20 +15,8 @@ class Nexus {
         this.rotation = 0; 
     }
     
-    update() {
-        this.rotation += 0.002;
-        const dist = Math.hypot(player.x - this.x, player.y - this.y);
-        
-        if (dist < this.radius + 200 && !nexusOpen) { 
-            document.getElementById('merge-prompt').innerText = "[E] NEXUS'A GİRİŞ YAP";
-            document.getElementById('merge-prompt').className = 'visible';
-            if(keys.e && !window.cinematicMode) { enterNexus(); keys.e = false; }
-        } else if (nexusOpen || (echoRay && !echoRay.attached && Math.hypot(player.x-echoRay.x, player.y-echoRay.y) < 300)) {
-            if(nexusOpen) document.getElementById('merge-prompt').className = '';
-        } else {
-             document.getElementById('merge-prompt').className = '';
-        }
-    }
+    update() {this.rotation += 0.002;}
+    
     
     draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
@@ -39,6 +27,61 @@ class Nexus {
         ctx.beginPath(); ctx.arc(0,0, 80, 0, Math.PI*2); ctx.fillStyle = "#000"; ctx.fill();
         ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 5; ctx.stroke();
         ctx.shadowBlur = 50; ctx.shadowColor = "#38bdf8"; ctx.fillStyle = "#e0f2fe"; ctx.beginPath(); ctx.arc(0,0, 30, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+}
+
+// -------------------------------------------------------------------------
+// STORAGE CENTER (DEPO MERKEZİ) SINIFI
+// -------------------------------------------------------------------------
+class StorageCenter {
+    constructor() {
+        this.x = GameRules.LOCATIONS.STORAGE_CENTER.x;
+        this.y = GameRules.LOCATIONS.STORAGE_CENTER.y;
+        this.radius = 200;
+        this.rotation = 0;
+    }
+
+    update() {
+        this.rotation -= 0.001;
+        // Etkileşim mantığı game.js loop fonksiyonuna taşındı.
+        // Burası sadece görsel güncelleme yapar.
+    }
+
+    draw(ctx) {
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+        
+        // Altıgen Taban
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            ctx.lineTo(this.radius * Math.cos(i * Math.PI / 3), this.radius * Math.sin(i * Math.PI / 3));
+        }
+        ctx.closePath();
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.5)"; // Morumsu
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(10, 10, 20, 0.9)";
+        ctx.fill();
+
+        // İç Detaylar (Konteynerler)
+        ctx.fillStyle = "rgba(168, 85, 247, 0.1)";
+        ctx.fillRect(-80, -80, 160, 160);
+        
+        ctx.strokeStyle = "#a855f7";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+        ctx.strokeRect(-80, -80, 160, 160);
+        ctx.setLineDash([]);
+
+        // Text
+        ctx.save();
+        ctx.rotate(-this.rotation); // Yazıyı düz tut
+        ctx.fillStyle = "#e9d5ff";
+        ctx.font = "bold 20px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("DEPO", 0, 8);
+        ctx.restore();
+        
         ctx.restore();
     }
 }
@@ -142,8 +185,10 @@ class VoidRay {
         
         // Görsel Hasar Efekti
         const dmgOverlay = document.getElementById('damage-overlay');
-        dmgOverlay.classList.add('active');
-        setTimeout(() => dmgOverlay.classList.remove('active'), 200);
+        if(dmgOverlay) {
+            dmgOverlay.classList.add('active');
+            setTimeout(() => dmgOverlay.classList.remove('active'), 200);
+        }
 
         if (this.health <= 0) {
             this.die();
@@ -153,7 +198,7 @@ class VoidRay {
     die() {
         // Ölüm Ekranını Göster
         document.getElementById('death-screen').classList.add('active');
-        isPaused = true; // Oyunu dondur (kısmen, arka planda işlem dönebilir ama input almayacağız)
+        isPaused = true; 
         
         // 3 Saniye sonra yeniden doğ
         setTimeout(() => {
@@ -202,7 +247,7 @@ class VoidRay {
         const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
         const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
         
-        // --- RADYASYON VE SINIR KONTROLÜ (GÜNCELLENDİ) ---
+        // --- RADYASYON VE SINIR KONTROLÜ ---
         const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
         
         if (isOutOfBounds) {
@@ -221,7 +266,6 @@ class VoidRay {
                 
                 // Geri itme kuvveti zamanla artar
                 const pushForce = 0.5 + (this.outOfBoundsTimer * 0.002); 
-                
                 this.vx += Math.cos(angleToCenter) * pushForce;
                 this.vy += Math.sin(angleToCenter) * pushForce;
             }
@@ -229,11 +273,8 @@ class VoidRay {
             // Görsel Uyarılar
             document.getElementById('radiation-overlay').classList.add('active');
             document.getElementById('radiation-warning').style.display = 'block';
-            
         } else {
-            // Sınır içine dönüldü, sayacı yavaşça düşür (hemen sıfırlama, gir-çık yapılmasın)
             this.outOfBoundsTimer = Math.max(0, this.outOfBoundsTimer - 5);
-            
             document.getElementById('radiation-overlay').classList.remove('active');
             document.getElementById('radiation-warning').style.display = 'none';
         }
@@ -248,7 +289,6 @@ class VoidRay {
                 this.energy = Math.max(0, this.energy - cost);
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
-                // Sınır içindeysek enerji yenilenir
                 if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + 0.01);
         }
         
@@ -262,19 +302,17 @@ class VoidRay {
             ACCEL = 0.2; 
         }
 
-        // BAR GÜNCELLEMELERİ
         const energyBar = document.getElementById('energy-bar-fill');
         energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
         if(this.energy < 20) energyBar.style.background = '#ef4444';
         else energyBar.style.background = '#38bdf8';
 
-        // Can Barı Güncellemesi
         const healthBar = document.getElementById('health-bar-fill');
         const healthPct = (this.health / this.maxHealth) * 100;
         healthBar.style.width = healthPct + '%';
-        if (healthPct < 30) healthBar.style.background = '#ef4444'; // Kırmızı
-        else if (healthPct < 60) healthBar.style.background = '#f59e0b'; // Turuncu
-        else healthBar.style.background = '#10b981'; // Yeşil
+        if (healthPct < 30) healthBar.style.background = '#ef4444'; 
+        else if (healthPct < 60) healthBar.style.background = '#f59e0b'; 
+        else healthBar.style.background = '#10b981'; 
 
         let targetRoll = 0; let targetWingState = 0;
 
@@ -299,11 +337,34 @@ class VoidRay {
             targetWingState = 0; 
         } else if (autopilot) {
             let targetX, targetY, doThrust = true;
+            
+            // --- OTOPİLOT VE DEPO MANTIĞI ---
+            const cap = getPlayerCapacity();
+            
+            if (collectedItems.length >= cap && aiMode !== 'deposit' && aiMode !== 'base') {
+                aiMode = 'deposit'; 
+                showNotification({name: "DEPO DOLU: OTOMATİK AKTARIM BAŞLATILIYOR", type:{color:'#a855f7'}}, "");
+                updateAIButton();
+            }
+
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
                  const distToNexus = Math.hypot(this.x - nexus.x, this.y - nexus.y);
                  if(distToNexus < 400) doThrust = false;
-            } else if (aiMode === 'travel' && manualTarget) {
+            } 
+            else if (aiMode === 'deposit') {
+                targetX = storageCenter.x; targetY = storageCenter.y;
+                const distToStorage = Math.hypot(this.x - storageCenter.x, this.y - storageCenter.y);
+                
+                if(distToStorage < 200) {
+                    doThrust = false;
+                    depositToStorage(collectedItems, "VATOZ");
+                    aiMode = 'gather';
+                    showNotification({name: "OTOMATİK AKTARIM TAMAMLANDI", type:{color:'#10b981'}}, "");
+                    updateAIButton();
+                }
+            }
+            else if (aiMode === 'travel' && manualTarget) {
                 targetX = manualTarget.x; targetY = manualTarget.y;
                 const distToTarget = Math.hypot(this.x - targetX, this.y - targetY);
                 if(distToTarget < 200) {
@@ -314,14 +375,19 @@ class VoidRay {
                      updateAIButton();
                 }
             } else {
+                // Gather Mode
                 aiMode = 'gather';
                 let nearest = null, minDist = Infinity;
-                for(let p of planets) {
-                    if(!p.collected && p.type.id !== 'toxic') {
-                        const d = (p.x-this.x)**2 + (p.y-this.y)**2;
-                        if(d < minDist) { minDist = d; nearest = p; }
+                
+                if (collectedItems.length < cap) {
+                    for(let p of planets) {
+                        if(!p.collected && p.type.id !== 'toxic') {
+                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
+                            if(d < minDist) { minDist = d; nearest = p; }
+                        }
                     }
                 }
+                
                 if(nearest) { targetX = nearest.x; targetY = nearest.y; } 
                 else { targetX = this.x + Math.cos(this.angle)*1000; targetY = this.y + Math.sin(this.angle)*1000; }
             }
@@ -351,7 +417,7 @@ class VoidRay {
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
         }
 
-        // Çekim Alanı Fiziği
+        // Çekim Alanı
         planets.forEach(p => {
             if(!p.collected && p.type.id !== 'toxic') {
                 const dx = p.x - this.x; const dy = p.y - this.y;
@@ -456,6 +522,7 @@ class EchoRay {
         this.mode = 'roam'; 
         this.energy = 100;
         this.energyDisplayTimer = 0; 
+        this.fullNotified = false;
         
         // Radar Yapılandırması
         this.scanRadius = 4000;
@@ -483,6 +550,7 @@ class EchoRay {
 
         if (this.energyDisplayTimer > 0) this.energyDisplayTimer--;
 
+        // Enerji kontrolü
         if (this.energy < 10 && this.mode !== 'recharge' && !this.attached) {
             const fuelIndex = this.lootBag.findIndex(i => i.name === 'Nebula Özü');
             if (fuelIndex !== -1) {
@@ -501,10 +569,31 @@ class EchoRay {
             }
         }
 
-        const badge = document.getElementById('echo-total-badge'); const count = this.lootBag.length; badge.innerText = count; badge.style.display = count > 0 ? 'flex' : 'none';
+        const badge = document.getElementById('echo-total-badge'); 
+        const count = this.lootBag.length; 
+        badge.innerText = count; 
+        badge.style.display = count > 0 ? 'flex' : 'none';
         
+        // Kapasite Kontrolü
+        const echoCap = getEchoCapacity();
+        
+        if (count >= echoCap) {
+             badge.style.background = '#ef4444'; // Dolu ise kırmızı
+             
+             // Eğer doluysa ve şarj veya zaten depoya gitmiyorsa
+             if (this.mode !== 'deposit_storage' && this.mode !== 'recharge' && this.mode !== 'return') {
+                 // Otomatik olarak depoya gönder
+                 this.mode = 'deposit_storage';
+                 showNotification({name: "YANKI DEPOSU DOLU: BOŞALTMAYA GİDİYOR", type:{color:'#a855f7'}}, "");
+                 updateEchoDropdownUI();
+             }
+        } else {
+            badge.style.background = '#67e8f9';
+        }
+
         let targetX, targetY;
 
+        // --- HEDEF BELİRLEME MANTIĞI ---
         if (this.mode === 'recharge') {
             targetX = nexus.x; targetY = nexus.y;
             const d = Math.hypot(this.x - nexus.x, this.y - nexus.y);
@@ -517,18 +606,35 @@ class EchoRay {
                     updateEchoDropdownUI();
                 }
             }
+        } else if (this.mode === 'deposit_storage') {
+            // Depo merkezine git
+            targetX = storageCenter.x; targetY = storageCenter.y;
+            const d = Math.hypot(this.x - storageCenter.x, this.y - storageCenter.y);
+            if (d < 150) {
+                // Depoya boşalt
+                depositToStorage(this.lootBag, "YANKI");
+                this.mode = 'roam'; // Göreve dön
+                showNotification({name: "YANKI DEPOYU BOŞALTTI", type:{color:'#67e8f9'}}, "");
+                updateEchoDropdownUI();
+            }
         } else if (this.attached || this.mode === 'return') {
             const target = this.attached ? player.tail[player.tail.length - 1] : player;
             targetX = target.x; targetY = target.y;
         } else {
-            let nearest = null, minDist = Infinity;
-            for(let p of planets) {
-                if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
-                    const d = (p.x-this.x)**2 + (p.y-this.y)**2;
-                    if(d < minDist) { minDist = d; nearest = p; }
+            // Roam (Toplama) Modu
+            if (this.lootBag.length < echoCap) {
+                let nearest = null, minDist = Infinity;
+                for(let p of planets) {
+                    if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
+                        const d = (p.x-this.x)**2 + (p.y-this.y)**2;
+                        if(d < minDist) { minDist = d; nearest = p; }
+                    }
                 }
+                if(nearest) { targetX = nearest.x; targetY = nearest.y; }
+            } else {
+                targetX = player.x + Math.cos(Date.now() * 0.001) * 300;
+                targetY = player.y + Math.sin(Date.now() * 0.001) * 300;
             }
-            if(nearest) { targetX = nearest.x; targetY = nearest.y; }
         }
 
         if (targetX !== undefined) {
@@ -543,7 +649,7 @@ class EchoRay {
                 if (dist < 100 && this.mode !== 'roam') {
                      this.vx *= 0.8; this.vy *= 0.8;
                 } else {
-                     const thrust = (this.mode === 'recharge') ? 0.8 : 0.5;
+                     const thrust = (this.mode === 'recharge' || this.mode === 'deposit_storage') ? 0.8 : 0.5;
                      this.vx += Math.cos(targetA) * thrust; this.vy += Math.sin(targetA) * thrust;
                 }
             }
@@ -566,21 +672,32 @@ class EchoRay {
         
         if (!this.attached) {
             this.x += this.vx; this.y += this.vy;
-            if (this.mode !== 'recharge') {
+            if (this.mode !== 'recharge' && this.mode !== 'deposit_storage') {
                 const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
                 const pickupRange = 40 * rangeMult;
-                for(let p of planets) {
-                    if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
-                        const d = Math.hypot(this.x-p.x, this.y-p.y);
-                        if(d < p.radius + pickupRange) { 
-                            p.collected = true; 
-                            if(p.type.id === 'tardigrade') {
-                                this.lootBag.push(p);
-                            } else {
-                                const count = GameRules.calculateLootCount(); 
-                                for(let i=0; i<count; i++) this.lootBag.push(p); 
+                
+                // Toplama döngüsü, sadece kapasite varsa çalışır
+                if (this.lootBag.length < echoCap) {
+                    for(let p of planets) {
+                        if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
+                            const d = Math.hypot(this.x-p.x, this.y-p.y);
+                            if(d < p.radius + pickupRange) { 
+                                p.collected = true; 
+                                if(p.type.id === 'tardigrade') {
+                                    this.lootBag.push(p);
+                                } else {
+                                    const count = GameRules.calculateLootCount(); 
+                                    // Kapasiteye sığacak kadar al
+                                    const availableSpace = echoCap - this.lootBag.length;
+                                    const takeAmount = Math.min(count, availableSpace);
+                                    
+                                    for(let i=0; i<takeAmount; i++) this.lootBag.push(p); 
+                                }
+                                if(echoInvOpen) renderEchoInventory(); 
+                                
+                                // Döngü içinde kapasite dolarsa çık
+                                if (this.lootBag.length >= echoCap) break;
                             }
-                            if(echoInvOpen) renderEchoInventory(); 
                         }
                     }
                 }
@@ -641,14 +758,9 @@ class Planet {
         this.radius = this.type.id==='legendary'?120 : (this.type.id==='toxic'? 60 : (this.type.id==='lost' ? 80 : (this.type.id === 'tardigrade' ? 50 : 40+Math.random()*60)));
     }
     
-    /**
-     * Gezegeni çizer. Görünürlük durumuna göre stil değiştirir.
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {number} visibility - 0: Gizli, 1: Radar (Gri), 2: Tarama (Renkli)
-     */
     draw(ctx, visibility = 2) {
         if(this.collected) return;
-        if(visibility === 0) return; // Radar Dışı
+        if(visibility === 0) return; 
 
         // Radar Teması (Kısmi Görüş)
         if(visibility === 1) {

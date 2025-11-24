@@ -645,3 +645,19 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
     opacity: 0; transition: opacity 0.1s;
 }
 #damage-overlay.active { opacity: 1; }
+
+/* --- STORAGE PENCERESİ (YENİ) --- */
+.storage-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 4px; transition: all 0.2s;
+}
+.storage-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+.storage-btn-s {
+    padding: 4px 10px; font-size: 0.7rem; border-radius: 2px; cursor: pointer;
+    border: 1px solid transparent; transition: 0.2s;
+}
+.btn-deposit { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); }
+.btn-deposit:hover { background: #38bdf8; color: #000; }
+.btn-withdraw { background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.3); }
+.btn-withdraw:hover { background: #a855f7; color: #000; }

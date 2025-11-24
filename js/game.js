@@ -14,9 +14,11 @@ let playerData = {
         playerSpeed: 0, 
         playerTurn: 0, 
         playerMagnet: 0, 
+        playerCapacity: 0,
         echoSpeed: 0, 
         echoRange: 0, 
-        echoDurability: 0 
+        echoDurability: 0,
+        echoCapacity: 0
     },
     stats: { 
         maxSpeed: 0, 
@@ -59,17 +61,18 @@ const bmCtx = bmCanvas.getContext('2d');
 
 // Varlıklar ve Koleksiyonlar
 let width, height;
-let player, echoRay = null, nexus = null, repairStation = null, audio; // repairStation eklendi
+let player, echoRay = null, nexus = null, repairStation = null, storageCenter = null, audio; 
 let planets = [], stars = [], collectedItems = [], particles = [];
+let centralStorage = [];
 
 // Arayüz Durumları
-let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false;
+let inventoryOpen = false, echoInvOpen = false, nexusOpen = false, mapOpen = false, storageOpen = false; // storageOpen eklendi
 let statsOpen = false;
 let activeFilter = 'all';
 
 // Otopilot ve Yapay Zeka
 let autopilot = false;
-let aiMode = 'gather'; // 'gather' | 'base' | 'travel'
+let aiMode = 'gather'; // gather | base | travel | deposit
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
@@ -80,6 +83,17 @@ const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, 
 // YARDIMCI FONKSİYONLAR
 // -------------------------------------------------------------------------
 
+// Kapasite Hesaplama Fonksiyonları
+function getPlayerCapacity() {
+    // Taban: 150 (Sabit İstek), Seviye Başına: +25
+    return 150 + (playerData.upgrades.playerCapacity * 25);
+}
+
+function getEchoCapacity() {
+    // Taban: 80 (Sabit İstek), Seviye Başına: +10
+    return 80 + (playerData.upgrades.echoCapacity * 10);
+}
+
 /**
  * Belirtilen koordinatlarda yeni bir Yankı (EchoRay) oluşturur.
  */
@@ -89,15 +103,172 @@ function spawnEcho(x, y) {
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
 }
 
+/**
+ * Eşyaları merkez depoya aktarır (OTOMATİK İŞLEM İÇİN).
+ * @param {Array} sourceArray - Boşaltılacak dizi (collectedItems veya lootBag)
+ * @param {String} sourceName - Kaynağın ismi (Log için)
+ */
+function depositToStorage(sourceArray, sourceName) {
+    if (sourceArray.length === 0) return;
+    
+    const count = sourceArray.length;
+    const itemsToStore = sourceArray.filter(i => i.type.id !== 'tardigrade');
+    
+    itemsToStore.forEach(item => centralStorage.push(item));
+    sourceArray.length = 0;
+    
+    audio.playCash(); 
+    showNotification({name: `${sourceName}: ${count} EŞYA DEPOYA AKTARILDI`, type:{color:'#a855f7'}}, "");
+    
+    updateInventoryCount();
+    if(inventoryOpen) renderInventory();
+    if(echoInvOpen) renderEchoInventory();
+    if(storageOpen) renderStorageUI();
+}
+
+// -------------------------------------------------------------------------
+// STORAGE UI MANTIĞI (YENİ)
+// -------------------------------------------------------------------------
+
+function openStorage() {
+    storageOpen = true;
+    document.getElementById('storage-overlay').classList.add('open');
+    renderStorageUI();
+}
+
+function closeStorage() {
+    storageOpen = false;
+    document.getElementById('storage-overlay').classList.remove('open');
+}
+
+function renderStorageUI() {
+    if (!storageOpen) return;
+
+    const shipList = document.getElementById('storage-ship-list');
+    const centerList = document.getElementById('storage-center-list');
+    const shipCap = document.getElementById('storage-ship-cap');
+    const centerCount = document.getElementById('storage-center-count');
+
+    shipCap.innerText = `${collectedItems.length} / ${getPlayerCapacity()}`;
+    centerCount.innerText = `${centralStorage.length} EŞYA`;
+
+    // Gemi Listesi
+    shipList.innerHTML = '';
+    const shipGrouped = {};
+    collectedItems.forEach((item, index) => {
+        if (!shipGrouped[item.name]) shipGrouped[item.name] = { ...item, count: 0, indices: [] };
+        shipGrouped[item.name].count++;
+        shipGrouped[item.name].indices.push(index);
+    });
+
+    Object.values(shipGrouped).forEach(grp => {
+        shipList.innerHTML += `
+            <div class="storage-item">
+                <div class="flex items-center gap-2">
+                    <span style="color:${grp.type.color}">●</span>
+                    <span class="text-gray-300 text-sm">${grp.name}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-gray-500 text-xs">x${grp.count}</span>
+                    <button onclick="depositItem('${grp.name}')" class="storage-btn-s btn-deposit">DEPOLA</button>
+                </div>
+            </div>
+        `;
+    });
+
+    // Merkez Depo Listesi
+    centerList.innerHTML = '';
+    const centerGrouped = {};
+    centralStorage.forEach((item, index) => {
+        if (!centerGrouped[item.name]) centerGrouped[item.name] = { ...item, count: 0 };
+        centerGrouped[item.name].count++;
+    });
+
+    Object.values(centerGrouped).forEach(grp => {
+        centerList.innerHTML += `
+            <div class="storage-item">
+                <div class="flex items-center gap-2">
+                    <span style="color:${grp.type.color}">●</span>
+                    <span class="text-gray-300 text-sm">${grp.name}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-gray-500 text-xs">x${grp.count}</span>
+                    <button onclick="withdrawItem('${grp.name}')" class="storage-btn-s btn-withdraw">AL</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// Tekil Depolama
+window.depositItem = function(name) {
+    const index = collectedItems.findIndex(i => i.name === name);
+    if (index !== -1) {
+        const item = collectedItems.splice(index, 1)[0];
+        centralStorage.push(item);
+        renderStorageUI();
+        updateInventoryCount();
+    }
+};
+
+// Hepsini Depolama
+window.depositAllToStorage = function() {
+    depositToStorage(collectedItems, "VATOZ"); 
+};
+
+// Tekil Çekme
+window.withdrawItem = function(name) {
+    if (collectedItems.length >= getPlayerCapacity()) {
+        showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+        return;
+    }
+    const index = centralStorage.findIndex(i => i.name === name);
+    if (index !== -1) {
+        const item = centralStorage.splice(index, 1)[0];
+        collectedItems.push(item);
+        renderStorageUI();
+        updateInventoryCount();
+    }
+};
+
+// Hepsini Çekme
+window.withdrawAllFromStorage = function() {
+    const cap = getPlayerCapacity();
+    let moved = 0;
+    // Depodaki her şeyi gemiye sığdığı kadar al
+    while(centralStorage.length > 0 && collectedItems.length < cap) {
+        collectedItems.push(centralStorage.pop());
+        moved++;
+    }
+    if (moved > 0) showNotification({name: `${moved} EŞYA GEMİYE ALINDI`, type:{color:'#38bdf8'}}, "");
+    else if (centralStorage.length > 0) showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+    
+    renderStorageUI();
+    updateInventoryCount();
+};
+
 // -------------------------------------------------------------------------
 // ARAYÜZ (UI) YÖNETİMİ
 // -------------------------------------------------------------------------
 
 function updateInventoryCount() {
     const badge = document.getElementById('inv-total-badge'); 
-    const count = collectedItems.length; 
+    const count = collectedItems.length;
+    const capacity = getPlayerCapacity();
+    
     badge.innerText = count; 
     badge.style.display = count > 0 ? 'flex' : 'none';
+    
+    if (count >= capacity) {
+        badge.style.background = '#ef4444';
+        badge.style.color = '#fff';
+    } else if (count >= capacity * 0.9) {
+        badge.style.background = '#f59e0b';
+        badge.style.color = '#000';
+    } else {
+        badge.style.background = '#fff';
+        badge.style.color = '#000';
+    }
     
     document.getElementById('count-all').innerText = count;
     document.getElementById('count-legendary').innerText = collectedItems.filter(i => i.type.id === 'legendary').length;
@@ -106,10 +277,21 @@ function updateInventoryCount() {
 }
 
 function addItemToInventory(planet) { 
+    const currentCount = collectedItems.length;
+    const capacity = getPlayerCapacity();
+
+    if (currentCount >= capacity) {
+        if (!autopilot) {
+            showNotification({name: "ENVANTER DOLU! NEXUS VEYA DEPOYA GİDİN.", type:{color:'#ef4444'}}, "");
+        }
+        return false; 
+    }
+
     collectedItems.push(planet); 
     playerData.stats.totalResources++; 
     updateInventoryCount(); 
-    if(inventoryOpen) renderInventory(); 
+    if(inventoryOpen) renderInventory();
+    return true; 
 }
 
 function updateEchoDropdownUI() {
@@ -124,7 +306,8 @@ function updateEchoDropdownUI() {
     
     if (echoRay.attached) document.getElementById('menu-merge').classList.add('active-mode');
     else if (echoRay.mode === 'return') document.getElementById('menu-return').classList.add('active-mode');
-    else if (echoRay.mode === 'recharge') { /* Şarj durumu özel bir menü gerektirmez */ }
+    else if (echoRay.mode === 'recharge') { /* Şarj */ }
+    else if (echoRay.mode === 'deposit_storage') { /* Depolama */ } 
     else document.getElementById('menu-roam').classList.add('active-mode');
 }
 
@@ -147,21 +330,44 @@ function echoManualMerge() {
     const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
     
     if (dist < 350) {
-         // Yankı üzerindeki eşyaları oyuncuya aktar
          if (echoRay.lootBag.length > 0) {
+            let itemsToTransfer = [];
+            let itemsKept = [];
+            let playerCap = getPlayerCapacity();
+            let currentLoad = collectedItems.length;
+
             echoRay.lootBag.forEach(p => { 
                 if(p.type.id === 'tardigrade') {
                     player.energy = Math.min(player.energy + 50, player.maxEnergy);
                     showNotification({name: "YANKI: TARDİGRAD GETİRDİ (+%50 ENERJİ)", type:{color:'#C7C0AE'}}, "");
+                    player.gainXp(p.type.xp);
                 } else {
-                    addItemToInventory(p); 
-                    player.gainXp(p.type.xp); 
+                    if (currentLoad < playerCap) {
+                        itemsToTransfer.push(p);
+                        currentLoad++;
+                    } else {
+                        itemsKept.push(p);
+                    }
                 }
             });
-            if(echoRay.lootBag.filter(p=>p.type.id!=='tardigrade').length > 0) {
-                showNotification({name: `YANKI: EŞYALAR AKTARILDI`, type:{color:'#38bdf8'}}, "");
+
+            itemsToTransfer.forEach(item => {
+                 collectedItems.push(item);
+                 playerData.stats.totalResources++;
+                 player.gainXp(item.type.xp);
+            });
+
+            echoRay.lootBag = itemsKept;
+
+            if(itemsToTransfer.length > 0) {
+                showNotification({name: `YANKI: ${itemsToTransfer.length} EŞYA AKTARILDI`, type:{color:'#38bdf8'}}, "");
             }
-            echoRay.lootBag = []; 
+
+            if(itemsKept.length > 0) {
+                 showNotification({name: "UYARI: OYUNCU ENVANTERİ DOLU!", type:{color:'#ef4444'}}, "Bazı eşyalar Yankı'da kaldı.");
+            }
+            
+            updateInventoryCount();
             if(echoInvOpen) renderEchoInventory();
         }
         
@@ -184,6 +390,10 @@ function renderEchoInventory() {
     if(!echoRay) return; 
     const grid = document.getElementById('echo-inv-grid-content');
     
+    const headerTitle = document.querySelector('#echo-inventory-overlay h2');
+    const cap = getEchoCapacity();
+    if(headerTitle) headerTitle.innerHTML = `YANKI DEPOSU <span style="font-size:0.6em; color:#67e8f9; opacity:0.7;">(${echoRay.lootBag.length}/${cap})</span>`;
+
     if(echoRay.lootBag.length === 0) { 
         grid.innerHTML = '<div class="text-center text-cyan-500/50 mt-20">Depo boş.</div>'; 
         return; 
@@ -205,6 +415,16 @@ function renderEchoInventory() {
 
 function renderInventory() {
     const grid = document.getElementById('inv-grid-content');
+    
+    const invHeader = document.querySelector('.inv-header h2');
+    const cap = getPlayerCapacity();
+    const count = collectedItems.length;
+    const color = count >= cap ? '#ef4444' : '#94a3b8';
+    
+    if(invHeader) {
+        invHeader.innerHTML = `ENVANTER <span style="font-size:0.5em; vertical-align:middle; color:${color}; letter-spacing:1px; margin-left:10px;">${count} / ${cap}</span>`;
+    }
+
     let filteredItems = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
     
     if(filteredItems.length === 0) { 
@@ -283,6 +503,8 @@ function renderStats() {
         <tr><th>KAZANILAN KRİSTAL</th><td>${playerData.stats.totalStardust} ◆</td></tr>
         <tr><th>HARCANAN KRİSTAL</th><td>${playerData.stats.totalSpentStardust} ◆</td></tr>
         <tr><th>HARCANAN ENERJİ</th><td>${Math.floor(playerData.stats.totalEnergySpent)} BİRİM</td></tr>
+        <tr><th>ENVANTER KAPASİTESİ</th><td>${collectedItems.length} / ${getPlayerCapacity()}</td></tr>
+        <tr><th>DEPO (MERKEZ)</th><td>${centralStorage.length} EŞYA</td></tr>
     `;
 }
 
@@ -327,6 +549,10 @@ function updateAIButton() {
         btn.innerText = 'ÜS'; 
         btn.style.color = '#fbbf24'; 
         btn.style.borderColor = '#fbbf24'; 
+    } else if (aiMode === 'deposit') {
+        btn.innerText = 'DEPO'; 
+        btn.style.color = '#a855f7'; 
+        btn.style.borderColor = '#a855f7'; 
     } else { 
         btn.innerText = 'TOPLA'; 
         btn.style.color = 'white'; 
@@ -350,6 +576,7 @@ function switchNexusTab(tabName) {
 
 function renderMarket() {
     const grid = document.getElementById('market-grid'); grid.innerHTML = '';
+    
     if(collectedItems.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-gray-500 mt-10">Satılacak eşya yok.</div>'; return; }
     const grouped = {}; collectedItems.forEach(item => { if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; grouped[item.name].count++; });
     Object.values(grouped).forEach(item => {
@@ -390,8 +617,9 @@ function renderUpgrades() {
         let pips = ''; for(let i=0; i<data.max; i++) pips += `<div class="lvl-pip ${i<currentLvl?'filled':''}"></div>`;
         return `<div class="upgrade-item"><div class="upg-info"><h4>${data.name}</h4><p>${data.desc}</p><div class="upg-level">${pips}</div></div><button class="buy-btn" ${isMax || playerData.stardust < cost ? 'disabled' : ''} onclick="buyUpgrade('${key}')">${isMax ? 'MAX' : 'GELİŞTİR'} ${!isMax ? `<span class="cost-text">${cost} ◆</span>` : ''}</button></div>`;
     };
-    ['playerSpeed', 'playerTurn', 'playerMagnet'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k]));
-    ['echoSpeed', 'echoRange', 'echoDurability'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k]));
+    
+    ['playerSpeed', 'playerTurn', 'playerMagnet', 'playerCapacity'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k]));
+    ['echoSpeed', 'echoRange', 'echoDurability', 'echoCapacity'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k]));
 }
 
 window.buyUpgrade = function(key) {
@@ -401,7 +629,7 @@ window.buyUpgrade = function(key) {
         playerData.stardust -= cost; 
         playerData.upgrades[key]++; 
         playerData.stats.totalSpentStardust += cost;
-        audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); 
+        audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); updateInventoryCount(); // Kapasite değişince badge güncelle
     }
 };
 
@@ -416,19 +644,19 @@ function showNotification(planet, suffix) {
     let type = "loot";
     const name = planet.name || "";
 
-    if (name === "ROTA OLUŞTURULDU") {
-        msg = `Sistem: Rota oluşturuldu.`;
+    if (name === "ROTA OLUŞTURULDU" || name.includes("OTOMATİK")) {
+        msg = `Sistem: ${name}`;
         type = "info";
     } else if (name.includes("EVRİM GEÇİRİLDİ")) {
         msg = `Sistem: ${name}`;
         type = "info";
-    } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ")) {
+    } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ") || name.includes("DEPO")) {
         msg = `Sistem: ${name}`;
         type = "info";
     } else if (name.includes("ENERJİ")) {
          msg = `${name} ${suffix}`;
          type = "info";
-    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ")) {
+    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU")) {
         msg = `UYARI: ${name} ${suffix}`;
         type = "alert";
     } else if (name.includes("KAYIP KARGO")) {
@@ -452,7 +680,6 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
     
     chatHistory[channel].push(msgObj);
     
-    // "Genel" kanalı tüm mesajları toplar
     if (channel !== 'genel') {
         chatHistory['genel'].push(msgObj);
     }
@@ -511,9 +738,6 @@ document.getElementById('chat-input').addEventListener('keydown', (e) => {
 // HARİTA VE RADAR ÇİZİMİ
 // -------------------------------------------------------------------------
 
-/**
- * Ekran kenarında hedef göstergesi çizer.
- */
 function drawTargetIndicator(targetX, targetY, color) {
     const camCX = player.x; const camCY = player.y; const dx = targetX - camCX; const dy = targetY - camCY;
     const screenHalfW = (width / currentZoom) / 2; const screenHalfH = (height / currentZoom) / 2;
@@ -543,7 +767,6 @@ function drawBigMap() {
     const offsetX = (bmCanvas.width - WORLD_SIZE * scale) / 2;
     const offsetY = (bmCanvas.height - WORLD_SIZE * scale) / 2;
 
-    // Harita Sınırları
     bmCtx.strokeStyle = "rgba(255,255,255,0.1)"; bmCtx.lineWidth = 2;
     bmCtx.strokeRect(offsetX, offsetY, WORLD_SIZE*scale, WORLD_SIZE*scale);
 
@@ -551,7 +774,6 @@ function drawBigMap() {
     const py = offsetY + player.y * scale;
     
     // --- Oyuncu Radarı ---
-    // Dış Çember (Turuncu - Radar/Kısmi Görüş)
     bmCtx.beginPath(); 
     bmCtx.arc(px, py, player.radarRadius * scale, 0, Math.PI*2); 
     
@@ -567,7 +789,6 @@ function drawBigMap() {
     bmCtx.fill();
     bmCtx.shadowBlur = 0;
 
-    // İç Çember (Yeşil - Tarama/Tam Görüş)
     bmCtx.beginPath(); 
     bmCtx.arc(px, py, player.scanRadius * scale, 0, Math.PI*2); 
     
@@ -585,7 +806,6 @@ function drawBigMap() {
         const ex = offsetX + echoRay.x * scale;
         const ey = offsetY + echoRay.y * scale;
         
-        // Dış Çember
         bmCtx.beginPath(); 
         bmCtx.arc(ex, ey, echoRay.radarRadius * scale, 0, Math.PI*2); 
         
@@ -599,7 +819,6 @@ function drawBigMap() {
         bmCtx.fillStyle = "rgba(251, 191, 36, 0.03)";
         bmCtx.fill();
         
-        // İç Çember
         bmCtx.beginPath(); 
         bmCtx.arc(ex, ey, echoRay.scanRadius * scale, 0, Math.PI*2); 
         
@@ -614,18 +833,16 @@ function drawBigMap() {
         bmCtx.shadowBlur = 0;
     }
 
-    // Gezegen Çizimi
     planets.forEach(p => {
         if(!p.collected) {
             const visibility = getPlanetVisibility(p, player, echoRay);
-            if (visibility === 0) return; // Görünmez
+            if (visibility === 0) return;
 
             bmCtx.beginPath(); 
             
             if (visibility === 1) {
-                bmCtx.fillStyle = "rgba(255,255,255,0.3)"; // Radar Sinyali (Gri)
+                bmCtx.fillStyle = "rgba(255,255,255,0.3)"; 
             } else {
-                // Tam Görünür (Renkli) - ARTIK TÜR RENGİNİ KULLANIYOR
                 bmCtx.fillStyle = p.type.color; 
             }
             
@@ -635,22 +852,22 @@ function drawBigMap() {
         }
     });
 
-    // Sabit Varlıklar
     bmCtx.fillStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 5, 0, Math.PI*2); bmCtx.fill();
     bmCtx.strokeStyle = "white"; bmCtx.beginPath(); bmCtx.arc(offsetX + nexus.x*scale, offsetY + nexus.y*scale, 10, 0, Math.PI*2); bmCtx.stroke();
 
-    // Tamir İstasyonu (YENİ)
     if(repairStation) {
         bmCtx.fillStyle = "#10b981"; bmCtx.beginPath(); bmCtx.arc(offsetX + repairStation.x*scale, offsetY + repairStation.y*scale, 4, 0, Math.PI*2); bmCtx.fill();
+    }
+    
+    if(storageCenter) {
+        bmCtx.fillStyle = "#a855f7"; bmCtx.beginPath(); bmCtx.arc(offsetX + storageCenter.x*scale, offsetY + storageCenter.y*scale, 5, 0, Math.PI*2); bmCtx.fill();
     }
 
     if(echoRay) { bmCtx.fillStyle = "#67e8f9"; bmCtx.beginPath(); bmCtx.arc(offsetX + echoRay.x*scale, offsetY + echoRay.y*scale, 4, 0, Math.PI*2); bmCtx.fill(); }
 
-    // Oyuncu Yönü
     bmCtx.save(); bmCtx.translate(offsetX + player.x*scale, offsetY + player.y*scale); bmCtx.rotate(player.angle + Math.PI/2);
     bmCtx.fillStyle = "#38bdf8"; bmCtx.beginPath(); bmCtx.moveTo(0, -8); bmCtx.lineTo(6, 8); bmCtx.lineTo(-6, 8); bmCtx.fill(); bmCtx.restore();
 
-    // Hedef Çizgisi
     if(manualTarget) {
         const tx = offsetX + manualTarget.x*scale; const ty = offsetY + manualTarget.y*scale;
         bmCtx.strokeStyle = "#ef4444"; bmCtx.setLineDash([5, 5]); bmCtx.beginPath(); bmCtx.moveTo(offsetX + player.x*scale, offsetY + player.y*scale); bmCtx.lineTo(tx, ty); bmCtx.stroke(); bmCtx.setLineDash([]);
@@ -703,16 +920,15 @@ function closeMap() {
 function init() {
     player = new VoidRay(); 
     nexus = new Nexus(); 
-    repairStation = new RepairStation(); // YENİ: Tamir istasyonu oluşturuldu
+    repairStation = new RepairStation(); 
+    storageCenter = new StorageCenter(); 
     audio = new ZenAudio();
     planets = []; 
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    // Gezegenleri Oluştur
     for(let i=0; i<1200; i++) planets.push(new Planet());
     
-    // Arka Plan Yıldızları
     stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
     
     player.updateUI(); updateInventoryCount(); isPaused = false;
@@ -722,7 +938,6 @@ function init() {
     targetZoom = 1.0;  
     window.cinematicMode = true; 
 
-    // Başlangıç Mesajları
     addChatMessage("Sistem başlatılıyor...", "system", "genel");
     setTimeout(() => addChatMessage("Optik sensörler kalibre ediliyor...", "info", "genel"), 1000);
     setTimeout(() => addChatMessage("Hoş geldin, Pilot. Motorlar aktif.", "loot", "genel"), 3500);
@@ -746,20 +961,16 @@ function startLoop() {
     loop();
 }
 
-/**
- * Verilen bir gezegenin görünürlük durumunu hesaplar.
- * @returns {number} 0: Gizli, 1: Radar (Kısmi), 2: Tarama (Tam)
- */
 function getPlanetVisibility(p, player, echo) {
     let visibility = 0;
 
     const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
     
     if (dPlayer < player.scanRadius) {
-        return 2; // Tam Görünür
+        return 2; 
     }
     else if (dPlayer < player.radarRadius) {
-        visibility = 1; // Kısmi Görünür
+        visibility = 1; 
     }
 
     if (echo) {
@@ -780,7 +991,6 @@ function loop() {
         const dt = now - lastFrameTime;
         lastFrameTime = now;
 
-        // Kamera ve Zoom
         let zoomSpeed = 0.1;
         if (window.cinematicMode) {
             zoomSpeed = 0.02;
@@ -790,11 +1000,11 @@ function loop() {
         }
         currentZoom += (targetZoom - currentZoom) * zoomSpeed;
 
-        // Güncellemeler
         player.update(dt);
         if(echoRay) echoRay.update(); 
         nexus.update();
-        repairStation.update(); // YENİ
+        repairStation.update();
+        storageCenter.update();
 
         if(autopilot) {
             playerData.stats.timeAI += dt;
@@ -804,7 +1014,6 @@ function loop() {
             renderStats();
         }
 
-        // Toplanmamış gezegenleri filtrele ve gerekirse yenilerini ekle
         planets = planets.filter(p => !p.collected);
         if (planets.length < 1200) {
             const needed = 1200 - planets.length;
@@ -814,11 +1023,11 @@ function loop() {
             }
         }
 
-        // Tuş Kontrolleri (Menü Açma/Kapama)
         if (keys.Escape) { 
             if (inventoryOpen) closeInventory();
             else if (echoInvOpen) closeEchoInventory();
             else if (nexusOpen) exitNexus();
+            else if (storageOpen) closeStorage(); 
             else if (mapOpen) closeMap();
             else if (statsOpen) closeStats();
             else if (document.getElementById('sound-panel').classList.contains('open')) document.getElementById('sound-panel').classList.remove('open');
@@ -840,16 +1049,16 @@ function loop() {
             mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
         }
 
-        // Ana Çizimler
         ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
         ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
 
         ctx.save(); ctx.translate(width/2, height/2); ctx.scale(currentZoom, currentZoom); ctx.translate(-player.x, -player.y);
         nexus.draw(ctx);
-        repairStation.draw(ctx); // YENİ
+        repairStation.draw(ctx); 
+        storageCenter.draw(ctx); 
+        
         for(let i=particles.length-1; i>=0; i--) { particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
         
-        // Oyun Dünyası Radar Çizimi
         ctx.lineWidth = 1;
         ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; 
         ctx.beginPath(); ctx.arc(player.x, player.y, player.scanRadius, 0, Math.PI*2); ctx.stroke();
@@ -865,7 +1074,6 @@ function loop() {
             ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
         }
 
-        // Gezegenlerin Çizilmesi ve Etkileşim Kontrolü
         planets.forEach(p => { 
             const visibility = getPlanetVisibility(p, player, echoRay);
             
@@ -884,12 +1092,19 @@ function loop() {
                         else { 
                             const now = Date.now(); 
                             if (now - lastToxicNotification > 2000) { showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}}, ""); lastToxicNotification = now; } 
-                            // YENİ: Zehirli gaz can azaltır
                             player.takeDamage(5);
                         } 
                     } else if (p.type.id === 'lost') { 
-                        p.collected = true; audio.playChime({id:'legendary'}); showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
-                        if (p.lootContent && p.lootContent.length > 0) { p.lootContent.forEach(item => { addItemToInventory(item); player.gainXp(item.type.xp); }); } 
+                         if (addItemToInventory(p)) { 
+                             p.collected = true; 
+                             audio.playChime({id:'legendary'}); 
+                             showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
+                             if (p.lootContent && p.lootContent.length > 0) { 
+                                 p.lootContent.forEach(item => { 
+                                     if(addItemToInventory(item)) player.gainXp(item.type.xp); 
+                                 }); 
+                             }
+                         }
                     } else if (p.type.id === 'tardigrade') {
                         p.collected = true; 
                         audio.playChime(p.type); 
@@ -897,11 +1112,22 @@ function loop() {
                         showNotification({name: "TARDİGRAD YENDİ (+%50 ENERJİ)", type:{color:'#C7C0AE'}}, "");
                         player.gainXp(p.type.xp);
                     } else { 
-                        p.collected = true; audio.playChime(p.type); 
-                        // GameRules üzerinden loot sayısı hesapla
                         const lootCount = GameRules.calculateLootCount(); 
-                        for(let i=0; i<lootCount; i++) { addItemToInventory(p); player.gainXp(p.type.xp); }
-                        showNotification(p, lootCount > 1 ? `x${lootCount}` : ""); 
+                        let addedCount = 0;
+                        for(let i=0; i<lootCount; i++) { 
+                            if(addItemToInventory(p)) {
+                                addedCount++;
+                                player.gainXp(p.type.xp); 
+                            } else {
+                                break; 
+                            }
+                        }
+                        
+                        if (addedCount > 0) {
+                            p.collected = true; 
+                            audio.playChime(p.type); 
+                            showNotification(p, addedCount > 1 ? `x${addedCount}` : ""); 
+                        } 
                     } 
                 } 
             } 
@@ -912,8 +1138,12 @@ function loop() {
         
         const promptEl = document.getElementById('merge-prompt');
         const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
-        let showNexusPrompt = (distNexus < nexus.radius + 300) && !nexusOpen;
+        const distStorage = Math.hypot(player.x - storageCenter.x, player.y - storageCenter.y);
         
+        let showNexusPrompt = (distNexus < nexus.radius + 200) && !nexusOpen;
+        let showStoragePrompt = (distStorage < storageCenter.radius + 200) && !storageOpen;
+
+        // Prompt Yönetimi
         if (showNexusPrompt) {
             promptEl.innerText = "[E] NEXUS'A GİRİŞ YAP";
             promptEl.className = 'visible';
@@ -922,7 +1152,17 @@ function loop() {
                     enterNexus(); keys.e = false; 
                 }
             }
-        } else if (echoRay && !nexusOpen && !mapOpen) {
+        } 
+        else if (showStoragePrompt) {
+            promptEl.innerText = "[E] DEPO YÖNETİMİ";
+            promptEl.className = 'visible';
+            if (keys.e) { 
+                if(document.activeElement !== document.getElementById('chat-input')) {
+                    openStorage(); keys.e = false; 
+                }
+            }
+        }
+        else if (echoRay && !nexusOpen && !storageOpen && !mapOpen) {
             const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
             if (!echoRay.attached && distEcho < 300) { 
                 promptEl.innerText = "[F] BİRLEŞ"; promptEl.className = 'visible'; 
@@ -933,6 +1173,7 @@ function loop() {
                 } 
             } else if (echoRay.attached) { 
                     promptEl.className = ''; 
+                    
                     if(keys.f) { 
                         if(document.activeElement !== document.getElementById('chat-input')) {
                             echoRay.attached = false; echoRay.mode = 'roam'; updateEchoDropdownUI(); keys.f = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); 
@@ -947,12 +1188,12 @@ function loop() {
 
         if(echoRay && !echoRay.attached) drawTargetIndicator(echoRay.x, echoRay.y, "#67e8f9");
         drawTargetIndicator(nexus.x, nexus.y, "#ffffff");
-        drawTargetIndicator(repairStation.x, repairStation.y, "#10b981"); // YENİ: Tamir istasyonu hedefi
+        drawTargetIndicator(repairStation.x, repairStation.y, "#10b981");
+        drawTargetIndicator(storageCenter.x, storageCenter.y, "#a855f7");
         drawMiniMap();
         if(mapOpen) drawBigMap();
     } else {
-        // Oyun duraklatılmış olsa bile, eğer ölüm ekranı aktifse animasyon veya çizimi devam ettirmeliyiz ki ekran siyah kalmasın.
-        // Ancak basitlik için şimdilik sadece requestAnimationFrame çağırıyoruz.
+        // Paused logic
     }
     animationId = requestAnimationFrame(loop);
 }
@@ -977,12 +1218,10 @@ function drawMiniMap() {
     mmCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
     mmCtx.fill();
 
-    // Radar menziline göre dinamik ölçekleme
     const mmRadius = 90;
     const scale = mmRadius / player.radarRadius; 
     const cx = 90, cy = 90;
     
-    // Tarama Çemberi
     const scanPixelRadius = player.scanRadius * scale;
     mmCtx.lineWidth = 1;
     mmCtx.strokeStyle = "rgba(16, 185, 129, 0.4)"; 
@@ -1006,10 +1245,14 @@ function drawMiniMap() {
             mmCtx.fillStyle = "white"; mmCtx.beginPath(); mmCtx.arc(nx, ny, 4, 0, Math.PI*2); mmCtx.fill();
     }
 
-    // Tamir İstasyonu (Minimap)
     const rx = (repairStation.x-player.x)*scale + cx; const ry = (repairStation.y-player.y)*scale + cy;
     if(Math.hypot(rx-cx, ry-cy) < mmRadius) {
             mmCtx.fillStyle = "#10b981"; mmCtx.beginPath(); mmCtx.arc(rx, ry, 3, 0, Math.PI*2); mmCtx.fill();
+    }
+    
+    const sx = (storageCenter.x-player.x)*scale + cx; const sy = (storageCenter.y-player.y)*scale + cy;
+    if(Math.hypot(sx-cx, sy-cy) < mmRadius) {
+            mmCtx.fillStyle = "#a855f7"; mmCtx.beginPath(); mmCtx.arc(sx, sy, 3, 0, Math.PI*2); mmCtx.fill();
     }
     
     planets.forEach(p => {
@@ -1023,7 +1266,6 @@ function drawMiniMap() {
                 if (visibility === 1) {
                     mmCtx.fillStyle = "rgba(255,255,255,0.3)"; 
                 } else if (visibility === 2) {
-                    // Tam Görünür - TÜR RENGİ
                     mmCtx.fillStyle = p.type.color; 
                 } else {
                     return; 
@@ -1074,7 +1316,7 @@ window.addEventListener('keydown', e => {
             autopilot = true;
             aiMode = 'gather';
             addChatMessage("Otopilot: Toplama protokolü devreye alındı.", "info", "genel");
-        } else if (aiMode === 'gather' || aiMode === 'travel') {
+        } else if (aiMode === 'gather' || aiMode === 'travel' || aiMode === 'deposit') {
             aiMode = 'base';
             addChatMessage("Otopilot: Üsse dönüş rotası hesaplanıyor.", "info", "genel");
         } else {

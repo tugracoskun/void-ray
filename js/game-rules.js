@@ -8,9 +8,10 @@ const GameRules = {
     // --- HARİTA YAPILANDIRMASI ---
     LOCATIONS: {
         NEXUS:          { x: 3000, y: 3000 },
+        STORAGE_CENTER: { x: 2400, y: 2400 },
         REPAIR_STATION: { x: 3600, y: 3200 },
         PLAYER_START:   { x: 3000, y: 3800 },
-        PLAYER_RESPAWN: { x: 3600, y: 3200 } // Genelde tamir istasyonunda doğar
+        PLAYER_RESPAWN: { x: 3600, y: 3200 }
     },
 
     // --- EKONOMİ VE GELİŞİM ---
