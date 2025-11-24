@@ -1,6 +1,7 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
  * * Bu dosya oyunun ana döngüsünü ve durum yönetimini kontrol eder.
+ * * Varlık (Entity) sınıfları artık ayrı dosyalardan yüklenmektedir.
  */
 
 // -------------------------------------------------------------------------
@@ -48,10 +49,11 @@ const ctx = canvas.getContext('2d');
 const mmCanvas = document.getElementById('minimap-canvas');
 const mmCtx = mmCanvas.getContext('2d');
 const bmCanvas = document.getElementById('big-map-canvas');
-const bmCtx = bmCanvas.getContext('2d');
+const bmCtx = document.getElementById('big-map-canvas').getContext('2d'); // Güncellendi
 
 // Varlıklar ve Koleksiyonlar
 let width, height;
+// Player, echoRay, nexus, repairStation, storageCenter, audio artık global scope'ta tanımlanan sınıflardan oluşturulacak.
 let player, echoRay = null, nexus = null, repairStation = null, storageCenter = null, audio; 
 let planets = [], stars = [], collectedItems = [], particles = [];
 let centralStorage = [];
@@ -67,7 +69,7 @@ let aiMode = 'gather'; // gather | base | travel | deposit
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
-// NOT: 'keys' nesnesi artık controls.js içinde tanımlanmıştır.
+// NOT: 'keys' nesnesi controls.js içinde tanımlanmıştır.
 
 // -------------------------------------------------------------------------
 // YARDIMCI FONKSİYONLAR
@@ -88,6 +90,7 @@ function getEchoCapacity() {
  * Belirtilen koordinatlarda yeni bir Yankı (EchoRay) oluşturur.
  */
 function spawnEcho(x, y) { 
+    // EchoRay sınıfı artık entities/EchoRay.js'de
     echoRay = new EchoRay(x, y); 
     document.getElementById('echo-wrapper-el').style.display = 'flex'; 
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
@@ -676,6 +679,7 @@ function showToxicEffect() { const el = document.getElementById('toxic-overlay')
 // -------------------------------------------------------------------------
 
 function init() {
+    // Varlık Sınıfları artık global scope'ta tanımlı olduğu için new ile oluşturulur.
     player = new VoidRay(); 
     nexus = new Nexus(); 
     repairStation = new RepairStation(); 
@@ -685,6 +689,7 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
+    // Planet sınıfı da entities/Planet.js'den geliyor.
     for(let i=0; i<1200; i++) planets.push(new Planet());
     
     stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
@@ -718,9 +723,9 @@ function startTipsCycle() {
     let tipIdx = 0;
     const tipEl = document.getElementById('tip-text');
     setInterval(() => {
-        tipIdx = (tipIdx + 1) % TIPS.length;
         tipEl.style.opacity = 0;
         setTimeout(() => {
+            tipIdx = (tipIdx + 1) % TIPS.length;
             tipEl.innerText = TIPS[tipIdx];
             tipEl.style.opacity = 1;
         }, 1000);
@@ -767,6 +772,7 @@ function loop() {
             const needed = 1200 - planets.length;
             for(let i=0; i<needed; i++) {
                 let px, py, d; do { px = Math.random() * WORLD_SIZE; py = Math.random() * WORLD_SIZE; d = Math.hypot(px - player.x, py - player.y); } while(d < 2000);
+                // Planet sınıfı entities/Planet.js'den geliyor.
                 planets.push(new Planet(px, py));
             }
         }
@@ -793,6 +799,7 @@ function loop() {
         repairStation.draw(ctx); 
         storageCenter.draw(ctx); 
         
+        // Particle sınıfı entities/Particle.js'den geliyor.
         for(let i=particles.length-1; i>=0; i--) { particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
         
         ctx.lineWidth = 1;
@@ -808,6 +815,7 @@ function loop() {
         }
 
         planets.forEach(p => { 
+            // maps.js'den gelen getPlanetVisibility kullanılıyor.
             const visibility = getPlanetVisibility(p, player, echoRay);
             if (visibility === 0) return;
             const viewW = width / currentZoom; const viewH = height / currentZoom; 
@@ -817,7 +825,9 @@ function loop() {
             if(!p.collected) { 
                  if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) { 
                     if(p.type.id === 'toxic') { 
-                        audio.playToxic(); showToxicEffect(); for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16')); 
+                        audio.playToxic(); showToxicEffect(); 
+                        // Particle sınıfı entities/Particle.js'den geliyor.
+                        for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16')); 
                         if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}}, ""); } 
                         else { 
                             const now = Date.now(); 

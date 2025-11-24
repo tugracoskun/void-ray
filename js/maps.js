@@ -1,18 +1,30 @@
 /**
  * Void Ray - Harita ve Radar Sistemi
  * * Bu modül Dependency Injection ve Merkezi Konfigürasyon kullanır.
+ * * entities.js dosyasından taşınan getPlanetVisibility fonksiyonunu içerir.
  */
 
+/**
+ * Gezegenin oyuncu ve yankıya göre görünürlük seviyesini hesaplar.
+ * @param {Planet} p - Gezegen nesnesi
+ * @param {VoidRay} player - Oyuncu nesnesi
+ * @param {EchoRay | null} echo - Yankı nesnesi
+ * @returns {number} 0: Görünmez, 1: Radar (Sinyal), 2: Tarama (Tam Görüş)
+ */
 function getPlanetVisibility(p, player, echo) {
     let visibility = 0;
     const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
     
+    // Oyuncu Tarama Alanı (Tam Görüş)
     if (dPlayer < player.scanRadius) return 2; 
+    // Oyuncu Radar Alanı (Sinyal)
     else if (dPlayer < player.radarRadius) visibility = 1; 
 
     if (echo) {
         const dEcho = Math.hypot(echo.x - p.x, echo.y - p.y);
+        // Yankı Tarama Alanı (Tam Görüş)
         if (dEcho < echo.scanRadius) return 2; 
+        // Yankı Radar Alanı (Sinyal)
         else if (dEcho < echo.radarRadius) {
             if (visibility < 1) visibility = 1; 
         }
@@ -165,6 +177,7 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     // --- Gezegenler ---
     entities.planets.forEach(p => {
         if(!p.collected) {
+            // getPlanetVisibility global olarak tanımlanır.
             const visibility = getPlanetVisibility(p, entities.player, entities.echoRay);
             if (visibility === 0) return;
 
@@ -271,6 +284,7 @@ function drawMiniMap(ctx, entities, state) {
             let py = (p.y-entities.player.y)*scale + cy;
             
             if(Math.hypot(px-cx, py-cy) < radius) {
+                // getPlanetVisibility global olarak tanımlanır.
                 const visibility = getPlanetVisibility(p, entities.player, entities.echoRay);
                 if (visibility === 1) ctx.fillStyle = "rgba(255,255,255,0.3)"; 
                 else if (visibility === 2) ctx.fillStyle = p.type.color; 
