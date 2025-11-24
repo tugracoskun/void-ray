@@ -43,14 +43,6 @@ let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
 
-// İletişim Sistemi (Loglar ve Mesajlar)
-let chatHistory = {
-    genel: [],
-    bilgi: [],
-    grup: []
-};
-let activeChatTab = 'genel';
-
 // Grafik Bağlamları (Canvas Contexts)
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -631,105 +623,6 @@ window.buyUpgrade = function(key) {
 };
 
 function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
-
-// -------------------------------------------------------------------------
-// BİLDİRİM VE SOHBET SİSTEMİ
-// -------------------------------------------------------------------------
-
-function showNotification(planet, suffix) {
-    let msg = "";
-    let type = "loot";
-    const name = planet.name || "";
-
-    if (name === "ROTA OLUŞTURULDU" || name.includes("OTOMATİK")) {
-        msg = `Sistem: ${name}`;
-        type = "info";
-    } else if (name.includes("EVRİM GEÇİRİLDİ")) {
-        msg = `Sistem: ${name}`;
-        type = "info";
-    } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ") || name.includes("DEPO")) {
-        msg = `Sistem: ${name}`;
-        type = "info";
-    } else if (name.includes("ENERJİ")) {
-         msg = `${name} ${suffix}`;
-         type = "info";
-    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU")) {
-        msg = `UYARI: ${name} ${suffix}`;
-        type = "alert";
-    } else if (name.includes("KAYIP KARGO")) {
-        msg = `Keşif: ${name} bulundu!`;
-        type = "info";
-    } else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
-        msg = `Toplandı: ${name} ${suffix}`;
-        type = "loot";
-    } else {
-        msg = `${name} ${suffix}`;
-        type = "info";
-    }
-    
-    addChatMessage(msg, type, 'bilgi');
-}
-
-function addChatMessage(text, type = 'system', channel = 'bilgi') {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    const msgObj = { text, type, time: timeStr };
-    
-    chatHistory[channel].push(msgObj);
-    
-    if (channel !== 'genel') {
-        chatHistory['genel'].push(msgObj);
-    }
-    
-    if (activeChatTab === channel || activeChatTab === 'genel') {
-        const chatContent = document.getElementById('chat-content');
-        const div = document.createElement('div');
-        div.className = `chat-message ${type}`;
-        div.innerHTML = `<span class="chat-timestamp">[${timeStr}]</span> ${text}`;
-        chatContent.appendChild(div);
-        chatContent.scrollTop = chatContent.scrollHeight;
-    }
-}
-
-function switchChatTab(tab) {
-    activeChatTab = tab;
-    
-    document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
-    
-    const inputArea = document.getElementById('chat-input-area');
-    if(tab === 'bilgi') inputArea.style.display = 'none';
-    else inputArea.style.display = 'flex';
-
-    const chatContent = document.getElementById('chat-content');
-    chatContent.innerHTML = '';
-    
-    chatHistory[tab].forEach(msg => {
-        const div = document.createElement('div');
-        div.className = `chat-message ${msg.type}`;
-        div.innerHTML = `<span class="chat-timestamp">[${msg.time}]</span> ${msg.text}`;
-        chatContent.appendChild(div);
-    });
-    chatContent.scrollTop = chatContent.scrollHeight;
-}
-
-function sendUserMessage() {
-    const input = document.getElementById('chat-input');
-    const msg = input.value.trim();
-    if(!msg) return;
-
-    input.value = '';
-    
-    addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
-    setTimeout(() => {
-        addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
-    }, 200);
-}
-
-document.getElementById('chat-send-btn').addEventListener('click', sendUserMessage);
-document.getElementById('chat-input').addEventListener('keydown', (e) => {
-    if(e.key === 'Enter') sendUserMessage();
-});
 
 // -------------------------------------------------------------------------
 // HARİTA İŞLEMLERİ (ARTIK maps.js'de)
