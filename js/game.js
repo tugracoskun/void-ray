@@ -1119,4 +1119,3 @@ document.getElementById('btn-stats-icon').addEventListener('click', () => {
 
 function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; mmCanvas.width = 180; mmCanvas.height = 180; bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
 window.addEventListener('resize', resize); resize();
-}
