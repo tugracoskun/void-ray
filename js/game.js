@@ -1,7 +1,6 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
- * * Bu dosya oyunun ana döngüsünü, durum yönetimini ve
- * * kullanıcı etkileşimlerini kontrol eder.
+ * * Bu dosya oyunun ana döngüsünü ve durum yönetimini kontrol eder.
  */
 
 // -------------------------------------------------------------------------
@@ -68,8 +67,7 @@ let aiMode = 'gather'; // gather | base | travel | deposit
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
-// Tuş Kontrolleri
-const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, Escape:false };
+// NOT: 'keys' nesnesi artık controls.js içinde tanımlanmıştır.
 
 // -------------------------------------------------------------------------
 // YARDIMCI FONKSİYONLAR
@@ -625,25 +623,6 @@ window.buyUpgrade = function(key) {
 function showToxicEffect() { const el = document.getElementById('toxic-overlay'); el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
 
 // -------------------------------------------------------------------------
-// HARİTA İŞLEMLERİ (ARTIK maps.js'de)
-// -------------------------------------------------------------------------
-
-canvas.addEventListener('mousedown', (e) => {
-    if (!echoRay) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    
-    const screenX = (echoRay.x - player.x) * currentZoom + width/2;
-    const screenY = (echoRay.y - player.y) * currentZoom + height/2;
-    
-    const dist = Math.hypot(mx - screenX, my - screenY);
-    if (dist < 40 * currentZoom) {
-        echoRay.energyDisplayTimer = 240; 
-    }
-});
-
-// -------------------------------------------------------------------------
 // OYUN DÖNGÜSÜ VE BAŞLATMA
 // -------------------------------------------------------------------------
 
@@ -743,7 +722,7 @@ function loop() {
             }
         }
 
-        // Tuş Kontrolleri (Değişmedi)
+        // Tuş Kontrolleri (keys nesnesi controls.js'den gelir)
         if (keys.Escape) { 
             if (inventoryOpen) closeInventory();
             else if (echoInvOpen) closeEchoInventory();
@@ -754,19 +733,6 @@ function loop() {
             else if (document.getElementById('sound-panel').classList.contains('open')) document.getElementById('sound-panel').classList.remove('open');
             else togglePause();
             keys.Escape = false;
-        }
-
-        if (keys.q) { 
-            if(document.activeElement === document.getElementById('chat-input')) return;
-            autopilot = !autopilot; 
-            if(!autopilot) { manualTarget = null; aiMode = 'gather'; }
-            else { aiMode = 'gather'; } 
-            updateAIButton();
-            keys.q = false; 
-        }
-        if (keys.m) { 
-            if(document.activeElement === document.getElementById('chat-input')) return;
-            mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
         }
 
         // Çizim (Değişmedi)
@@ -870,7 +836,7 @@ function loop() {
     animationId = requestAnimationFrame(loop);
 }
 
-// Olay Dinleyicileri (Event Listeners)
+// Olay Dinleyicileri (Event Listeners - Kalanlar)
 function togglePause() { isPaused = true; document.getElementById('pause-overlay').classList.add('active'); }
 function resumeGame() { isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); }
 function quitToMain() { 
@@ -881,65 +847,10 @@ function quitToMain() {
     if(animationId) cancelAnimationFrame(animationId); 
 }
 
-window.addEventListener('keydown', e => { 
-    if(document.activeElement === document.getElementById('chat-input')) {
-        if(e.key === "Escape") {
-            document.getElementById('chat-input').blur(); 
-        }
-        return; 
-    }
-
-    if(e.code === "Space") e.preventDefault(); 
-    if(e.key === "Escape") keys.Escape = true; 
-    else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; 
-    else if(e.code === "Space") keys[" "] = true; 
-    else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
-    
-    if(e.key.toLowerCase() === 'q') { 
-        if (!autopilot) {
-            autopilot = true;
-            aiMode = 'gather';
-            addChatMessage("Otopilot: Toplama protokolü devreye alındı.", "info", "genel");
-        } else if (aiMode === 'gather' || aiMode === 'travel' || aiMode === 'deposit') {
-            aiMode = 'base';
-            addChatMessage("Otopilot: Üsse dönüş rotası hesaplanıyor.", "info", "genel");
-        } else {
-            autopilot = false;
-            manualTarget = null;
-            addChatMessage("Otopilot: Devre dışı. Manuel kontrol aktif.", "system", "genel");
-        }
-        updateAIButton();
-        keys.q = false; 
-    }
-
-    if(e.key.toLowerCase() === 'm') { 
-        if(document.activeElement === document.getElementById('chat-input')) return;
-        mapOpen = !mapOpen; const overlay = document.getElementById('big-map-overlay'); if(mapOpen) overlay.classList.add('active'); else overlay.classList.remove('active'); keys.m = false; 
-    }
-    
-    if(e.key.toLowerCase() === 'i') { inventoryOpen=!inventoryOpen; document.getElementById('inventory-overlay').classList.toggle('open'); if(inventoryOpen) renderInventory(); } 
-});
-
-window.addEventListener('keyup', e => { if(e.key === "Escape") keys.Escape = false; else if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; else if(e.code === "Space") keys[" "] = false; else if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
-
-window.addEventListener('wheel', e => { 
-    if (e.target.closest('#chat-content')) return;
-    if (window.cinematicMode) return;
-
-    e.preventDefault(); 
-    // CONFIG Kullanımı
-    targetZoom += e.deltaY * -MAP_CONFIG.zoom.speed; 
-    targetZoom = Math.min(Math.max(MAP_CONFIG.zoom.min, targetZoom), MAP_CONFIG.zoom.max); 
-}, { passive: false });
-
-document.getElementById('btn-start').addEventListener('click', () => { document.getElementById('main-menu').classList.add('menu-hidden'); init(); audio.init(); startLoop(); document.getElementById('bgMusic').play().catch(e=>console.log(e)); });
-document.getElementById('btn-inv-icon').addEventListener('click', () => { inventoryOpen=true; document.getElementById('inventory-overlay').classList.add('open'); renderInventory(); });
-document.getElementById('btn-close-inv').addEventListener('click', () => { inventoryOpen=false; document.getElementById('inventory-overlay').classList.remove('open'); });
-document.getElementById('btn-ai-toggle').addEventListener('click', () => { autopilot = !autopilot; if(!autopilot) { manualTarget=null; aiMode='gather'; } else { aiMode='gather'; } updateAIButton(); });
-
-document.getElementById('btn-stats-icon').addEventListener('click', () => {
-    openStats();
-});
-
+// Pencere Boyutlandırma (Bu görsel bir olay olduğu için burada kalabilir)
 function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; mmCanvas.width = 180; mmCanvas.height = 180; bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
 window.addEventListener('resize', resize); resize();
+
+// --- KONTROLCÜLERİ BAŞLAT ---
+// Controls.js içindeki fonksiyonu çağırarak dinleyicileri aktif ediyoruz
+initControls();
