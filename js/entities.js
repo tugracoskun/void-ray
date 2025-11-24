@@ -9,8 +9,8 @@
 // -------------------------------------------------------------------------
 class Nexus {
     constructor() { 
-        this.x = WORLD_SIZE/2; 
-        this.y = WORLD_SIZE/2; 
+        this.x = 3000; 
+        this.y = 3000; 
         this.radius = 300; 
         this.rotation = 0; 
     }
@@ -48,8 +48,8 @@ class Nexus {
 // -------------------------------------------------------------------------
 class RepairStation {
     constructor() {
-        this.x = 2000; // Haritanın sol üst köşesine yakın
-        this.y = 2000;
+        this.x = 3600;
+        this.y = 3200;
         this.radius = 150;
         this.rotation = 0;
     }
@@ -92,8 +92,8 @@ class RepairStation {
 // -------------------------------------------------------------------------
 class VoidRay {
     constructor() {
-        this.x = WORLD_SIZE/2 + 600; 
-        this.y = WORLD_SIZE/2 + 600;
+        this.x = 3000; 
+        this.y = 3800;
         this.vx = 0; 
         this.vy = 0; 
         this.angle = -Math.PI/2;
@@ -171,10 +171,9 @@ class VoidRay {
         this.vx = 0;
         this.vy = 0;
         this.outOfBoundsTimer = 0;
-        
-        // Sol Üstteki Tamir İstasyonuna Taşı
-        this.x = 2000; 
-        this.y = 2000;
+
+        this.x = 3600; 
+        this.y = 3200;
         
         // Arayüzü Temizle
         document.getElementById('death-screen').classList.remove('active');
