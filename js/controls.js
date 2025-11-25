@@ -52,10 +52,10 @@ function initControls() {
         // M Tuşu: Harita Toggle
         if(e.key.toLowerCase() === 'm') { 
             if(document.activeElement === document.getElementById('chat-input')) return;
-            mapOpen = !mapOpen; 
-            const overlay = document.getElementById('big-map-overlay'); 
-            if(mapOpen) overlay.classList.add('active'); 
-            else overlay.classList.remove('active'); 
+            // Artık game.js'deki fonksiyonları kullanıyor
+            if (mapOpen) closeMap();
+            else openMap();
+            
             keys.m = false; 
         }
         
@@ -79,6 +79,9 @@ function initControls() {
     window.addEventListener('wheel', e => { 
         if (e.target.closest('#chat-content')) return; // Chatte scroll yaparken zoom yapma
         if (window.cinematicMode) return;
+        
+        // HARİTA KONTROLÜ: Harita açıksa oyun zoomunu engelle
+        if (typeof mapOpen !== 'undefined' && mapOpen) return;
 
         e.preventDefault(); 
         // CONFIG Kullanımı (data.js'den)

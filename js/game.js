@@ -132,6 +132,17 @@ function closeStorage() {
     document.getElementById('storage-overlay').classList.remove('open');
 }
 
+// --- HARİTA YÖNETİMİ ---
+function openMap() {
+    mapOpen = true;
+    document.getElementById('big-map-overlay').classList.add('active');
+}
+
+function closeMap() {
+    mapOpen = false;
+    document.getElementById('big-map-overlay').classList.remove('active');
+}
+
 function renderStorageUI() {
     if (!storageOpen) return;
 

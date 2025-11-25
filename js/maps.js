@@ -4,6 +4,14 @@
  * * entities.js dosyasından taşınan getPlanetVisibility fonksiyonunu içerir.
  */
 
+// Büyük Harita Durumu (Zoom ve Pan Kontrolü)
+const bigMapState = {
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    isDragging: false
+};
+
 /**
  * Gezegenin oyuncu ve yankıya göre görünürlük seviyesini hesaplar.
  * @param {Planet} p - Gezegen nesnesi
@@ -83,30 +91,109 @@ function drawTargetIndicator(ctx, origin, view, target, color) {
 }
 
 function initMapListeners(canvasElement, worldSize, onTargetSelected) {
-    if (canvasElement) {
-        canvasElement.addEventListener('mousedown', (e) => {
+    if (!canvasElement) return;
+
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let hasDragged = false;
+
+    // Zoom (Tekerlek) - Mouse Konumuna Göre
+    canvasElement.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Oyunun zoom yapmasını engelle
+
+        const rect = canvasElement.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const zoomSensitivity = 0.001;
+        const oldZoom = bigMapState.zoom;
+        let newZoom = oldZoom + (e.deltaY * -zoomSensitivity * 2); 
+        newZoom = Math.min(Math.max(1, newZoom), 8); // Min 1x, Max 8x Zoom
+
+        // Zoom değiştiyse pan değerlerini güncelle
+        if (newZoom !== oldZoom) {
+            // Mouse'un canvas merkezine göre konumu
+            const canvasCenterX = canvasElement.width / 2;
+            const canvasCenterY = canvasElement.height / 2;
+            const mouseRelX = mouseX - canvasCenterX;
+            const mouseRelY = mouseY - canvasCenterY;
+
+            // Matematiksel Açıklama:
+            // Mouse'un altındaki dünya noktasının sabit kalması için Pan değerini kaydırıyoruz.
+            // YeniPan = MouseRel - (MouseRel - EskiPan) * (YeniZoom / EskiZoom)
+            
+            const zoomFactor = newZoom / oldZoom;
+            
+            bigMapState.panX = mouseRelX - (mouseRelX - bigMapState.panX) * zoomFactor;
+            bigMapState.panY = mouseRelY - (mouseRelY - bigMapState.panY) * zoomFactor;
+
+            bigMapState.zoom = newZoom;
+
+            // Eğer zoom 1'e döndüyse pan'i sıfırla ki harita tam ortalansın ve kaymasın
+            if (bigMapState.zoom === 1) {
+                bigMapState.panX = 0;
+                bigMapState.panY = 0;
+            }
+        }
+    });
+
+    // Sürükleme Başlangıcı
+    canvasElement.addEventListener('mousedown', (e) => {
+        bigMapState.isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        hasDragged = false;
+    });
+
+    // Sürükleme
+    window.addEventListener('mousemove', (e) => {
+        if (bigMapState.isDragging) {
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            
+            // Küçük hareketleri tıklama olarak saymak için eşik değeri
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged = true;
+
+            bigMapState.panX += dx;
+            bigMapState.panY += dy;
+
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+        }
+    });
+
+    // Sürükleme Bitişi / Tıklama
+    window.addEventListener('mouseup', (e) => {
+        bigMapState.isDragging = false;
+        
+        // Eğer sürükleme yapılmadıysa bu bir tıklamadır (Hedef Seçimi)
+        if (!hasDragged && e.target === canvasElement) {
             const rect = canvasElement.getBoundingClientRect();
             const clickX = e.clientX - rect.left; 
             const clickY = e.clientY - rect.top;
             
-            const margin = MAP_CONFIG.bigmap.margin; // CONFIG KULLANIMI
+            const margin = MAP_CONFIG.bigmap.margin;
             const cWidth = canvasElement.width;
             const cHeight = canvasElement.height;
 
-            const scale = Math.min((cWidth - margin*2) / worldSize, (cHeight - margin*2) / worldSize);
-            const offsetX = (cWidth - worldSize * scale) / 2;
-            const offsetY = (cHeight - worldSize * scale) / 2;
+            // Tersine Koordinat Hesaplama
+            const baseScale = Math.min((cWidth - margin*2) / worldSize, (cHeight - margin*2) / worldSize);
+            const finalScale = baseScale * bigMapState.zoom;
+            
+            const offsetX = (cWidth - worldSize * finalScale) / 2 + bigMapState.panX;
+            const offsetY = (cHeight - worldSize * finalScale) / 2 + bigMapState.panY;
     
-            const worldX = (clickX - offsetX) / scale; 
-            const worldY = (clickY - offsetY) / scale;
+            const worldX = (clickX - offsetX) / finalScale; 
+            const worldY = (clickY - offsetY) / finalScale;
             
             if(worldX >= 0 && worldX <= worldSize && worldY >= 0 && worldY <= worldSize) {
                 if (typeof onTargetSelected === 'function') {
                     onTargetSelected(worldX, worldY);
                 }
             }
-        });
-    }
+        }
+    });
 }
 
 function drawBigMap(ctx, canvas, worldSize, entities, state) {
@@ -116,9 +203,16 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const margin = MAP_CONFIG.bigmap.margin;
-    const scale = Math.min((canvas.width - margin*2) / worldSize, (canvas.height - margin*2) / worldSize);
-    const offsetX = (canvas.width - worldSize * scale) / 2;
-    const offsetY = (canvas.height - worldSize * scale) / 2;
+    
+    // Temel Ölçek (Ekrana sığdırma)
+    const baseScale = Math.min((canvas.width - margin*2) / worldSize, (canvas.height - margin*2) / worldSize);
+    
+    // Zoom Uygulanmış Ölçek
+    const scale = baseScale * bigMapState.zoom; // Artık tüm çizimlerde bu 'scale' kullanılacak
+
+    // Ofset ve Pan (Zoom ve Sürükleme etkisi)
+    const offsetX = (canvas.width - worldSize * scale) / 2 + bigMapState.panX;
+    const offsetY = (canvas.height - worldSize * scale) / 2 + bigMapState.panY;
 
     // Sınır çizgisi
     ctx.strokeStyle = MAP_CONFIG.bigmap.gridColor; 

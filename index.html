@@ -179,47 +179,82 @@
 
     <!-- DİĞER PENCERELER -->
     <div id="big-map-overlay">
-        <div class="big-map-container">
-            <canvas id="big-map-canvas"></canvas>
+        <!-- HARİTA DÜZENİ WRAPPER (YENİ) -->
+        <div class="big-map-layout">
             
-            <!-- RADAR BİLGİ BUTONU -->
-            <div class="radar-info-wrapper">
-                <div class="radar-info-icon">?</div>
-                <div class="radar-info-tooltip">
-                    <h4 class="text-white font-bold mb-2 border-b border-white/20 pb-1 tracking-widest text-sm">RADAR SİSTEMİ</h4>
-                    
-                    <div class="radar-legend-item">
-                        <div class="r-dot scan"></div>
-                        <div>
-                            <span class="r-title text-emerald-400">TARAMA ALANI (Yeşil)</span>
-                            <p class="r-desc">Tam Görüş. Kaynakların türü ve içeriği net olarak tespit edilir.</p>
+            <!-- SOL: HARİTA KUTUSU -->
+            <div class="big-map-container">
+                <canvas id="big-map-canvas"></canvas>
+                
+                <!-- RADAR BİLGİ BUTONU (SOL ÜSTTE KALIYOR) -->
+                <div class="radar-info-wrapper">
+                    <div class="radar-info-icon">?</div>
+                    <div class="radar-info-tooltip">
+                        <h4 class="text-white font-bold mb-2 border-b border-white/20 pb-1 tracking-widest text-sm">RADAR SİSTEMİ</h4>
+                        
+                        <div class="radar-legend-item">
+                            <div class="r-dot scan"></div>
+                            <div>
+                                <span class="r-title text-emerald-400">TARAMA ALANI (Yeşil)</span>
+                                <p class="r-desc">Tam Görüş. Kaynakların türü ve içeriği net olarak tespit edilir.</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="radar-legend-item">
-                        <div class="r-dot radar"></div>
-                        <div>
-                            <span class="r-title text-amber-400">RADAR ALANI (Turuncu)</span>
-                            <p class="r-desc">Kısmi Görüş. Nesneler sadece belirsiz sinyal olarak görünür.</p>
+                        <div class="radar-legend-item">
+                            <div class="r-dot radar"></div>
+                            <div>
+                                <span class="r-title text-amber-400">RADAR ALANI (Turuncu)</span>
+                                <p class="r-desc">Kısmi Görüş. Nesneler sadece belirsiz sinyal olarak görünür.</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="radar-legend-item">
-                        <div class="r-dot unknown"></div>
-                        <div>
-                            <span class="r-title text-gray-400">BİLİNMEYEN BÖLGE</span>
-                            <p class="r-desc">Kapsama alanı dışı. Hiçbir veri alınamaz.</p>
+                        <div class="radar-legend-item">
+                            <div class="r-dot unknown"></div>
+                            <div>
+                                <span class="r-title text-gray-400">BİLİNMEYEN BÖLGE</span>
+                                <p class="r-desc">Kapsama alanı dışı. Hiçbir veri alınamaz.</p>
+                            </div>
                         </div>
+
+                        <!-- KONTROLLER -->
+                        <h4 class="text-white font-bold mb-2 mt-4 border-b border-white/20 pb-1 tracking-widest text-sm">HARİTA KONTROLLERİ</h4>
+                        
+                        <div class="radar-legend-item">
+                            <div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); width:8px; height:8px; border-radius:2px; box-shadow:none;"></div>
+                            <div>
+                                <span class="r-title text-white">OTO-PİLOT</span>
+                                <p class="r-desc">Gitmek istediğiniz noktaya tıklayarak rota oluşturun.</p>
+                            </div>
+                        </div>
+
+                        <div class="radar-legend-item">
+                            <div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); width:8px; height:8px; border-radius:50%; box-shadow:none;"></div>
+                            <div>
+                                <span class="r-title text-white">YAKINLAŞTIRMA</span>
+                                <p class="r-desc">Fare tekerleği ile haritaya yakınlaşıp uzaklaşabilirsiniz.</p>
+                            </div>
+                        </div>
+
+                        <div class="radar-legend-item">
+                            <div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); width:8px; height:8px; border-radius:0px; box-shadow:none;"></div>
+                            <div>
+                                <span class="r-title text-white">GEZİNME</span>
+                                <p class="r-desc">Farenin sol tuşuna basılı tutarak haritayı kaydırabilirsiniz.</p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+                <div class="absolute top-4 right-4 cursor-pointer text-white opacity-50 hover:opacity-100" onclick="closeMap()">✕</div>
             </div>
 
+            <!-- SAĞ: LEJANT (AYRI PENCERE) -->
             <div class="big-map-info-overlay">
                 <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
                 <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
                 <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #fff;"></div> NEXUS</div>
-                <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div> <!-- YENİ -->
-                <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> DEPO MERKEZİ</div> <!-- YENİ -->
+                <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div>
+                <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> DEPO MERKEZİ</div>
                 <div class="legend-item"><div class="l-dot" style="background:#67e8f9;"></div> YANKI</div>
                 <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
                 <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
@@ -227,9 +262,8 @@
                 <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> Kayıp Kargo</div>
                 <div class="legend-item"><div class="l-dot" style="border:1px dashed #ef4444;"></div> Hedef</div>
             </div>
-            <div class="map-tip">Oto-pilot ile gitmek için haritada bir noktaya tıklayın.</div>
-            <div class="absolute top-4 right-4 cursor-pointer text-white opacity-50 hover:opacity-100" onclick="closeMap()">✕</div>
-        </div>
+
+        </div> <!-- Layout End -->
     </div>
 
     <!-- İSTATİSTİK PANELİ -->

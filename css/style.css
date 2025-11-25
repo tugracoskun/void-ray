@@ -457,12 +457,42 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
 /* Glassmorphism Big Map */
 #big-map-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; display: none; justify-content: center; align-items: center; }
 #big-map-overlay.active { display: flex; }
-.big-map-container { position: relative; width: 90vh; height: 90vh; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--soft-radius); overflow: hidden; background: rgba(5, 5, 10, 0.8); backdrop-filter: blur(10px); box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-.big-map-info-overlay { 
-    position: absolute; top: 20px; right: 20px; width: 250px;
-    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-    padding: 20px; border-radius: 4px; pointer-events: none;
+
+/* YENİ HARİTA DÜZENİ */
+.big-map-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    max-width: 95vw; /* Ekran taşmasını engelle */
 }
+
+/* Harita Kutusu (Eski big-map-container güncellendi) */
+.big-map-container { 
+    position: relative; 
+    width: 85vh; /* Lejant için yer açmak adına biraz küçültüldü */
+    height: 85vh; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: var(--soft-radius); 
+    overflow: hidden; 
+    background: rgba(5, 5, 10, 0.8); 
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+}
+
+/* Lejant Kutusu (Yeni stil) */
+.big-map-info-overlay { 
+    /* position: absolute kaldırıldı, statik oldu */
+    width: 280px;
+    height: 85vh; /* Harita ile aynı yükseklik */
+    background: rgba(5, 5, 10, 0.85); /* Harita ile uyumlu */
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 20px; 
+    border-radius: 4px; 
+    pointer-events: auto; /* Tıklanabilir */
+    overflow-y: auto; /* Çok madde olursa scroll */
+    backdrop-filter: blur(10px);
+}
+
 .legend-item { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; color: #cbd5e1; letter-spacing: 1px; font-size: 0.9rem; }
 .l-dot { width: 10px; height: 10px; border-radius: 0; }
 .map-tip { position: absolute; bottom: 20px; left: 20px; color: rgba(255,255,255,0.5); font-size: 0.8rem; pointer-events: none; }
