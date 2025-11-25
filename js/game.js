@@ -812,6 +812,40 @@ function loop() {
         if(echoRay) {
             ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.scanRadius, 0, Math.PI*2); ctx.stroke();
             ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
+            
+            // --- YANKI DÖNÜŞ ÇİZGİSİ ---
+            if (echoRay.mode === 'return') {
+                const distToEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                
+                // Mesafe scanRadius'tan küçükse (yeşil alan içindeyse) opasiteyi düşür
+                let lineAlpha = 0.4;
+                if (distToEcho < player.scanRadius) {
+                    // İçeri girdikçe (mesafe azaldıkça) görünürlük azalır
+                    lineAlpha = Math.max(0, (distToEcho / player.scanRadius) * 0.4);
+                }
+
+                if (lineAlpha > 0.05) { // Çok silikse çizme
+                    ctx.beginPath();
+                    // Yankıdan oyuncuya doğru çizelim ki akış yönü mantıklı olsun
+                    ctx.moveTo(echoRay.x, echoRay.y);
+                    ctx.lineTo(player.x, player.y);
+                    
+                    ctx.strokeStyle = MAP_CONFIG.colors.echo; 
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([15, 10]); // Kesik Çizgi
+                    
+                    // Animasyon
+                    ctx.lineDashOffset = -Date.now() / 50; 
+
+                    ctx.globalAlpha = lineAlpha;
+                    ctx.stroke();
+                    
+                    // Temizlik
+                    ctx.globalAlpha = 1.0;
+                    ctx.setLineDash([]);
+                    ctx.lineDashOffset = 0;
+                }
+            }
         }
 
         planets.forEach(p => { 

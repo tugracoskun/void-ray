@@ -215,7 +215,7 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(6, 8); ctx.lineTo(-6, 8); ctx.fill(); 
     ctx.restore();
 
-    // Hedef Çizgisi
+    // Hedef Çizgisi (Manual Target)
     if(state.manualTarget) {
         const tx = offsetX + state.manualTarget.x*scale; 
         const ty = offsetY + state.manualTarget.y*scale;
@@ -224,6 +224,29 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
         ctx.setLineDash([5, 5]); 
         ctx.beginPath(); ctx.moveTo(offsetX + entities.player.x*scale, offsetY + entities.player.y*scale); ctx.lineTo(tx, ty); ctx.stroke(); ctx.setLineDash([]);
         ctx.beginPath(); ctx.arc(tx, ty, 5, 0, Math.PI*2); ctx.stroke();
+    }
+
+    // --- YANKI DÖNÜŞ ÇİZGİSİ (Büyük Harita) ---
+    if(entities.echoRay && entities.echoRay.mode === 'return') {
+        const ex = offsetX + entities.echoRay.x * scale;
+        const ey = offsetY + entities.echoRay.y * scale;
+        const px = offsetX + entities.player.x * scale;
+        const py = offsetY + entities.player.y * scale;
+        
+        ctx.strokeStyle = MAP_CONFIG.colors.echo; 
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]); 
+        
+        // Animasyon
+        ctx.lineDashOffset = -Date.now() / 20;
+
+        ctx.beginPath(); 
+        ctx.moveTo(ex, ey); // Yankıdan
+        ctx.lineTo(px, py); // Oyuncuya
+        ctx.stroke(); 
+        
+        ctx.setLineDash([]);
+        ctx.lineDashOffset = 0;
     }
 }
 
