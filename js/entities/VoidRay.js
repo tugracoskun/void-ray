@@ -26,8 +26,11 @@ class VoidRay {
         
         this.outOfBoundsTimer = 0; 
         
+        // Kuyruk Ayarları
+        this.baseTailCount = 20;
+        this.boostTailCount = 50; // Boost sırasında kuyruk uzasın
         this.tail = []; 
-        for(let i=0; i<20; i++) this.tail.push({x:this.x, y:this.y});
+        for(let i=0; i<this.baseTailCount; i++) this.tail.push({x:this.x, y:this.y});
         
         this.scanRadius = 4000;
         this.radarRadius = 10000; 
@@ -157,9 +160,12 @@ class VoidRay {
             document.getElementById('radiation-warning').style.display = 'none';
         }
 
+        // Boost durumu kontrolü
+        const isBoosting = keys[" "] && this.energy > 0 && !window.cinematicMode;
+
         // Enerji Yönetimi
         // Global keys ve lowEnergyWarned
-        if (keys[" "] && this.energy > 0 && !window.cinematicMode) {
+        if (isBoosting) {
                 const cost = 0.05;
                 this.energy = Math.max(0, this.energy - cost); 
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
@@ -292,7 +298,7 @@ class VoidRay {
             // Manuel Kontrol
             if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
             if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
-            if (keys.w || (keys[" "] && this.energy > 0)) {
+            if (keys.w || isBoosting) {
                 this.vx += Math.cos(this.angle) * ACCEL;
                 this.vy += Math.sin(this.angle) * ACCEL;
                 targetWingState = -0.8; this.wingPhase += 0.2;
@@ -341,7 +347,25 @@ class VoidRay {
 
         this.roll += (targetRoll - this.roll) * 0.05; this.wingState += (targetWingState - this.wingState) * 0.1;
         
-        // Kuyruk Efekti
+        // Kuyruk Efekti - Dinamik Uzama/Kısalma
+        const targetCount = isBoosting ? this.boostTailCount : this.baseTailCount;
+        
+        // Hedef uzunluğa yumuşak geçiş (Her karede 2 parça ekle/çıkar)
+        const transitionSpeed = 2;
+        
+        if (this.tail.length < targetCount) {
+             for(let k=0; k<transitionSpeed; k++) {
+                 if (this.tail.length >= targetCount) break;
+                 const last = this.tail[this.tail.length - 1];
+                 this.tail.push({x: last.x, y: last.y});
+             }
+        } else if (this.tail.length > targetCount) {
+             for(let k=0; k<transitionSpeed; k++) {
+                 if (this.tail.length <= targetCount) break;
+                 this.tail.pop();
+             }
+        }
+
         let targetX = this.x - Math.cos(this.angle) * 20 * this.scale;
         let targetY = this.y - Math.sin(this.angle) * 20 * this.scale;
         this.tail[0].x += (targetX - this.tail[0].x) * 0.5; this.tail[0].y += (targetY - this.tail[0].y) * 0.5;
