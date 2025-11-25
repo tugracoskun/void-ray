@@ -42,15 +42,16 @@ const GameRules = {
     // Kaynak Düşme Olasılıkları (Ağırlıklı Dağılım)
     // Toplam: 100 birim üzerinden hesaplanmıştır.
     LOOT_DISTRIBUTION: [
-        { count: 1, weight: 60 }, // %60 ihtimalle 1 kaynak
+        { count: 0, weight: 20 }, // %20 ihtimalle BOŞ (Sadece XP)
+        { count: 1, weight: 45 }, // %45 ihtimalle 1 kaynak
         { count: 2, weight: 25 }, // %25 ihtimalle 2 kaynak
-        { count: 3, weight: 10 }, // %10 ihtimalle 3 kaynak
-        { count: 4, weight: 5 }   // %5 ihtimalle 4 kaynak (Jackpot!)
+        { count: 3, weight: 7 },  // %7 ihtimalle 3 kaynak
+        { count: 4, weight: 3 }   // %3 ihtimalle 4 kaynak (Jackpot!)
     ],
 
     /**
      * Tanımlı ağırlıklara göre rastgele kaynak sayısı (loot) hesaplar.
-     * @returns {number} Üretilecek kaynak sayısı (1-4 arası)
+     * @returns {number} Üretilecek kaynak sayısı (0-4 arası)
      */
     calculateLootCount: function() {
         // Toplam ağırlığı hesapla

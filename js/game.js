@@ -889,12 +889,39 @@ function loop() {
                     } else if (p.type.id === 'tardigrade') {
                         p.collected = true; audio.playChime(p.type); 
                         player.energy = Math.min(player.energy + 50, player.maxEnergy);
-                        showNotification({name: "TARDİGRAD YENDİ (+%50 ENERJİ)", type:{color:'#C7C0AE'}}, "");
+                        showNotification({name: "TARDİGRAD YENDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${p.type.xp} XP)`);
                         player.gainXp(p.type.xp);
                     } else { 
-                        const lootCount = GameRules.calculateLootCount(); let addedCount = 0;
-                        for(let i=0; i<lootCount; i++) { if(addItemToInventory(p)) { addedCount++; player.gainXp(p.type.xp); } else { break; } }
-                        if (addedCount > 0) { p.collected = true; audio.playChime(p.type); showNotification(p, addedCount > 1 ? `x${addedCount}` : ""); } 
+                        const lootCount = GameRules.calculateLootCount(); 
+                        
+                        // YENİ MANTIK: Hiç kaynak çıkmasa bile XP ver
+                        if (lootCount === 0) {
+                            p.collected = true;
+                            // XP kazan
+                            player.gainXp(p.type.xp);
+                            showNotification({
+                                name: `+${p.type.xp} XP`, 
+                                type: { color: '#94a3b8' } // Gri renk
+                            }, "(Veri Analizi)");
+                        } else {
+                            let addedCount = 0;
+                            for(let i=0; i<lootCount; i++) { 
+                                if(addItemToInventory(p)) { 
+                                    addedCount++; 
+                                    player.gainXp(p.type.xp); 
+                                } else { 
+                                    break; 
+                                } 
+                            }
+                            if (addedCount > 0) { 
+                                p.collected = true; 
+                                audio.playChime(p.type); 
+                                // Diğer toplamalarda da XP göster
+                                const totalXp = addedCount * p.type.xp;
+                                const suffix = (addedCount > 1 ? `x${addedCount} ` : "") + `(+${totalXp} XP)`;
+                                showNotification(p, suffix); 
+                            } 
+                        }
                     } 
                 } 
             } 
