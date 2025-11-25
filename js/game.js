@@ -75,6 +75,17 @@ let lowEnergyWarned = false;
 // YARDIMCI FONKSİYONLAR
 // -------------------------------------------------------------------------
 
+/**
+ * Gezegenin türüne göre rastgele XP hesaplar.
+ * Taban XP değerinin %50'si ile %150'si arasında değişir.
+ */
+function calculatePlanetXp(type) {
+    if (!type || !type.xp) return 0;
+    // 0.5 (yarısı) ile 1.5 (bir buçuk katı) arasında rastgele çarpan
+    const variance = 0.5 + Math.random(); 
+    return Math.floor(type.xp * variance);
+}
+
 // Kapasite Hesaplama Fonksiyonları
 function getPlayerCapacity() {
     // Taban: 150 (Sabit İstek), Seviye Başına: +25
@@ -340,8 +351,9 @@ function echoManualMerge() {
             echoRay.lootBag.forEach(p => { 
                 if(p.type.id === 'tardigrade') {
                     player.energy = Math.min(player.energy + 50, player.maxEnergy);
-                    showNotification({name: "YANKI: TARDİGRAD GETİRDİ (+%50 ENERJİ)", type:{color:'#C7C0AE'}}, "");
-                    player.gainXp(p.type.xp);
+                    const xp = calculatePlanetXp(p.type);
+                    showNotification({name: "YANKI: TARDİGRAD GETİRDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${xp} XP)`);
+                    player.gainXp(xp);
                 } else {
                     if (currentLoad < playerCap) {
                         itemsToTransfer.push(p);
@@ -352,16 +364,19 @@ function echoManualMerge() {
                 }
             });
 
+            let totalTransferXp = 0;
             itemsToTransfer.forEach(item => {
                  collectedItems.push(item);
                  playerData.stats.totalResources++;
-                 player.gainXp(item.type.xp);
+                 const xp = calculatePlanetXp(item.type);
+                 totalTransferXp += xp;
+                 player.gainXp(xp);
             });
 
             echoRay.lootBag = itemsKept;
 
             if(itemsToTransfer.length > 0) {
-                showNotification({name: `YANKI: ${itemsToTransfer.length} EŞYA AKTARILDI`, type:{color:'#38bdf8'}}, "");
+                showNotification({name: `YANKI: ${itemsToTransfer.length} EŞYA AKTARILDI`, type:{color:'#38bdf8'}}, `(+${totalTransferXp} XP)`);
             }
 
             if(itemsKept.length > 0) {
@@ -884,31 +899,43 @@ function loop() {
                              p.collected = true; 
                              audio.playChime({id:'legendary'}); 
                              showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
-                             if (p.lootContent && p.lootContent.length > 0) { p.lootContent.forEach(item => { if(addItemToInventory(item)) player.gainXp(item.type.xp); }); }
+                             if (p.lootContent && p.lootContent.length > 0) { 
+                                 p.lootContent.forEach(item => { 
+                                     if(addItemToInventory(item)) {
+                                         const xp = calculatePlanetXp(item.type);
+                                         player.gainXp(xp);
+                                     }
+                                 }); 
+                             }
                          }
                     } else if (p.type.id === 'tardigrade') {
                         p.collected = true; audio.playChime(p.type); 
                         player.energy = Math.min(player.energy + 50, player.maxEnergy);
-                        showNotification({name: "TARDİGRAD YENDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${p.type.xp} XP)`);
-                        player.gainXp(p.type.xp);
+                        const xp = calculatePlanetXp(p.type);
+                        showNotification({name: "TARDİGRAD YENDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${xp} XP)`);
+                        player.gainXp(xp);
                     } else { 
                         const lootCount = GameRules.calculateLootCount(); 
                         
                         // YENİ MANTIK: Hiç kaynak çıkmasa bile XP ver
                         if (lootCount === 0) {
                             p.collected = true;
-                            // XP kazan
-                            player.gainXp(p.type.xp);
+                            // XP kazan (Rastgele)
+                            const xp = calculatePlanetXp(p.type);
+                            player.gainXp(xp);
                             showNotification({
-                                name: `+${p.type.xp} XP`, 
+                                name: `+${xp} XP`, 
                                 type: { color: '#94a3b8' } // Gri renk
                             }, "(Veri Analizi)");
                         } else {
                             let addedCount = 0;
+                            let totalXp = 0;
                             for(let i=0; i<lootCount; i++) { 
                                 if(addItemToInventory(p)) { 
                                     addedCount++; 
-                                    player.gainXp(p.type.xp); 
+                                    const xp = calculatePlanetXp(p.type);
+                                    totalXp += xp;
+                                    player.gainXp(xp); 
                                 } else { 
                                     break; 
                                 } 
@@ -917,7 +944,6 @@ function loop() {
                                 p.collected = true; 
                                 audio.playChime(p.type); 
                                 // Diğer toplamalarda da XP göster
-                                const totalXp = addedCount * p.type.xp;
                                 const suffix = (addedCount > 1 ? `x${addedCount} ` : "") + `(+${totalXp} XP)`;
                                 showNotification(p, suffix); 
                             } 
