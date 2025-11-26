@@ -325,6 +325,12 @@ function updateEchoDropdownUI() {
 
 function setEchoMode(mode) {
     if(!echoRay) return;
+    
+    // Eğer mod 'return' değilse (örn: tekrar 'roam' yapıldıysa) otomatik birleşmeyi iptal et
+    if (mode !== 'return') {
+        echoRay.pendingMerge = false;
+    }
+
     if (mode === 'roam' && echoRay.attached) { 
         echoRay.attached = false; 
         showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); 
@@ -390,10 +396,12 @@ function echoManualMerge() {
         audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
+        echoRay.pendingMerge = false;
         updateEchoDropdownUI();
     } else { 
-        showNotification({name: "YANKI ÇOK UZAK, ÇAĞIRILIYOR...", type:{color:'#fbbf24'}}, ""); 
+        showNotification({name: "YANKI BİRLEŞMEK İÇİN GELİYOR...", type:{color:'#fbbf24'}}, ""); 
         setEchoMode('return'); 
+        echoRay.pendingMerge = true;
     }
 }
 
@@ -779,7 +787,15 @@ function loop() {
         currentZoom += (targetZoom - currentZoom) * zoomSpeed;
 
         player.update(dt);
-        if(echoRay) echoRay.update(); 
+        if(echoRay) {
+            echoRay.update(); 
+            // OTOMATİK BİRLEŞME KONTROLÜ
+            if (echoRay.mode === 'return' && echoRay.pendingMerge) {
+                 const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                 // Yaklaşınca (300 birim) birleşmeyi tetikle
+                 if (dist < 300) echoManualMerge();
+            }
+        }
         nexus.update();
         repairStation.update();
         storageCenter.update();

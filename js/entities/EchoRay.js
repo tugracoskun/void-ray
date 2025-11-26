@@ -18,6 +18,7 @@ class EchoRay {
         this.fullNotified = false;
         
         this.wingPhase = 0; 
+        this.pendingMerge = false;
         
         this.scanRadius = 4000;
         this.radarRadius = 10000;
