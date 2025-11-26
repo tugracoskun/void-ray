@@ -142,7 +142,9 @@ class EchoRay {
                 this.angle += diff * 0.1;
                 
                 const dist = Math.hypot(targetX - this.x, targetY - this.y);
-                if (dist < 100 && this.mode !== 'roam') {
+                const stopDistance = (this.mode === 'return') ? 250 : 100;
+
+                if (dist < stopDistance && this.mode !== 'roam') {
                      this.vx *= 0.8; this.vy *= 0.8;
                 } else {
                      const thrust = (this.mode === 'recharge' || this.mode === 'deposit_storage') ? 0.8 : 0.5;
