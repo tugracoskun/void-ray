@@ -1,6 +1,7 @@
 /**
  * Void Ray - İletişim ve Bildirim Sistemi
  * * Sohbet geçmişi, sistem bildirimleri ve kullanıcı mesajlarını yönetir.
+ * * AYRICA: Sürüklenebilir pencere mantığını içerir (Sınır korumalı).
  */
 
 // İletişim Sistemi (Loglar ve Mesajlar)
@@ -131,8 +132,7 @@ function sendUserMessage() {
     }, 200);
 }
 
-// Olay Dinleyicileri (DOM yüklendikten sonra çalışması için kontrol eklenebilir ama 
-// script en altta olduğu için direkt çalışacaktır)
+// Olay Dinleyicileri
 const sendBtn = document.getElementById('chat-send-btn');
 if(sendBtn) sendBtn.addEventListener('click', sendUserMessage);
 
@@ -142,3 +142,98 @@ if(chatInput) {
         if(e.key === 'Enter') sendUserMessage();
     });
 }
+
+// --- SÜRÜKLE BIRAK SİSTEMİ (DRAG & DROP - SINIR KORUMALI) ---
+/**
+ * Bir HTML elementini sürükle-bırak yapılabilir hale getirir.
+ * Ekran sınırlarını aşmasını engeller.
+ * @param {HTMLElement} el - Taşınacak ana pencere/element
+ * @param {HTMLElement} handle - Tutulacak başlık/sap kısmı
+ */
+function makeElementDraggable(el, handle) {
+    if (!el || !handle) return;
+    
+    handle.style.cursor = 'move';
+    
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    
+    handle.addEventListener('mousedown', (e) => {
+        // Sadece sol tık ile sürüklensin
+        if (e.button !== 0) return;
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        // Mevcut pozisyonu al (Hesaplanan stil)
+        const rect = el.getBoundingClientRect();
+        
+        // Elementin konumlandırmasını 'absolute' ve 'top/left'e sabitle
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+        el.style.left = rect.left + 'px';
+        el.style.top = rect.top + 'px';
+        el.style.margin = '0';
+        
+        startLeft = rect.left;
+        startTop = rect.top;
+        
+        // Seçimi engelle
+        e.preventDefault();
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+    
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        
+        let newLeft = startLeft + dx;
+        let newTop = startTop + dy;
+        
+        // --- SINIR KONTROLÜ (BOUNDARY CHECK) ---
+        const maxLeft = window.innerWidth - el.offsetWidth;
+        const maxTop = window.innerHeight - el.offsetHeight;
+        
+        // 0'dan küçük olamaz (sol/üst sınır)
+        // maxLeft/maxTop'tan büyük olamaz (sağ/alt sınır)
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        
+        el.style.left = newLeft + 'px';
+        el.style.top = newTop + 'px';
+    }
+    
+    function onMouseUp() {
+        isDragging = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+    
+    // Pencere yeniden boyutlandırıldığında element ekran dışında kaldıysa içeri çek
+    window.addEventListener('resize', () => {
+        const rect = el.getBoundingClientRect();
+        const maxLeft = window.innerWidth - el.offsetWidth;
+        const maxTop = window.innerHeight - el.offsetHeight;
+        
+        let newLeft = rect.left;
+        let newTop = rect.top;
+        
+        if (newLeft > maxLeft) newLeft = maxLeft;
+        if (newTop > maxTop) newTop = maxTop;
+        
+        el.style.left = Math.max(0, newLeft) + 'px';
+        el.style.top = Math.max(0, newTop) + 'px';
+    });
+}
+
+// Chat Panelini Sürüklenebilir Yap
+const chatPanelEl = document.getElementById('chat-panel');
+const chatHeaderEl = document.querySelector('#chat-panel .chat-header');
+
+// Başlat
+makeElementDraggable(chatPanelEl, chatHeaderEl);
