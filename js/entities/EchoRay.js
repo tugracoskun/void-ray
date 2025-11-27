@@ -22,6 +22,16 @@ class EchoRay {
         
         this.scanRadius = 4000;
         this.radarRadius = 10000;
+
+        // --- RENK YÖNETİMİ ---
+        this.colorLerp = 0; // 0: Normal, 1: Tamamen Oyuncu Rengi
+        
+        // Varsayılan Yankı Rengi (Açık Gri / Metalik - #cbd5e1)
+        this.baseColor = { r: 203, g: 213, b: 225 }; 
+        
+        // Hedef Renk (Oyuncu Mavisi - #38bdf8)
+        // İleride oyuncu rengi değişirse burası güncellenebilir veya parametrik yapılabilir.
+        this.targetColor = { r: 56, g: 189, b: 248 }; 
     }
     
     update() {
@@ -33,6 +43,14 @@ class EchoRay {
 
         const durabilityMult = 1 + (playerData.upgrades.echoDurability * 0.5);
         let drain = 0.005 / durabilityMult; 
+
+        // --- RENK GEÇİŞ MANTIĞI ---
+        // Eğer bağlıysa oyuncu rengine yaklaş (ama tam aynısı olma, örn: 0.7)
+        // Değilse kendi rengine dön (0.0)
+        const targetLerp = this.attached ? 0.7 : 0.0;
+        const lerpSpeed = 0.05; // Renk değişim hızı (daha düşük = daha yumuşak)
+
+        this.colorLerp += (targetLerp - this.colorLerp) * lerpSpeed;
 
         // --- YANKI SINIR KONTROLÜ ---
         // Global WORLD_SIZE
@@ -218,15 +236,22 @@ class EchoRay {
         ctx.rotate(this.angle + Math.PI/2); 
         ctx.scale(0.6, 0.6); 
         
+        // --- DİNAMİK RENK HESAPLAMA ---
+        const r = Math.round(this.baseColor.r + (this.targetColor.r - this.baseColor.r) * this.colorLerp);
+        const g = Math.round(this.baseColor.g + (this.targetColor.g - this.baseColor.g) * this.colorLerp);
+        const b = Math.round(this.baseColor.b + (this.targetColor.b - this.baseColor.b) * this.colorLerp);
+        const dynamicColor = `rgb(${r},${g},${b})`;
+
         // Global nexus
         if (this.mode === 'recharge' && Math.hypot(this.x - nexus.x, this.y - nexus.y) < 150) {
              const pulse = 0.5 + Math.sin(Date.now() * 0.005) * 0.5; 
              ctx.shadowBlur = 30 + pulse * 30; 
-             ctx.shadowColor = "#cbd5e1"; // Gri parıltı
+             ctx.shadowColor = "#cbd5e1"; // Gri parıltı (Şarj olurken nötr renk)
              ctx.fillStyle = `rgba(203, 213, 225, ${0.5 + pulse * 0.5})`; 
         } else {
              ctx.shadowBlur = 20; 
-             ctx.shadowColor = "#94a3b8"; // Slate-400 (Uzay Grisi)
+             // Gölge rengi dinamik
+             ctx.shadowColor = dynamicColor;
         }
         
         // Kanat animasyonu değerleri
@@ -234,7 +259,7 @@ class EchoRay {
         let wingTipX = 60; 
         let wingFlap = Math.sin(this.wingPhase) * 5; 
         
-        // Gövde (Koyu Uzay Grisi)
+        // Gövde (Koyu Uzay Grisi - Hafifçe renk tonu alabilir ama şimdilik sabit tutuyoruz)
         ctx.fillStyle = "rgba(30, 41, 59, 0.95)"; 
         
         ctx.beginPath(); 
@@ -247,8 +272,8 @@ class EchoRay {
         ctx.bezierCurveTo(-wingTipX, wingTipY+wingFlap, -15, -10, 0, -30); 
         ctx.fill();
         
-        // Kenar Çizgileri (Açık Gri / Metalik)
-        ctx.strokeStyle = "#cbd5e1"; 
+        // Kenar Çizgileri (DİNAMİK RENK)
+        ctx.strokeStyle = dynamicColor; 
         ctx.lineWidth = 2; 
         ctx.stroke(); 
         
@@ -257,7 +282,7 @@ class EchoRay {
         
         if (this.mode !== 'recharge') {
              ctx.shadowBlur = 40; 
-             ctx.shadowColor = "#cbd5e1"; 
+             ctx.shadowColor = dynamicColor; // Göz parlaması da dinamik
         }
         
         ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill(); 
