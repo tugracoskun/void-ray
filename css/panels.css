@@ -91,6 +91,15 @@
 .inv-header { padding: 25px 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .inv-table-container { flex: 1; padding: 0; overflow-y: auto; }
 
+/* Envanter İçi Para Göstergesi (YENİ) */
+.inv-currency {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 5px;
+    letter-spacing: 1px;
+}
+
 /* --- NEXUS YAPISI --- */
 .nexus-header { padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent); }
 

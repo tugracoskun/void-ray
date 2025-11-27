@@ -29,15 +29,7 @@
 .ai-mode-switch.visible { display: block; }
 .ai-mode-switch:hover { background: rgba(255,255,255,0.2); color: white; }
 
-/* Currency Display */
-#currency-display {
-    position: absolute; top: 30px; right: 100px; 
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-    border: 1px solid var(--glass-border); color: rgba(255,255,255,0.7);
-    padding: 10px 25px; border-radius: var(--soft-radius);
-    font-size: 1rem; letter-spacing: 2px; font-weight: 400;
-    display: flex; align-items: center; gap: 10px;
-}
+/* Currency Display REMOVED from HUD */
 
 /* Echo Menu */
 .echo-wrapper { position: relative; display: none; flex-direction: column; }
