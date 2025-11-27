@@ -38,9 +38,14 @@
                 initControls();
             }
 
-            // 2. Chat Sistemini Başlat (DÜZELTİLDİ)
+            // 2. Chat Sistemini Başlat
             if (typeof initChatSystem === 'function') {
                 initChatSystem();
+            }
+
+            // 3. Ayar Dinleyicilerini Başlat
+            if (typeof initSettingsListeners === 'function') {
+                initSettingsListeners();
             }
         };
     </script>

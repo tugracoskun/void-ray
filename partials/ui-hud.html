@@ -40,11 +40,36 @@
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ) -->
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: NAVİGASYON BÖLÜMÜ EKLENDİ) -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <h3 class="text-white text-sm font-bold tracking-widest mb-4 border-b border-white/10 pb-2">AYARLAR</h3>
         
+        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">NAVİGASYON</div>
+        <div class="mb-4">
+            <div class="toggle-row">
+                <span>ÜS OKU (NEXUS)</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-nexus-arrow" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span>TAMİR OKU</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-repair-arrow">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span>DEPO OKU</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-storage-arrow">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
         <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">SES YÖNETİMİ</div>
         <div class="mb-4">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>

@@ -17,6 +17,13 @@ var repairStation = null;
 var storageCenter = null;
 var audio; 
 
+// OYUN AYARLARI (GÜNCELLENDİ: OK GÖRÜNÜRLÜĞÜ)
+window.gameSettings = {
+    showNexusArrow: true,
+    showRepairArrow: false,
+    showStorageArrow: false
+};
+
 let playerData = { 
     stardust: 0, 
     upgrades: { 
@@ -66,6 +73,35 @@ let autopilot = false;
 let aiMode = 'gather'; // gather | base | travel | deposit
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
+
+// -------------------------------------------------------------------------
+// AYAR DİNLEYİCİLERİ (YENİ)
+// -------------------------------------------------------------------------
+window.initSettingsListeners = function() {
+    console.log("Ayar dinleyicileri başlatılıyor...");
+    
+    const nexusToggle = document.getElementById('toggle-nexus-arrow');
+    const repairToggle = document.getElementById('toggle-repair-arrow');
+    const storageToggle = document.getElementById('toggle-storage-arrow');
+
+    if (nexusToggle) {
+        nexusToggle.addEventListener('change', (e) => {
+            window.gameSettings.showNexusArrow = e.target.checked;
+        });
+    }
+
+    if (repairToggle) {
+        repairToggle.addEventListener('change', (e) => {
+            window.gameSettings.showRepairArrow = e.target.checked;
+        });
+    }
+
+    if (storageToggle) {
+        storageToggle.addEventListener('change', (e) => {
+            window.gameSettings.showStorageArrow = e.target.checked;
+        });
+    }
+};
 
 // -------------------------------------------------------------------------
 // OYUN MEKANİKLERİ VE MANTIK
@@ -479,9 +515,19 @@ function loop() {
         if(echoRay && !echoRay.attached) {
             drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }
-        drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
-        drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, repairStation, MAP_CONFIG.colors.repair);
-        drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
+
+        // GÜNCELLENDİ: OK ÇİZİMLERİ AYARLARA BAĞLANDI
+        if (window.gameSettings.showNexusArrow) {
+            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
+        }
+        
+        if (window.gameSettings.showRepairArrow) {
+            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, repairStation, MAP_CONFIG.colors.repair);
+        }
+        
+        if (window.gameSettings.showStorageArrow) {
+            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
+        }
 
         const entities = { player, echoRay, nexus, repairStation, storageCenter, planets };
         const state = { manualTarget };
