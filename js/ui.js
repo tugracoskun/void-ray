@@ -12,7 +12,6 @@ let nexusOpen = false;
 let mapOpen = false;
 let storageOpen = false;
 let statsOpen = false;
-let activeFilter = 'all';
 
 // --- GLOBAL TOOLTIP YÖNETİMİ ---
 // Tooltip elementini JS ile oluşturup body'ye ekliyoruz
@@ -162,6 +161,8 @@ function updateInventoryCount() {
         }
     }
     
+    // Sidebar kaldırıldığı için bu elementler artık yok, ancak
+    // kod güvenliği için null kontrolü ile bırakıldı.
     const elCountAll = document.getElementById('count-all');
     if(elCountAll) {
         elCountAll.innerText = count;
@@ -184,22 +185,10 @@ function renderInventory() {
         invHeader.innerHTML = `ENVANTER <span style="font-size:0.5em; vertical-align:middle; color:${color}; letter-spacing:1px; margin-left:10px;">${count} / ${cap}</span>`;
     }
 
-    // Filtreleme mantığı
-    let filteredItems = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
-    
-    // Grid olarak render et
-    const displayCapacity = activeFilter === 'all' ? cap : filteredItems.length;
-    
-    renderGrid(gridContainer, filteredItems, displayCapacity, (item) => {
+    // Filtreleme mantığı kaldırıldı, direkt tüm eşyalar gösteriliyor.
+    renderGrid(gridContainer, collectedItems, cap, (item) => {
         // Envanterdeki eşyaya tıklanınca yapılacak işlem (Şimdilik boş)
     });
-}
-
-function filterInventory(f) { 
-    activeFilter = f; 
-    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); 
-    if(event && event.currentTarget) event.currentTarget.classList.add('active'); 
-    renderInventory(); 
 }
 
 function closeInventory() { 
