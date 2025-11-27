@@ -98,15 +98,42 @@
     </div>
 </div>
 
-<!-- YANKI ENVANTERI -->
+<!-- YANKI ENVANTERI (GÜNCELLENMİŞ) -->
 <div id="echo-inventory-overlay" class="overlay-base">
-    <div class="inv-window" style="border-color: var(--echo-color); height: 500px; width: 700px;">
-        <div class="inv-content" style="background: rgba(0,0,0,0.3); padding: 20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid rgba(103, 232, 249, 0.3); padding-bottom:10px;">
-                <h2 class="text-2xl font-light tracking-widest text-cyan-300">YANKI DEPOSU</h2>
-                <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeEchoInventory()">✕</div>
+    <div class="nexus-window" style="height: 600px; border-color: var(--echo-color);">
+        <div class="nexus-header">
+            <div>
+                <h1 class="nexus-logo-text" style="color:var(--echo-color); font-size: 2.5rem;">YANKI ARAYÜZÜ</h1>
+                <span class="text-xs text-cyan-400 tracking-widest">SENKRONİZE DEPO YÖNETİMİ</span>
             </div>
-            <div id="echo-inv-grid-content" style="overflow-y: auto; flex: 1;"></div>
+            <div class="cursor-pointer text-2xl opacity-50 hover:opacity-100" onclick="closeEchoInventory()">✕</div>
+        </div>
+        <div class="nexus-content active" style="display:flex; gap:20px; height:100%; overflow:hidden;">
+            <!-- SOL: OYUNCU -->
+            <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="text-sky-300 tracking-widest">GEMİ KARGOSU</h3>
+                    <span id="echo-player-cap" class="text-xs text-gray-400">0 / 150</span>
+                </div>
+                <div id="echo-player-grid" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
+                <div class="p-4 border-t border-white/10">
+                    <button onclick="transferAllToEcho()" class="w-full bg-white/5 hover:bg-white/10 text-sky-300 border border-sky-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AKTAR</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col justify-center items-center text-cyan-500"><div class="text-2xl">⇄</div></div>
+
+            <!-- SAĞ: YANKI -->
+            <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="text-cyan-300 tracking-widest">YANKI DEPOSU</h3>
+                    <span id="echo-storage-cap" class="text-xs text-gray-400">0 / 0</span>
+                </div>
+                <div id="echo-storage-grid" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
+                <div class="p-4 border-t border-white/10">
+                    <button onclick="transferAllToPlayer()" class="w-full bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AL</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
