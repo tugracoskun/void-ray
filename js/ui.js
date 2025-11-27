@@ -13,6 +13,9 @@ let mapOpen = false;
 let storageOpen = false;
 let statsOpen = false;
 
+// HUD Görünürlük Durumu (YENİ)
+let isHudVisible = true;
+
 // --- GLOBAL TOOLTIP YÖNETİMİ ---
 // Tooltip elementini JS ile oluşturup body'ye ekliyoruz
 const globalTooltip = document.createElement('div');
@@ -23,6 +26,8 @@ document.body.appendChild(globalTooltip);
  * Tooltip'i gösterir ve içeriğini doldurur.
  */
 function showTooltip(e, name, xp) {
+    if (!isHudVisible) return; // HUD gizliyse tooltip gösterme
+    
     globalTooltip.innerHTML = `
         <span class="tooltip-title">${name}</span>
         <span class="tooltip-xp">${xp} XP</span>
@@ -52,6 +57,35 @@ function hideTooltip() {
 }
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
+
+/**
+ * HUD ve Panelleri Gizle/Göster (YENİ)
+ * Sinematik mod veya ekran görüntüsü için kullanılır.
+ */
+window.toggleHUD = function() {
+    isHudVisible = !isHudVisible;
+    const hudContainer = document.getElementById('ui-hud');
+    const panelsContainer = document.getElementById('ui-panels');
+    
+    // Sınıfı ekle/çıkar (CSS transition opacity kullanacak)
+    if (hudContainer) {
+        if (isHudVisible) hudContainer.classList.remove('hidden-ui');
+        else hudContainer.classList.add('hidden-ui');
+    }
+    
+    if (panelsContainer) {
+        if (isHudVisible) panelsContainer.classList.remove('hidden-ui');
+        else panelsContainer.classList.add('hidden-ui');
+    }
+    
+    // Eğer gizleniyorsa açık tooltip varsa kapat
+    if (!isHudVisible) hideTooltip();
+    
+    // Bildirim göster (Sadece geri açıldığında veya gizlenirken konsola yazılabilir)
+    if (isHudVisible) {
+        showNotification({name: "ARAYÜZ AKTİF", type:{color:'#fff'}}, "");
+    }
+}
 
 function formatTime(ms) {
     if(!ms) ms = 0;

@@ -6,6 +6,19 @@
 .hud-container { pointer-events: none; position: absolute; inset: 0; z-index: 50; }
 .pointer-events-auto { pointer-events: auto; }
 
+/* --- HUD GİZLEME ÖZELLİĞİ (YENİ) --- */
+/* #ui-hud ve #ui-panels elementlerine bu sınıf eklendiğinde arayüz gizlenir */
+.hidden-ui {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Geçiş efektleri için kapsayıcılar */
+#ui-hud, #ui-panels {
+    transition: opacity 0.5s ease;
+    opacity: 1;
+}
+
 .hud-icon-group { position: absolute; top: 30px; left: 30px; display: flex; gap: 15px; pointer-events: auto; align-items: flex-start; }
 .hud-btn {
     width: 50px; height: 50px; 
@@ -28,8 +41,6 @@
 }
 .ai-mode-switch.visible { display: block; }
 .ai-mode-switch:hover { background: rgba(255,255,255,0.2); color: white; }
-
-/* Currency Display REMOVED from HUD */
 
 /* Echo Menu */
 .echo-wrapper { position: relative; display: none; flex-direction: column; }
