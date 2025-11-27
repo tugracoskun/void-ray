@@ -71,3 +71,33 @@ const GameRules = {
         return 1; // Hata durumunda varsayılan
     }
 };
+
+// --- YARDIMCI HESAPLAMA FONKSİYONLARI (Global Erişim İçin) ---
+
+/**
+ * Gezegenin türüne göre rastgele XP hesaplar.
+ * Taban XP değerinin %50'si ile %150'si arasında değişir.
+ */
+function calculatePlanetXp(type) {
+    if (!type || !type.xp) return 0;
+    // 0.5 (yarısı) ile 1.5 (bir buçuk katı) arasında rastgele çarpan
+    const variance = 0.5 + Math.random(); 
+    return Math.floor(type.xp * variance);
+}
+
+/**
+ * Oyuncunun güncel taşıma kapasitesini hesaplar.
+ * Taban: 150, Seviye Başına: +25
+ */
+function getPlayerCapacity() {
+    // playerData game.js içinde tanımlıdır, çalışma zamanında erişilebilir.
+    return 150 + (playerData.upgrades.playerCapacity * 25);
+}
+
+/**
+ * Yankı'nın güncel taşıma kapasitesini hesaplar.
+ * Taban: 80, Seviye Başına: +10
+ */
+function getEchoCapacity() {
+    return 80 + (playerData.upgrades.echoCapacity * 10);
+}
