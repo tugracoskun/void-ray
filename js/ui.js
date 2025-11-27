@@ -95,6 +95,7 @@ function showToxicEffect() {
  * @param {boolean} isUnlimited - Depo gibi limitsiz alanlar için
  */
 function renderGrid(container, items, capacity, onClickAction, isUnlimited = false) {
+    if (!container) return; // Güvenlik kontrolü
     container.innerHTML = '';
     container.className = 'inventory-grid-container';
     
@@ -219,8 +220,19 @@ function updateEchoDropdownUI() {
     else document.getElementById('menu-roam').classList.add('active-mode');
 }
 
+/**
+ * Yankı envanterini açar.
+ * GÜNCELLENDİ: Sadece Yankı bağlıyken (merge) açılır.
+ */
 function openEchoInventory() { 
     if(!echoRay) return; 
+    
+    if (!echoRay.attached) {
+        showNotification({name: "BAĞLANTI YOK", type:{color:'#ef4444'}}, "Yankı envanterine erişmek için birleşin.");
+        audio.playToxic();
+        return;
+    }
+    
     echoInvOpen = true; 
     document.getElementById('echo-inventory-overlay').classList.add('open'); 
     renderEchoInventory(); 
@@ -232,18 +244,140 @@ function closeEchoInventory() {
     hideTooltip();
 }
 
+/**
+ * Yankı envanter arayüzünü çizer.
+ * GÜNCELLENDİ: Depo mantığı ile iki ızgara gösterir (Oyuncu <-> Yankı).
+ */
 function renderEchoInventory() {
-    if(!echoRay) return; 
-    const gridContainer = document.getElementById('echo-inv-grid-content');
+    if(!echoRay || !echoInvOpen) return;
     
-    const headerTitle = document.querySelector('#echo-inventory-overlay h2');
-    const cap = getEchoCapacity();
-    if(headerTitle) headerTitle.innerHTML = `YANKI DEPOSU <span style="font-size:0.6em; color:#67e8f9; opacity:0.7;">(${echoRay.lootBag.length}/${cap})</span>`;
+    const playerContainer = document.getElementById('echo-player-grid');
+    const echoContainer = document.getElementById('echo-storage-grid');
+    const playerCapLabel = document.getElementById('echo-player-cap');
+    const echoCapLabel = document.getElementById('echo-storage-cap');
 
-    renderGrid(gridContainer, echoRay.lootBag, cap, (item) => {
-        // Yankı envanterine tıklama (Boş)
+    const pCap = getPlayerCapacity();
+    const eCap = getEchoCapacity();
+    
+    if(playerCapLabel) playerCapLabel.innerText = `${collectedItems.length} / ${pCap}`;
+    if(echoCapLabel) echoCapLabel.innerText = `${echoRay.lootBag.length} / ${eCap}`;
+
+    // SOL Taraf: Oyuncu Envanteri (Yankı'ya aktar)
+    renderGrid(playerContainer, collectedItems, pCap, (item) => {
+        transferToEcho(item);
+    });
+
+    // SAĞ Taraf: Yankı Deposu (Oyuncuya al)
+    renderGrid(echoContainer, echoRay.lootBag, eCap, (item) => {
+        transferToPlayer(item);
     });
 }
+
+// Global Transfer Fonksiyonları (Yankı için)
+
+// TEKİL TRANSFER
+window.transferToEcho = function(item) {
+    if (!echoRay) return;
+    if (echoRay.lootBag.length >= getEchoCapacity()) {
+         showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
+         return;
+    }
+    const idx = collectedItems.indexOf(item);
+    if (idx > -1) {
+        collectedItems.splice(idx, 1);
+        echoRay.lootBag.push(item);
+        renderEchoInventory();
+        updateInventoryCount();
+    }
+}
+
+window.transferToPlayer = function(item) {
+    if (collectedItems.length >= getPlayerCapacity()) {
+         showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
+         return;
+    }
+    const idx = echoRay.lootBag.indexOf(item);
+    if (idx > -1) {
+        echoRay.lootBag.splice(idx, 1);
+        
+        // Tardigrad ise tüket, değilse envantere al
+        if (item.type.id === 'tardigrade') {
+            player.energy = Math.min(player.energy + 50, player.maxEnergy);
+            const xp = calculatePlanetXp(item.type);
+            player.gainXp(xp);
+            showNotification({name: "TARDİGRAD KULLANILDI", type:{color:'#C7C0AE'}}, "");
+        } else {
+            collectedItems.push(item);
+        }
+        
+        renderEchoInventory();
+        updateInventoryCount();
+    }
+}
+
+// TOPLU TRANSFER (YENİ)
+window.transferAllToEcho = function() {
+    if (!echoRay) return;
+    const eCap = getEchoCapacity();
+    let movedCount = 0;
+
+    // Yankı dolana kadar veya oyuncu envanteri bitene kadar
+    while (echoRay.lootBag.length < eCap && collectedItems.length > 0) {
+        const item = collectedItems.shift(); // En baştan al
+        echoRay.lootBag.push(item);
+        movedCount++;
+    }
+
+    if (movedCount > 0) {
+        showNotification({name: `${movedCount} EŞYA AKTARILDI`, type:{color:'#67e8f9'}}, "");
+        if (audio) audio.playCash();
+    } else {
+         if(collectedItems.length > 0) showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
+         else showNotification({name: "GEMİ BOŞ!", type:{color:'#ef4444'}}, "");
+    }
+
+    renderEchoInventory();
+    updateInventoryCount();
+};
+
+window.transferAllToPlayer = function() {
+    if (!echoRay) return;
+    const pCap = getPlayerCapacity();
+    let movedCount = 0;
+
+    // Oyuncu dolana kadar veya yankı bitene kadar
+    // Dikkat: Tardigradlar yer kaplamaz (tüketilir), bu yüzden özel kontrol
+    while (echoRay.lootBag.length > 0) {
+        // Kontrol: Sadece envantere eklenecekse kapasiteye bak, yoksa (tardigrad) devam et
+        const nextItem = echoRay.lootBag[0];
+        
+        if (nextItem.type.id !== 'tardigrade' && collectedItems.length >= pCap) {
+             showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
+             break; // Kapasite doldu
+        }
+
+        const item = echoRay.lootBag.shift();
+        
+        if (item.type.id === 'tardigrade') {
+            player.energy = Math.min(player.energy + 50, player.maxEnergy);
+            const xp = calculatePlanetXp(item.type);
+            player.gainXp(xp);
+            showNotification({name: "TARDİGRAD KULLANILDI", type:{color:'#C7C0AE'}}, "");
+        } else {
+            collectedItems.push(item);
+            movedCount++;
+        }
+    }
+
+    if (movedCount > 0) {
+         showNotification({name: `${movedCount} EŞYA ALINDI`, type:{color:'#38bdf8'}}, "");
+         if (audio) audio.playCash();
+    }
+
+    renderEchoInventory();
+    updateInventoryCount();
+};
+
 
 // --- DEPO MERKEZİ (STORAGE) ARAYÜZÜ ---
 

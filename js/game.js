@@ -171,60 +171,24 @@ function setEchoMode(mode) {
     updateEchoDropdownUI();
 }
 
+/**
+ * GÜNCELLENDİ: Artık eşyaları otomatik transfer etmiyor.
+ * Sadece birleşme durumunu (attached) aktif ediyor.
+ */
 function echoManualMerge() {
     if(!echoRay) return;
     const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
     
     if (dist < 350) {
-         if (echoRay.lootBag.length > 0) {
-            let itemsToTransfer = [];
-            let itemsKept = [];
-            let playerCap = getPlayerCapacity();
-            let currentLoad = collectedItems.length;
-
-            echoRay.lootBag.forEach(p => { 
-                if(p.type.id === 'tardigrade') {
-                    player.energy = Math.min(player.energy + 50, player.maxEnergy);
-                    const xp = calculatePlanetXp(p.type);
-                    showNotification({name: "YANKI: TARDİGRAD GETİRDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${xp} XP)`);
-                    player.gainXp(xp);
-                } else {
-                    if (currentLoad < playerCap) {
-                        itemsToTransfer.push(p);
-                        currentLoad++;
-                    } else {
-                        itemsKept.push(p);
-                    }
-                }
-            });
-
-            let totalTransferXp = 0;
-            itemsToTransfer.forEach(item => {
-                 collectedItems.push(item);
-                 playerData.stats.totalResources++;
-                 const xp = calculatePlanetXp(item.type);
-                 totalTransferXp += xp;
-                 player.gainXp(xp);
-            });
-
-            echoRay.lootBag = itemsKept;
-
-            if(itemsToTransfer.length > 0) {
-                showNotification({name: `YANKI: ${itemsToTransfer.length} EŞYA AKTARILDI`, type:{color:'#38bdf8'}}, `(+${totalTransferXp} XP)`);
-            }
-
-            if(itemsKept.length > 0) {
-                 showNotification({name: "UYARI: OYUNCU ENVANTERİ DOLU!", type:{color:'#ef4444'}}, "Bazı eşyalar Yankı'da kaldı.");
-            }
-            
-            updateInventoryCount();
-            if(echoInvOpen) renderEchoInventory();
-        }
+        // Otomatik transfer kaldırıldı.
+        // Sadece birleşme gerçekleşiyor.
         
         if(audio) audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
         echoRay.pendingMerge = false;
+
+        showNotification({name: "SİSTEMLER BİRLEŞTİ", type:{color:'#67e8f9'}}, "Yankı deposuna erişilebilir.");
         updateEchoDropdownUI();
     } else { 
         showNotification({name: "YANKI BİRLEŞMEK İÇİN GELİYOR...", type:{color:'#fbbf24'}}, ""); 
