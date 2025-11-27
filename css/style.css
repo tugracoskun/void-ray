@@ -3,10 +3,12 @@
     --echo-color: #67e8f9;
     --toxic-color: #84cc16;
     --tardigrad-color: #C7C0AE;
-    --glass-bg: rgba(5, 5, 5, 0.9);
+    --glass-bg: rgba(5, 5, 5, 0.95);
     --glass-border: rgba(255, 255, 255, 0.15);
     --sharp-radius: 2px;
-    --soft-radius: 12px; /* Yumuşak kenarlar */
+    --soft-radius: 12px;
+    --slot-bg: #111;
+    --slot-border: #333;
 }
 body {
     margin: 0; overflow: hidden; background-color: #020204;
@@ -20,6 +22,87 @@ canvas { display: block; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+/* --- GRID SİSTEMİ --- */
+.inventory-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 4px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    max-height: 100%;
+    overflow-y: auto; 
+}
+
+.inventory-slot {
+    width: 42px;
+    height: 42px;
+    background-color: var(--slot-bg);
+    border: 1px solid var(--slot-border);
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,1), inset -1px -1px 3px rgba(255,255,255,0.05);
+    position: relative;
+    cursor: default;
+    transition: border-color 0.2s;
+    border-radius: 2px;
+}
+
+.inventory-slot:hover {
+    border-color: rgba(255,255,255,0.3);
+}
+
+.inventory-slot.has-item {
+    cursor: pointer;
+}
+
+.inventory-slot.has-item:hover {
+    border-color: var(--ray-color);
+    box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.item-box {
+    width: 32px;
+    height: 32px;
+    margin: 4px;
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    /* Baş harfi ortalamak ve stil vermek için yeni eklenenler */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 800; /* Kalın yazı */
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.2rem; /* Harf boyutu */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9); /* Okunabilirlik için gölge */
+    font-family: 'Outfit', sans-serif;
+    user-select: none;
+}
+
+/* --- YENİ GLOBAL TOOLTIP --- */
+#global-tooltip {
+    position: fixed; 
+    background: rgba(5, 5, 8, 0.98);
+    border: 1px solid var(--ray-color);
+    color: #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 9999; 
+    pointer-events: none; 
+    display: none; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    backdrop-filter: blur(5px);
+    transform: translate(15px, 15px); 
+}
+
+.tooltip-title { font-weight: 600; color: white; display: block; margin-bottom: 2px; }
+.tooltip-desc { font-size: 0.7rem; color: #94a3b8; }
+.tooltip-xp { color: var(--ray-color); font-family: monospace; }
+
+/* --- MEVCUT UI STİLLERİ --- */
 
 /* --- ANA MENÜ --- */
 #main-menu {
@@ -397,21 +480,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
 /* Inventory Layout */
 .inv-sidebar { width: 240px; background: rgba(255,255,255,0.01); border-right: 1px solid var(--glass-border); padding: 30px 20px; display: flex; flex-direction: column; gap: 10px; }
 .filter-btn { padding: 12px 15px; border-radius: 4px; color: #94a3b8; cursor: pointer; transition: 0.2s; font-size: 0.9rem; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-.filter-btn:hover { background: rgba(255,255,255,0.05); color: white; }
 .filter-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--ray-color); border-left: 2px solid var(--ray-color); }
+.filter-btn:hover { background: rgba(255,255,255,0.05); color: white; }
 
 .inv-content { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); position: relative; overflow: hidden; }
 .inv-header { padding: 25px 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .inv-table-container { flex: 1; padding: 0; overflow-y: auto; }
-
-.inv-table { width: 100%; border-collapse: collapse; text-align: left; }
-.inv-table th { 
-    padding: 15px 40px; color: rgba(255,255,255,0.4); font-weight: 400; 
-    font-size: 0.7rem; letter-spacing: 2px; border-bottom: 1px solid var(--glass-border); 
-    position: sticky; top: 0; background: rgba(5, 5, 5, 0.95); z-index: 10; 
-}
-.inv-table td { padding: 12px 40px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #e2e8f0; font-size: 0.9rem; }
-.inv-table tr:hover td { background: rgba(255,255,255,0.03); }
 
 /* Nexus Styles */
 .nexus-header { padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent); }

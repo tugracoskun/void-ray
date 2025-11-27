@@ -1,9 +1,11 @@
 /**
  * Void Ray - Kullanıcı Arayüzü (UI) Yönetimi
  * * Menüler, envanter ekranları, bildirimler ve HUD güncellemelerini yönetir.
+ * * game.js içinden ayrıştırılmıştır.
+ * * Grid (Kutu Kutu) envanter sistemi ve Global Tooltip eklendi.
  */
 
-// Arayüz Durumları
+// Arayüz Durumları (Global Erişim İçin)
 let inventoryOpen = false;
 let echoInvOpen = false;
 let nexusOpen = false;
@@ -11,6 +13,44 @@ let mapOpen = false;
 let storageOpen = false;
 let statsOpen = false;
 let activeFilter = 'all';
+
+// --- GLOBAL TOOLTIP YÖNETİMİ ---
+// Tooltip elementini JS ile oluşturup body'ye ekliyoruz
+const globalTooltip = document.createElement('div');
+globalTooltip.id = 'global-tooltip';
+document.body.appendChild(globalTooltip);
+
+/**
+ * Tooltip'i gösterir ve içeriğini doldurur.
+ */
+function showTooltip(e, name, xp) {
+    globalTooltip.innerHTML = `
+        <span class="tooltip-title">${name}</span>
+        <span class="tooltip-xp">${xp} XP</span>
+    `;
+    globalTooltip.style.display = 'block';
+    moveTooltip(e);
+}
+
+/**
+ * Tooltip'i farenin konumuna göre hareket ettirir.
+ */
+function moveTooltip(e) {
+    // Fare imlecinin biraz sağına ve altına konumlandır
+    const x = e.clientX + 15;
+    const y = e.clientY + 15;
+    
+    // Ekranın dışına taşmasını engellemek için basit kontrol (geliştirilebilir)
+    globalTooltip.style.left = x + 'px';
+    globalTooltip.style.top = y + 'px';
+}
+
+/**
+ * Tooltip'i gizler.
+ */
+function hideTooltip() {
+    globalTooltip.style.display = 'none';
+}
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
 
@@ -43,6 +83,59 @@ function showToxicEffect() {
     if(el) {
         el.classList.add('active'); 
         setTimeout(() => el.classList.remove('active'), 1500); 
+    }
+}
+
+// --- GRID (IZGARA) OLUŞTURUCU YARDIMCI ---
+/**
+ * HTML container içine envanter ızgarası çizer.
+ * @param {HTMLElement} container - Gridin ekleneceği div
+ * @param {Array} items - Eşya listesi
+ * @param {number} capacity - Toplam slot sayısı
+ * @param {Function} onClickAction - Tıklama olayı (item parametresi alır)
+ * @param {boolean} isUnlimited - Depo gibi limitsiz alanlar için
+ */
+function renderGrid(container, items, capacity, onClickAction, isUnlimited = false) {
+    container.innerHTML = '';
+    container.className = 'inventory-grid-container';
+    
+    // Limitsiz ise en az mevcut item kadar + biraz boşluk göster
+    const displayCount = isUnlimited ? Math.max(items.length + 20, 100) : capacity;
+
+    for (let i = 0; i < displayCount; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'inventory-slot';
+        
+        if (i < items.length) {
+            const item = items[i];
+            slot.classList.add('has-item');
+            
+            // Renkli kutu (İkon yerine)
+            const itemBox = document.createElement('div');
+            itemBox.className = 'item-box';
+            itemBox.style.backgroundColor = item.type.color;
+            
+            // DÜZELTME: İSMİN BAŞ HARFİNİ EKLE
+            if (item.name) {
+                // İsmin ilk harfini al, büyük harfe çevir
+                itemBox.innerText = item.name.charAt(0).toUpperCase();
+            }
+            
+            slot.appendChild(itemBox);
+            
+            // Olaylar
+            slot.onclick = () => {
+                hideTooltip(); // Tıklayınca gizle ki takılı kalmasın
+                onClickAction(item);
+            };
+            
+            // Yeni JS tabanlı Tooltip olayları
+            slot.onmouseenter = (e) => showTooltip(e, item.name, item.type.xp);
+            slot.onmousemove = (e) => moveTooltip(e);
+            slot.onmouseleave = () => hideTooltip();
+        }
+        
+        container.appendChild(slot);
     }
 }
 
@@ -79,8 +172,8 @@ function updateInventoryCount() {
 }
 
 function renderInventory() {
-    const grid = document.getElementById('inv-grid-content');
-    if(!grid) return;
+    const gridContainer = document.getElementById('inv-grid-content');
+    if(!gridContainer) return;
     
     const invHeader = document.querySelector('.inv-header h2');
     const cap = getPlayerCapacity();
@@ -91,31 +184,15 @@ function renderInventory() {
         invHeader.innerHTML = `ENVANTER <span style="font-size:0.5em; vertical-align:middle; color:${color}; letter-spacing:1px; margin-left:10px;">${count} / ${cap}</span>`;
     }
 
+    // Filtreleme mantığı
     let filteredItems = collectedItems.filter(i => activeFilter === 'all' || i.type.id === activeFilter);
     
-    if(filteredItems.length === 0) { 
-        grid.innerHTML = '<div class="text-center text-gray-500 mt-20">Bu kategoride eşya yok.</div>'; 
-        return; 
-    }
+    // Grid olarak render et
+    const displayCapacity = activeFilter === 'all' ? cap : filteredItems.length;
     
-    const grouped = {};
-    filteredItems.forEach(item => {
-        if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 };
-        grouped[item.name].count++;
+    renderGrid(gridContainer, filteredItems, displayCapacity, (item) => {
+        // Envanterdeki eşyaya tıklanınca yapılacak işlem (Şimdilik boş)
     });
-
-    let html = `<table class="inv-table"><thead><tr><th>TÜR</th><th>İSİM</th><th>XP</th><th style="text-align:right">MİKTAR</th></tr></thead><tbody>`;
-    Object.values(grouped).sort((a, b) => b.type.xp - a.type.xp).forEach(item => {
-        html += `
-            <tr>
-                <td style="color:${item.type.color}">●</td>
-                <td style="color:${item.type.color}">${item.name}</td>
-                <td style="font-size:0.8rem; opacity:0.7">${item.type.xp} XP</td>
-                <td style="text-align:right">x${item.count}</td>
-            </tr>`;
-    });
-    html += '</tbody></table>';
-    grid.innerHTML = html;
 }
 
 function filterInventory(f) { 
@@ -128,6 +205,7 @@ function filterInventory(f) {
 function closeInventory() { 
     inventoryOpen = false; 
     document.getElementById('inventory-overlay').classList.remove('open'); 
+    hideTooltip(); // Kapanırken tooltip'i de gizle
 }
 
 // --- YANKI (ECHO) ARAYÜZÜ ---
@@ -162,33 +240,20 @@ function openEchoInventory() {
 function closeEchoInventory() { 
     echoInvOpen = false; 
     document.getElementById('echo-inventory-overlay').classList.remove('open'); 
+    hideTooltip();
 }
 
 function renderEchoInventory() {
     if(!echoRay) return; 
-    const grid = document.getElementById('echo-inv-grid-content');
+    const gridContainer = document.getElementById('echo-inv-grid-content');
     
     const headerTitle = document.querySelector('#echo-inventory-overlay h2');
     const cap = getEchoCapacity();
     if(headerTitle) headerTitle.innerHTML = `YANKI DEPOSU <span style="font-size:0.6em; color:#67e8f9; opacity:0.7;">(${echoRay.lootBag.length}/${cap})</span>`;
 
-    if(echoRay.lootBag.length === 0) { 
-        grid.innerHTML = '<div class="text-center text-cyan-500/50 mt-20">Depo boş.</div>'; 
-        return; 
-    }
-    
-    const grouped = {}; 
-    echoRay.lootBag.forEach(item => { 
-        if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; 
-        grouped[item.name].count++; 
+    renderGrid(gridContainer, echoRay.lootBag, cap, (item) => {
+        // Yankı envanterine tıklama (Boş)
     });
-    
-    let html = `<table class="inv-table"><thead><tr><th>TÜR</th><th>İSİM</th><th>XP</th><th style="text-align:right">MİKTAR</th></tr></thead><tbody>`;
-    Object.values(grouped).sort((a, b) => b.type.xp - a.type.xp).forEach(item => { 
-        html += `<tr><td style="color:${item.type.color}">●</td><td style="color:${item.type.color}">${item.name}</td><td style="font-size:0.8rem; opacity:0.7">${item.type.xp} XP</td><td style="text-align:right">x${item.count}</td></tr>`; 
-    });
-    html += '</tbody></table>'; 
-    grid.innerHTML = html;
 }
 
 // --- DEPO MERKEZİ (STORAGE) ARAYÜZÜ ---
@@ -202,66 +267,73 @@ function openStorage() {
 function closeStorage() {
     storageOpen = false;
     document.getElementById('storage-overlay').classList.remove('open');
+    hideTooltip();
 }
 
 function renderStorageUI() {
     if (!storageOpen) return;
 
-    const shipList = document.getElementById('storage-ship-list');
-    const centerList = document.getElementById('storage-center-list');
+    const shipListContainer = document.getElementById('storage-ship-list');
+    const centerListContainer = document.getElementById('storage-center-list');
     const shipCap = document.getElementById('storage-ship-cap');
     const centerCount = document.getElementById('storage-center-count');
 
     shipCap.innerText = `${collectedItems.length} / ${getPlayerCapacity()}`;
     centerCount.innerText = `${centralStorage.length} EŞYA`;
 
-    // Gemi Listesi
-    shipList.innerHTML = '';
-    const shipGrouped = {};
-    collectedItems.forEach((item, index) => {
-        if (!shipGrouped[item.name]) shipGrouped[item.name] = { ...item, count: 0, indices: [] };
-        shipGrouped[item.name].count++;
-        shipGrouped[item.name].indices.push(index);
+    // Sol Taraf: Gemi Envanteri (Grid)
+    renderGrid(shipListContainer, collectedItems, getPlayerCapacity(), (item) => {
+        depositItem(item.name);
     });
 
-    Object.values(shipGrouped).forEach(grp => {
-        shipList.innerHTML += `
-            <div class="storage-item">
-                <div class="flex items-center gap-2">
-                    <span style="color:${grp.type.color}">●</span>
-                    <span class="text-gray-300 text-sm">${grp.name}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-gray-500 text-xs">x${grp.count}</span>
-                    <button onclick="depositItem('${grp.name}')" class="storage-btn-s btn-deposit">DEPOLA</button>
-                </div>
-            </div>
-        `;
-    });
-
-    // Merkez Depo Listesi
-    centerList.innerHTML = '';
-    const centerGrouped = {};
-    centralStorage.forEach((item, index) => {
-        if (!centerGrouped[item.name]) centerGrouped[item.name] = { ...item, count: 0 };
-        centerGrouped[item.name].count++;
-    });
-
-    Object.values(centerGrouped).forEach(grp => {
-        centerList.innerHTML += `
-            <div class="storage-item">
-                <div class="flex items-center gap-2">
-                    <span style="color:${grp.type.color}">●</span>
-                    <span class="text-gray-300 text-sm">${grp.name}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-gray-500 text-xs">x${grp.count}</span>
-                    <button onclick="withdrawItem('${grp.name}')" class="storage-btn-s btn-withdraw">AL</button>
-                </div>
-            </div>
-        `;
-    });
+    // Sağ Taraf: Merkez Depo (Grid - Limitsiz Görünüm)
+    renderGrid(centerListContainer, centralStorage, 0, (item) => {
+        withdrawItem(item.name);
+    }, true);
 }
+
+// UI İşlemleri (Storage)
+window.depositItem = function(name) {
+    const index = collectedItems.findIndex(i => i.name === name);
+    if (index !== -1) {
+        const item = collectedItems.splice(index, 1)[0];
+        centralStorage.push(item);
+        renderStorageUI();
+        updateInventoryCount();
+    }
+};
+
+window.depositAllToStorage = function() {
+    depositToStorage(collectedItems, "VATOZ"); 
+};
+
+window.withdrawItem = function(name) {
+    if (collectedItems.length >= getPlayerCapacity()) {
+        showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+        return;
+    }
+    const index = centralStorage.findIndex(i => i.name === name);
+    if (index !== -1) {
+        const item = centralStorage.splice(index, 1)[0];
+        collectedItems.push(item);
+        renderStorageUI();
+        updateInventoryCount();
+    }
+};
+
+window.withdrawAllFromStorage = function() {
+    const cap = getPlayerCapacity();
+    let moved = 0;
+    while(centralStorage.length > 0 && collectedItems.length < cap) {
+        collectedItems.push(centralStorage.pop());
+        moved++;
+    }
+    if (moved > 0) showNotification({name: `${moved} EŞYA GEMİYE ALINDI`, type:{color:'#38bdf8'}}, "");
+    else if (centralStorage.length > 0) showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+    
+    renderStorageUI();
+    updateInventoryCount();
+};
 
 // --- HARİTA ARAYÜZÜ ---
 
@@ -415,6 +487,48 @@ function renderUpgrades() {
     ['playerSpeed', 'playerTurn', 'playerMagnet', 'playerCapacity'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k], false));
     ['echoSpeed', 'echoRange', 'echoDurability', 'echoCapacity'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k], true));
 }
+
+window.buyUpgrade = function(key) {
+    if (key.startsWith('echo')) {
+        if (!echoRay) {
+             showNotification({name: "YANKI MEVCUT DEĞİL!", type:{color:'#ef4444'}}, "");
+             return;
+        }
+        if (!echoRay.attached) {
+            showNotification({name: "YANKI BAĞLI DEĞİL!", type:{color:'#ef4444'}}, "Yükseltme için birleşin.");
+            audio.playToxic(); 
+            return;
+        }
+    }
+
+    const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
+    const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
+    if(playerData.stardust >= cost) { 
+        playerData.stardust -= cost; 
+        playerData.upgrades[key]++; 
+        playerData.stats.totalSpentStardust += cost;
+        audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); updateInventoryCount(); 
+    }
+};
+
+window.sellItem = function(name, unitPrice, count) {
+    collectedItems = collectedItems.filter(i => i.name !== name);
+    const totalEarned = count * unitPrice;
+    playerData.stardust += totalEarned; 
+    playerData.stats.totalStardust += totalEarned;
+    audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
+};
+
+window.sellAll = function() {
+    let total = 0; let toKeep = [];
+    collectedItems.forEach(item => { if(item.type.value > 0) total += item.type.value; else toKeep.push(item); });
+    if(total > 0) { 
+        collectedItems = toKeep; 
+        playerData.stardust += total; 
+        playerData.stats.totalStardust += total;
+        audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket(); showNotification({name: `${total} KRİSTAL KAZANILDI`, type:{color:'#fbbf24'}}, ""); 
+    }
+};
 
 // --- AI ARAYÜZÜ ---
 
