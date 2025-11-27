@@ -67,7 +67,7 @@
 .echo-p-rate { font-size: 0.65rem; color: #94a3b8; }
 
 .echo-menu-item {
-    padding: 10px 15px; border-radius: 4px; cursor: pointer;
+    padding: 10px; border-radius: 4px; cursor: pointer;
     font-size: 0.85rem; letter-spacing: 1px; color: #cbd5e1;
     transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center;
 }
@@ -154,11 +154,13 @@
 .speed-val { font-size: 2rem; color: #e2e8f0; font-weight: 300; font-family: monospace; line-height: 1; }
 .speed-unit { font-size: 0.8rem; color: rgba(255,255,255,0.3); margin-left: 5px; font-weight: 300; }
 
-/* Sound Menu */
-#btn-sound { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: var(--soft-radius); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; }
-#btn-sound:hover { border-color: white; color: white; }
-#sound-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: var(--soft-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
-#sound-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+/* Settings Menu (GÜNCELLENDİ) */
+#btn-settings { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: var(--soft-radius); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; font-size: 1.5rem; }
+#btn-settings:hover { border-color: white; color: white; transform: rotate(90deg); }
+
+#settings-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: var(--soft-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
+#settings-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
 input[type=range] { width: 100%; -webkit-appearance: none; height: 2px; background: rgba(255,255,255,0.1); outline: none; margin-top: 10px; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: white; cursor: pointer; border-radius: 0; }
 

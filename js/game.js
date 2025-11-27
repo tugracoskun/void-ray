@@ -315,7 +315,7 @@ function loop() {
             }
         }
 
-        // ESC Kontrolü
+        // ESC Kontrolü (GÜNCELLENDİ)
         if (keys.Escape) { 
             if (inventoryOpen) closeInventory();
             else if (echoInvOpen) closeEchoInventory();
@@ -323,7 +323,10 @@ function loop() {
             else if (storageOpen) closeStorage(); 
             else if (mapOpen) closeMap();
             else if (statsOpen) closeStats();
-            else if (document.getElementById('sound-panel').classList.contains('open')) document.getElementById('sound-panel').classList.remove('open');
+            // BURADA AYARLAR PANELİ KONTROLÜ
+            else if (document.getElementById('settings-panel') && document.getElementById('settings-panel').classList.contains('open')) {
+                document.getElementById('settings-panel').classList.remove('open');
+            }
             else togglePause();
             keys.Escape = false;
         }

@@ -40,10 +40,20 @@
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <div id="btn-sound">♫</div>
-    <div id="sound-panel">
-        <div class="mb-4"><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div><input type="range" id="vol-music" min="0" max="100" value="50"></div>
-        <div><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div><input type="range" id="vol-sfx" min="0" max="100" value="80"></div>
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ) -->
+    <div id="btn-settings" title="Ayarlar">⚙</div>
+    <div id="settings-panel">
+        <h3 class="text-white text-sm font-bold tracking-widest mb-4 border-b border-white/10 pb-2">AYARLAR</h3>
+        
+        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">SES YÖNETİMİ</div>
+        <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>
+            <input type="range" id="vol-music" min="0" max="100" value="50">
+        </div>
+        <div>
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div>
+            <input type="range" id="vol-sfx" min="0" max="100" value="80">
+        </div>
     </div>
 
     <div id="merge-prompt"></div>

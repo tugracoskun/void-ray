@@ -17,21 +17,22 @@ class ZenAudio {
     }
     
     bindUI() {
-        // Ses paneli kontrollerini bağla
-        const soundPanel = document.getElementById('sound-panel');
-        const btnSound = document.getElementById('btn-sound');
+        // Ayarlar paneli kontrollerini bağla (GÜNCELLENDİ: btn-settings ve settings-panel)
+        const settingsPanel = document.getElementById('settings-panel');
+        const btnSettings = document.getElementById('btn-settings');
         const volMusicInput = document.getElementById('vol-music');
         const volSfxInput = document.getElementById('vol-sfx');
 
-        if (btnSound) {
-            btnSound.addEventListener('click', () => soundPanel.classList.toggle('open'));
+        if (btnSettings && settingsPanel) {
+            btnSettings.addEventListener('click', () => settingsPanel.classList.toggle('open'));
         }
 
         if (volMusicInput) {
             volMusicInput.addEventListener('input', (e) => { 
                 const val = e.target.value / 100; 
                 if(this.bgMusic) this.bgMusic.volume = val; 
-                document.getElementById('val-m').innerText = e.target.value + '%'; 
+                const valDisp = document.getElementById('val-m');
+                if(valDisp) valDisp.innerText = e.target.value + '%'; 
                 volMusic = val; 
             });
         }
@@ -40,7 +41,8 @@ class ZenAudio {
             volSfxInput.addEventListener('input', (e) => { 
                 const val = e.target.value / 100; 
                 volSFX = val; 
-                document.getElementById('val-s').innerText = e.target.value + '%'; 
+                const valDisp = document.getElementById('val-s');
+                if(valDisp) valDisp.innerText = e.target.value + '%'; 
             });
         }
     }
