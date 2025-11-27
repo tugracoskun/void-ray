@@ -119,10 +119,6 @@ function initMapListeners(canvasElement, worldSize, onTargetSelected) {
             const mouseRelX = mouseX - canvasCenterX;
             const mouseRelY = mouseY - canvasCenterY;
 
-            // Matematiksel Açıklama:
-            // Mouse'un altındaki dünya noktasının sabit kalması için Pan değerini kaydırıyoruz.
-            // YeniPan = MouseRel - (MouseRel - EskiPan) * (YeniZoom / EskiZoom)
-            
             const zoomFactor = newZoom / oldZoom;
             
             bigMapState.panX = mouseRelX - (mouseRelX - bigMapState.panX) * zoomFactor;
@@ -208,19 +204,101 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     const baseScale = Math.min((canvas.width - margin*2) / worldSize, (canvas.height - margin*2) / worldSize);
     
     // Zoom Uygulanmış Ölçek
-    const scale = baseScale * bigMapState.zoom; // Artık tüm çizimlerde bu 'scale' kullanılacak
+    const scale = baseScale * bigMapState.zoom;
 
     // Ofset ve Pan (Zoom ve Sürükleme etkisi)
     const offsetX = (canvas.width - worldSize * scale) / 2 + bigMapState.panX;
     const offsetY = (canvas.height - worldSize * scale) / 2 + bigMapState.panY;
 
-    // Sınır çizgisi
-    ctx.strokeStyle = MAP_CONFIG.bigmap.gridColor; 
+    // --- GRID SİSTEMİ ---
+    const GRID_STEP_MAJOR = 20000; // Her 20k birimde bir ana çizgi
+    const GRID_STEP_MINOR = 5000;  // Her 5k birimde bir ara çizgi (Zoom levela göre)
+
+    ctx.save();
+    
+    // Gridlerin dışarı taşmasını engellemek için clip
+    ctx.beginPath();
+    ctx.rect(offsetX, offsetY, worldSize * scale, worldSize * scale);
+    ctx.clip();
+
+    // 1. Ara Çizgiler (Sadece yakınlaştığında görünür)
+    if (bigMapState.zoom > 2) {
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+        ctx.lineWidth = 1;
+
+        for (let x = 0; x <= worldSize; x += GRID_STEP_MINOR) {
+            const screenX = offsetX + x * scale;
+            ctx.moveTo(screenX, offsetY);
+            ctx.lineTo(screenX, offsetY + worldSize * scale);
+        }
+        for (let y = 0; y <= worldSize; y += GRID_STEP_MINOR) {
+            const screenY = offsetY + y * scale;
+            ctx.moveTo(offsetX, screenY);
+            ctx.lineTo(offsetX + worldSize * scale, screenY);
+        }
+        ctx.stroke();
+    }
+
+    // 2. Ana Çizgiler ve Koordinat Yazıları
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; // Hafif mavi
+    ctx.lineWidth = 1;
+    ctx.fillStyle = "rgba(56, 189, 248, 0.4)";
+    ctx.font = "10px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+
+    for (let x = 0; x <= worldSize; x += GRID_STEP_MAJOR) {
+        const screenX = offsetX + x * scale;
+        ctx.moveTo(screenX, offsetY);
+        ctx.lineTo(screenX, offsetY + worldSize * scale);
+        // Koordinat yazısı
+        if(screenX > 0 && screenX < canvas.width)
+            ctx.fillText((x/1000)+"k", screenX + 2, offsetY + 2);
+    }
+    for (let y = 0; y <= worldSize; y += GRID_STEP_MAJOR) {
+        const screenY = offsetY + y * scale;
+        ctx.moveTo(offsetX, screenY);
+        ctx.lineTo(offsetX + worldSize * scale, screenY);
+        // Koordinat yazısı
+        if(screenY > 0 && screenY < canvas.height)
+            ctx.fillText((y/1000)+"k", offsetX + 2, screenY + 2);
+    }
+    ctx.stroke();
+
+    ctx.restore(); // Clip'i kaldır
+
+    // Sınır çizgisi (Daha parlak)
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.3)"; 
     ctx.lineWidth = 2;
     ctx.strokeRect(offsetX, offsetY, worldSize*scale, worldSize*scale);
 
     const px = offsetX + entities.player.x * scale;
     const py = offsetY + entities.player.y * scale;
+
+    // --- MESAFE HALKALARI (Taktiksel) ---
+    // Oyuncunun etrafında 5k ve 10k yarıçaplı halkalar
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.font = "9px monospace";
+    ctx.textAlign = "center";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
+
+    const rings = [5000, 10000];
+    rings.forEach(r => {
+        const rScaled = r * scale;
+        ctx.beginPath();
+        ctx.arc(0, 0, rScaled, 0, Math.PI * 2);
+        ctx.stroke();
+        // Halka üzerinde mesafe yazısı
+        ctx.fillText((r/1000) + "km", 0, -rScaled - 2);
+    });
+    ctx.restore();
+
     
     // --- Oyuncu Radarı ---
     ctx.beginPath(); 
@@ -286,16 +364,29 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     });
 
     // --- Sabit Üsler (Config Renkleri) ---
-    ctx.fillStyle = MAP_CONFIG.colors.nexus; ctx.beginPath(); ctx.arc(offsetX + entities.nexus.x*scale, offsetY + entities.nexus.y*scale, 5, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = MAP_CONFIG.colors.nexus; ctx.beginPath(); ctx.arc(offsetX + entities.nexus.x*scale, offsetY + entities.nexus.y*scale, 10, 0, Math.PI*2); ctx.stroke();
+    const drawBaseIcon = (entity, color, label) => {
+        const bx = offsetX + entity.x * scale;
+        const by = offsetY + entity.y * scale;
+        
+        ctx.fillStyle = color; 
+        ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI*2); ctx.fill();
+        
+        ctx.strokeStyle = color; 
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI*2); ctx.stroke();
 
-    if(entities.repairStation) {
-        ctx.fillStyle = MAP_CONFIG.colors.repair; ctx.beginPath(); ctx.arc(offsetX + entities.repairStation.x*scale, offsetY + entities.repairStation.y*scale, 4, 0, Math.PI*2); ctx.fill();
-    }
-    
-    if(entities.storageCenter) {
-        ctx.fillStyle = MAP_CONFIG.colors.storage; ctx.beginPath(); ctx.arc(offsetX + entities.storageCenter.x*scale, offsetY + entities.storageCenter.y*scale, 5, 0, Math.PI*2); ctx.fill();
-    }
+        // Üs isimleri
+        if (bigMapState.zoom > 1.5) {
+            ctx.fillStyle = "white";
+            ctx.font = "10px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(label, bx, by + 18);
+        }
+    };
+
+    drawBaseIcon(entities.nexus, MAP_CONFIG.colors.nexus, "NEXUS");
+    if(entities.repairStation) drawBaseIcon(entities.repairStation, MAP_CONFIG.colors.repair, "TAMİR");
+    if(entities.storageCenter) drawBaseIcon(entities.storageCenter, MAP_CONFIG.colors.storage, "DEPO");
 
     if(entities.echoRay) { 
         ctx.fillStyle = MAP_CONFIG.colors.echo; ctx.beginPath(); ctx.arc(offsetX + entities.echoRay.x*scale, offsetY + entities.echoRay.y*scale, 4, 0, Math.PI*2); ctx.fill(); 
@@ -318,6 +409,11 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
         ctx.setLineDash([5, 5]); 
         ctx.beginPath(); ctx.moveTo(offsetX + entities.player.x*scale, offsetY + entities.player.y*scale); ctx.lineTo(tx, ty); ctx.stroke(); ctx.setLineDash([]);
         ctx.beginPath(); ctx.arc(tx, ty, 5, 0, Math.PI*2); ctx.stroke();
+        
+        // Hedef koordinatları
+        ctx.fillStyle = MAP_CONFIG.colors.target;
+        ctx.font = "10px monospace";
+        ctx.fillText(`HEDEF [${Math.floor(state.manualTarget.x/1000)}:${Math.floor(state.manualTarget.y/1000)}]`, tx + 10, ty);
     }
 
     // --- YANKI DÖNÜŞ ÇİZGİSİ (Büyük Harita) ---
