@@ -1,0 +1,147 @@
+/* * MENUS.CSS
+ * Ana menü, duraklatma ve ölüm ekranları.
+ */
+
+/* --- ANA MENÜ --- */
+#main-menu {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 100%, #0f172a 0%, #000000 80%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 100; transition: opacity 0.5s ease;
+}
+.menu-hidden { opacity: 0; pointer-events: none; }
+
+.title-main {
+    font-size: 6rem; font-weight: 100; letter-spacing: 0.3em;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text; color: transparent;
+    margin-bottom: 10px; text-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
+    text-align: center;
+}
+
+/* Vatoz Animasyonu */
+.void-symbol {
+    width: 120px; height: 120px; margin: 20px;
+    animation: floatSymbol 6s ease-in-out infinite;
+}
+@keyframes floatSymbol {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+}
+
+.menu-btn {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+    padding: 20px 80px; border-radius: var(--soft-radius);
+    font-size: 1.2rem; letter-spacing: 5px; text-transform: uppercase;
+    color: #e2e8f0; cursor: pointer; transition: all 0.4s;
+    backdrop-filter: blur(10px); margin-top: 30px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+}
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1); border-color: white;
+    box-shadow: 0 0 60px rgba(255, 255, 255, 0.1); letter-spacing: 8px;
+    color: white;
+}
+
+/* Tips Section */
+.tips-container {
+    margin-top: 30px; margin-bottom: 10px;
+    height: 40px; width: 600px; text-align: center;
+    position: relative; display: flex; justify-content: center; align-items: center;
+}
+.tip-text {
+    font-size: 0.9rem; color: #94a3b8; letter-spacing: 1px;
+    animation: fadeInTip 1s ease; position: absolute;
+    width: 100%;
+}
+@keyframes fadeInTip { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Controls Info */
+.controls-grid {
+    position: absolute; bottom: 120px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 40px;
+    text-align: left;
+    background: rgba(255,255,255,0.02); padding: 20px 40px; 
+    border-radius: var(--soft-radius);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.key-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #94a3b8; letter-spacing: 1px; }
+.key-cap { 
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+    padding: 4px 8px; border-radius: 4px; color: white; font-weight: 600; font-size: 0.75rem; min-width: 25px; text-align: center;
+}
+
+/* --- GELİŞTİRİCİ FOOTER --- */
+.dev-footer {
+    position: absolute; bottom: 30px;
+    display: flex; align-items: center; gap: 20px;
+    padding: 10px 30px;
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+.dev-footer:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 5px 30px rgba(56, 189, 248, 0.1);
+}
+
+.dev-info-item { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-decoration: none; transition: all 0.2s; }
+.dev-info-item.link-hover:hover .dev-name { color: #fff; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+.dev-label { font-size: 0.6rem; letter-spacing: 2px; color: #64748b; text-transform: uppercase; }
+.dev-name { font-size: 0.9rem; letter-spacing: 1px; color: #e2e8f0; font-weight: 500; transition: 0.2s; }
+
+.dev-separator { width: 1px; height: 25px; background: rgba(255,255,255,0.1); }
+
+.github-link-btn {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: #cbd5e1;
+    font-size: 0.75rem; letter-spacing: 1.5px;
+    padding: 6px 15px; border-radius: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid transparent;
+    transition: all 0.3s;
+}
+.github-link-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    color: white; border-color: rgba(56, 189, 248, 0.3);
+}
+
+.github-link-btn.issue-btn { color: #fcd34d; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.05); }
+.github-link-btn.issue-btn:hover { background: rgba(251, 191, 36, 0.15); color: #fff; border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 15px rgba(251, 191, 36, 0.1); }
+
+/* --- PAUSE OVERLAY --- */
+#pause-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+    z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
+}
+#pause-overlay.active { display: flex; }
+.pause-title { font-size: 3rem; letter-spacing: 10px; color: white; font-weight: 200; margin-bottom: 20px; }
+.pause-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;
+    padding: 15px 60px; border-radius: var(--soft-radius); font-size: 1rem; letter-spacing: 3px;
+    cursor: pointer; transition: 0.3s;
+}
+.pause-btn:hover { background: white; color: black; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+.pause-btn.danger:hover { background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+
+/* --- DEATH SCREEN --- */
+#death-screen {
+    position: absolute; inset: 0;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 200;
+    color: #ef4444;
+    animation: fadeInDeath 2s ease;
+}
+#death-screen.active { display: flex; }
+
+@keyframes fadeInDeath { from { opacity: 0; } to { opacity: 1; } }
+
+.death-title { font-size: 4rem; letter-spacing: 10px; font-weight: 800; text-shadow: 0 0 30px #ef4444; margin-bottom: 10px; }
+.death-sub { font-size: 1.5rem; color: #fca5a5; letter-spacing: 5px; margin-bottom: 40px; opacity: 0.8; }
+.death-info { font-family: monospace; color: #94a3b8; animation: pulse 2s infinite; }
