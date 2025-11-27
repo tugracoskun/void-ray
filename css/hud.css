@@ -1,0 +1,227 @@
+/* * HUD.CSS
+ * Oyun içi arayüz, chat, minimap ve araçlar.
+ */
+
+/* HUD Elements */
+.hud-container { pointer-events: none; position: absolute; inset: 0; z-index: 50; }
+.pointer-events-auto { pointer-events: auto; }
+
+.hud-icon-group { position: absolute; top: 30px; left: 30px; display: flex; gap: 15px; pointer-events: auto; align-items: flex-start; }
+.hud-btn {
+    width: 50px; height: 50px; 
+    border-radius: var(--soft-radius);
+    border: 1px solid var(--glass-border);
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; color: rgba(255,255,255,0.6);
+    transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
+    font-size: 1.2rem; position: relative;
+}
+.hud-btn:hover, .hud-btn.active { border-color: var(--ray-color); color: white; background: rgba(255,255,255,0.05); }
+.hud-btn.active { background: rgba(56, 189, 248, 0.1); } 
+
+/* AI Mode Toggle */
+.ai-controls { display: flex; flex-direction: column; gap: 5px; }
+.ai-mode-switch {
+    font-size: 0.65rem; background: rgba(255,255,255,0.1); padding: 4px 8px; 
+    border-radius: 4px;
+    cursor: pointer; pointer-events: auto; display: none; text-align: center; border: 1px solid transparent;
+}
+.ai-mode-switch.visible { display: block; }
+.ai-mode-switch:hover { background: rgba(255,255,255,0.2); color: white; }
+
+/* Currency Display */
+#currency-display {
+    position: absolute; top: 30px; right: 100px; 
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+    border: 1px solid var(--glass-border); color: rgba(255,255,255,0.7);
+    padding: 10px 25px; border-radius: var(--soft-radius);
+    font-size: 1rem; letter-spacing: 2px; font-weight: 400;
+    display: flex; align-items: center; gap: 10px;
+}
+
+/* Echo Menu */
+.echo-wrapper { position: relative; display: none; flex-direction: column; }
+.echo-wrapper:hover .echo-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+.echo-dropdown {
+    position: absolute; top: 60px; left: 0;
+    background: rgba(8, 10, 15, 0.95); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--soft-radius); padding: 8px; width: 240px;
+    display: flex; flex-direction: column; gap: 5px;
+    opacity: 0; visibility: hidden; transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.echo-profile {
+    padding: 10px; margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; gap: 10px;
+}
+.echo-p-icon { 
+    width: 36px; height: 36px; background: rgba(103, 232, 249, 0.1); border: 1px solid var(--echo-color);
+    border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: var(--echo-color);
+}
+.echo-p-stats { display: flex; flex-direction: column; }
+.echo-p-name { font-size: 0.85rem; color: white; font-weight: 600; }
+.echo-p-rate { font-size: 0.65rem; color: #94a3b8; }
+
+.echo-menu-item {
+    padding: 10px 15px; border-radius: 4px; cursor: pointer;
+    font-size: 0.85rem; letter-spacing: 1px; color: #cbd5e1;
+    transition: 0.2s; border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center;
+}
+.echo-menu-item:hover { background: rgba(255,255,255,0.1); color: white; }
+.echo-menu-item.active-mode { color: var(--echo-color); background: rgba(103, 232, 249, 0.1); border-color: rgba(103, 232, 249, 0.2); }
+
+/* --- CHAT PANELİ --- */
+#chat-panel {
+    position: absolute; bottom: 30px; left: 30px;
+    width: 350px; height: 260px;
+    background: rgba(5, 5, 8, 0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--soft-radius);
+    display: flex; flex-direction: column;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    z-index: 65;
+}
+
+.chat-header {
+    display: flex; border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+    cursor: move; /* Sürükleme imleci */
+    user-select: none; /* Metin seçimini engelle */
+}
+
+.chat-tab {
+    flex: 1; padding: 10px 0; text-align: center;
+    font-size: 0.75rem; letter-spacing: 1px; color: #94a3b8;
+    cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent;
+}
+.chat-tab:hover:not(.disabled) { background: rgba(255,255,255,0.05); color: white; }
+.chat-tab.active { color: var(--ray-color); border-bottom-color: var(--ray-color); background: rgba(56, 189, 248, 0.05); }
+.chat-tab.disabled { opacity: 0.5; cursor: not-allowed; }
+
+.chat-content {
+    flex: 1; padding: 10px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 0.85rem;
+}
+.chat-message { line-height: 1.4; word-break: break-word; text-shadow: 0 1px 2px black; animation: fadeInMsg 0.2s ease; }
+.chat-message.system { color: #94a3b8; font-style: italic; }
+.chat-message.loot { color: #e2e8f0; }
+.chat-message.alert { color: #ef4444; font-weight: 500; }
+.chat-message.info { color: #38bdf8; }
+@keyframes fadeInMsg { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Chat Input Area */
+.chat-input-area {
+    display: flex; gap: 5px; padding: 8px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.3);
+}
+#chat-input {
+    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px; color: white; padding: 4px 8px; font-size: 0.8rem; outline: none;
+    font-family: 'Outfit', sans-serif;
+}
+#chat-input:focus { border-color: var(--ray-color); background: rgba(255,255,255,0.1); }
+#chat-send-btn {
+    background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #38bdf8; border-radius: 4px; cursor: pointer; padding: 0 10px;
+    transition: 0.2s;
+}
+#chat-send-btn:hover { background: var(--ray-color); color: black; }
+
+/* Chat Timestamp */
+.chat-timestamp {
+    color: #64748b; font-size: 0.7rem; margin-right: 6px; font-family: monospace;
+    opacity: 0.8;
+}
+
+/* --- SPEEDOMETER --- */
+#speedometer {
+    position: absolute; bottom: 30px; right: 230px;
+    left: auto; 
+    background: transparent; border: none;
+    padding: 0; border-radius: 0;
+    display: flex; flex-direction: column; gap: 0px;
+    opacity: 0.8; text-align: right; pointer-events: none; z-index: 55;
+}
+.speed-label { font-size: 0.6rem; color: #64748b; letter-spacing: 2px; text-transform: uppercase; }
+.speed-val { font-size: 2rem; color: #e2e8f0; font-weight: 300; font-family: monospace; line-height: 1; }
+.speed-unit { font-size: 0.8rem; color: rgba(255,255,255,0.3); margin-left: 5px; font-weight: 300; }
+
+/* Sound Menu */
+#btn-sound { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: var(--soft-radius); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; }
+#btn-sound:hover { border-color: white; color: white; }
+#sound-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: var(--soft-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
+#sound-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+input[type=range] { width: 100%; -webkit-appearance: none; height: 2px; background: rgba(255,255,255,0.1); outline: none; margin-top: 10px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: white; cursor: pointer; border-radius: 0; }
+
+/* XP Bar */
+#xp-container { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; }
+.xp-bar-bg { width: 100%; height: 2px; background: rgba(255,255,255,0.1); overflow: hidden; margin-top: 5px; }
+.xp-bar-fill { height: 100%; background: white; width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+.level-text { font-size: 0.7rem; letter-spacing: 3px; color: #64748b; }
+
+/* Prompt */
+#merge-prompt { position: absolute; bottom: 260px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.4); padding: 10px 30px; border-radius: var(--soft-radius); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 0.9rem; letter-spacing: 2px; backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.2s; pointer-events: none; text-align: center; }
+#merge-prompt.visible { opacity: 1; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
+
+/* --- MINIMAP --- */
+#minimap-wrapper {
+    position: absolute; bottom: 30px; right: 30px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    z-index: 60; pointer-events: auto;
+}
+#minimap-container {
+    width: 180px; height: 180px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+#energy-bar-container, #health-bar-container {
+    width: 100%; height: 3px;
+    background: rgba(255,255,255,0.1);
+    margin-top: 0px; 
+    border-radius: 1px;
+    overflow: hidden;
+}
+#energy-bar-fill {
+    height: 100%; background: #38bdf8; width: 100%;
+    box-shadow: 0 0 8px #38bdf8;
+    transition: width 0.2s linear, background 0.3s;
+}
+#health-bar-fill {
+    height: 100%; background: #10b981; width: 100%;
+    box-shadow: 0 0 8px #10b981;
+    transition: width 0.2s linear, background 0.3s;
+}
+.coords { font-family: monospace; font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+
+/* --- GLOBAL TOOLTIP --- */
+#global-tooltip {
+    position: fixed; 
+    background: rgba(5, 5, 8, 0.98);
+    border: 1px solid var(--ray-color);
+    color: #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 9999; 
+    pointer-events: none; 
+    display: none; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    backdrop-filter: blur(5px);
+    transform: translate(15px, 15px); 
+}
+.tooltip-title { font-weight: 600; color: white; display: block; margin-bottom: 2px; }
+.tooltip-desc { font-size: 0.7rem; color: #94a3b8; }
+.tooltip-xp { color: var(--ray-color); font-family: monospace; }
