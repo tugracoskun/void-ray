@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rüya Bahçesi: Void Ray - Final Polish</title>
+    <title>Rüya Bahçesi: Void Ray - Modüler Sürüm</title>
+    
+    <!-- STİL KÜTÜPHANELERİ -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;800&display=swap" rel="stylesheet">
     
@@ -15,392 +17,42 @@
     <link rel="stylesheet" href="css/world.css">
 </head>
 <body>
-
-    <audio id="bgMusic" loop>
-        <source src="uploaded:Crater.mp3" type="audio/mpeg">
-    </audio>
     
-    <!-- EFEKT KATMANLARI -->
-    <div id="toxic-overlay"></div>
-    <div id="radiation-overlay"></div>
-    <div id="damage-overlay"></div> <!-- Yeni: Hasar alınca kırmızı yanıp sönme -->
-    
-    <!-- UYARILAR -->
-    <div id="radiation-warning">
-        <div class="rad-icon">⚠</div>
-        <div>RADYASYON ALANI</div>
-        <div class="rad-sub">GERİ DÖ YOKSA GEMİ PARÇALANACAK</div>
-    </div>
+    <!-- PARÇALARIN YÜKLENECEĞİ ALANLAR (PLACEHOLDERS) -->
+    <div id="ui-core"></div>
+    <div id="ui-menus"></div>
+    <div id="ui-hud"></div>
+    <div id="ui-panels"></div>
 
-    <!-- ÖLÜM EKRANI -->
-    <div id="death-screen">
-        <div class="death-title">SİNYAL KAYBEDİLDİ</div>
-        <div class="death-sub">GEMİ GÖVDE BÜTÜNLÜĞÜNÜ YİTİRDİ</div>
-        <div class="death-info">Tamir İstasyonunda yeniden yapılandırılıyor...</div>
-    </div>
-    
-    <!-- PAUSE / ESC MENU -->
-    <div id="pause-overlay">
-        <div class="pause-title">DURAKLATILDI</div>
-        <button class="pause-btn" onclick="resumeGame()">DEVAM ET</button>
-        <button class="pause-btn danger" onclick="quitToMain()">ANA MENÜ</button>
-    </div>
-
-    <!-- ANA MENÜ -->
-    <div id="main-menu">
-        <div class="title-main">VOID RAY</div>
-        <svg class="void-symbol" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2">
-            <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" fill="rgba(56, 189, 248, 0.1)"/>
-            <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
-        </svg>
-        
-        <button id="btn-start" class="menu-btn">YAŞAM DÖNGÜSÜNÜ BAŞLAT</button>
-
-        <div class="tips-container">
-            <span id="tip-text" class="tip-text">Yankı'yla birleşmek için [F] tuşuna basın.</span>
-        </div>
-
-        <div class="controls-grid">
-            <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Hareket</span></div>
-            <div class="key-row"><span class="key-cap">E</span> <span>Etkileşim</span></div>
-            <div class="key-row"><span class="key-cap">F</span> <span>Yankı Birleş</span></div>
-            <div class="key-row"><span class="key-cap">Q</span> <span>AI Modu</span></div>
-            <div class="key-row"><span class="key-cap">I</span> <span>Envanter</span></div>
-            <div class="key-row"><span class="key-cap">M</span> <span>Harita</span></div>
-            <div class="key-row"><span class="key-cap">ESC</span> <span>Menü</span></div>
-        </div>
-
-        <!-- GELİŞTİRİCİ ALT BİLGİSİ -->
-        <div class="dev-footer">
-            <a href="https://github.com/tugracoskun" target="_blank" class="dev-info-item link-hover" title="Geliştirici Profilini Görüntüle">
-                <span class="dev-label">GELİŞTİRİCİ</span>
-                <span class="dev-name">@tugracoskun</span>
-            </a>
-            <div class="dev-separator"></div>
-            <a href="https://github.com/tugracoskun/void-ray" target="_blank" class="github-link-btn" title="GitHub Deposu">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-                <span>KAYNAK</span>
-            </a>
-            <div class="dev-separator"></div>
-            <a href="https://github.com/tugracoskun/void-ray/issues" target="_blank" class="github-link-btn issue-btn" title="Sorun Bildir veya İstek Gönder">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                <span>DESTEK</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- HUD -->
-    <div class="hud-container">
-        <div class="hud-icon-group">
-            <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)">
-                ❖ <span id="inv-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#fff; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
-            </div>
-            
-            <div id="btn-stats-icon" class="hud-btn" title="İstatistikler">
-                ≣
-            </div>
-            
-            <div id="echo-wrapper-el" class="echo-wrapper">
-                <div id="btn-echo-icon" class="hud-btn">
-                    ◎ <span id="echo-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#67e8f9; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
-                </div>
-                <div class="echo-dropdown">
-                    <div class="echo-profile">
-                        <div class="echo-p-icon">◈</div>
-                        <div class="echo-p-stats">
-                            <span class="echo-p-name">YANKI V1</span>
-                            <span id="echo-rate-disp" class="echo-p-rate">Toplama Hızı: Normal</span>
-                        </div>
-                    </div>
-                    <div id="menu-roam" class="echo-menu-item active-mode" onclick="setEchoMode('roam')">◈ SERBEST</div>
-                    <div id="menu-return" class="echo-menu-item" onclick="setEchoMode('return')">↪ ÇAĞIR</div>
-                    <div id="menu-merge" class="echo-menu-item" onclick="echoManualMerge()">☌ BİRLEŞ</div>
-                    <div class="echo-menu-item" onclick="openEchoInventory()">❖ ENVANTER</div>
-                </div>
-            </div>
-            
-            <div class="ai-controls">
-                <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (Q)">◈</div>
-                <div id="ai-mode-btn" class="ai-mode-switch" onclick="cycleAIMode()">TOPLA</div>
-            </div>
-        </div>
-
-        <div id="currency-display">
-            <span style="color: rgba(255,255,255,0.6);">◆</span> <span id="stardust-amount">0</span>
-        </div>
-        
-        <div id="xp-container">
-            <div class="level-text">EVRİM SEVİYESİ <span id="level-val" class="text-white font-bold text-lg">1</span></div>
-            <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
-        </div>
-
-        <div id="btn-sound">♫</div>
-        <div id="sound-panel">
-            <div class="mb-4"><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div><input type="range" id="vol-music" min="0" max="100" value="50"></div>
-            <div><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div><input type="range" id="vol-sfx" min="0" max="100" value="80"></div>
-        </div>
-
-        <div id="merge-prompt"></div>
-
-        <!-- CHAT PANELİ -->
-        <div id="chat-panel">
-            <div class="chat-header">
-                <div class="chat-tab active" id="tab-genel" onclick="switchChatTab('genel')">GENEL</div>
-                <div class="chat-tab" id="tab-grup" onclick="switchChatTab('grup')">GRUP</div>
-                <div class="chat-tab" id="tab-bilgi" onclick="switchChatTab('bilgi')">BİLGİ</div>
-            </div>
-            <div id="chat-content" class="chat-content">
-                <!-- Mesajlar JS ile eklenecek -->
-            </div>
-            <!-- Mesaj Giriş Alanı -->
-            <div id="chat-input-area" class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Mesaj yaz..." maxlength="64">
-                <button id="chat-send-btn">➤</button>
-            </div>
-        </div>
-
-        <!-- HIZ GÖSTERGESİ -->
-        <div id="speedometer">
-            <span class="speed-label">HIZ</span>
-            <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
-        </div>
-
-        <!-- MİNİ HARİTA VE BARLAR -->
-        <div id="minimap-wrapper">
-            <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
-            
-            <!-- ENERJİ BARI (Mavi) -->
-            <div id="energy-bar-container" title="Enerji">
-                <div id="energy-bar-fill"></div>
-            </div>
-            
-            <!-- CAN BARI (Kırmızı/Yeşil) - YENİ EKLENDİ -->
-            <div id="health-bar-container" title="Gövde Dayanıklılığı">
-                <div id="health-bar-fill"></div>
-            </div>
-
-            <div class="coords" id="coords">0000 : 0000</div>
-        </div>
-    </div>
-
-    <!-- DİĞER PENCERELER -->
-    <div id="big-map-overlay">
-        <!-- HARİTA DÜZENİ WRAPPER (YENİ) -->
-        <div class="big-map-layout">
-            
-            <!-- SOL: HARİTA KUTUSU -->
-            <div class="big-map-container">
-                <canvas id="big-map-canvas"></canvas>
-                
-                <!-- RADAR BİLGİ BUTONU (SOL ÜSTTE KALIYOR) -->
-                <div class="radar-info-wrapper">
-                    <div class="radar-info-icon">?</div>
-                    <div class="radar-info-tooltip">
-                        <h4 class="text-white font-bold mb-2 border-b border-white/20 pb-1 tracking-widest text-sm">RADAR SİSTEMİ</h4>
-                        
-                        <div class="radar-legend-item">
-                            <div class="r-dot scan"></div>
-                            <div>
-                                <span class="r-title text-emerald-400">TARAMA ALANI (Yeşil)</span>
-                                <p class="r-desc">Tam Görüş. Kaynakların türü ve içeriği net olarak tespit edilir.</p>
-                            </div>
-                        </div>
-
-                        <div class="radar-legend-item">
-                            <div class="r-dot radar"></div>
-                            <div>
-                                <span class="r-title text-amber-400">RADAR ALANI (Turuncu)</span>
-                                <p class="r-desc">Kısmi Görüş. Nesneler sadece belirsiz sinyal olarak görünür.</p>
-                            </div>
-                        </div>
-
-                        <div class="radar-legend-item">
-                            <div class="r-dot unknown"></div>
-                            <div>
-                                <span class="r-title text-gray-400">BİLİNMEYEN BÖLGE</span>
-                                <p class="r-desc">Kapsama alanı dışı. Hiçbir veri alınamaz.</p>
-                            </div>
-                        </div>
-
-                        <!-- KONTROLLER -->
-                        <h4 class="text-white font-bold mb-2 mt-4 border-b border-white/20 pb-1 tracking-widest text-sm">HARİTA KONTROLLERİ</h4>
-                        
-                        <div class="radar-legend-item">
-                            <div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); width:8px; height:8px; border-radius:2px; box-shadow:none;"></div>
-                            <div>
-                                <span class="r-title text-white">OTO-PİLOT</span>
-                                <p class="r-desc">Gitmek istediğiniz noktaya tıklayarak rota oluşturun.</p>
-                            </div>
-                        </div>
-
-                        <div class="radar-legend-item">
-                            <div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); width:8px; height:8px; border-radius:50%; box-shadow:none;"></div>
-                            <div>
-                                <span class="r-title text-white">YAKINLAŞTIRMA</span>
-                                <p class="r-desc">Fare tekerleği ile haritaya yakınlaşıp uzaklaşabilirsiniz.</p>
-                            </div>
-                        </div>
-
-                        <div class="radar-legend-item">
-                            <div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); width:8px; height:8px; border-radius:0px; box-shadow:none;"></div>
-                            <div>
-                                <span class="r-title text-white">GEZİNME</span>
-                                <p class="r-desc">Farenin sol tuşuna basılı tutarak haritayı kaydırabilirsiniz.</p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="absolute top-4 right-4 cursor-pointer text-white opacity-50 hover:opacity-100" onclick="closeMap()">✕</div>
-            </div>
-
-            <!-- SAĞ: LEJANT (AYRI PENCERE) -->
-            <div class="big-map-info-overlay">
-                <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
-                <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
-                <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #fff;"></div> NEXUS</div>
-                <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div>
-                <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> DEPO MERKEZİ</div>
-                <div class="legend-item"><div class="l-dot" style="background:#67e8f9;"></div> YANKI</div>
-                <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
-                <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
-                <div class="legend-item"><div class="l-dot" style="background:#C7C0AE;"></div> Tardigrad</div>
-                <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> Kayıp Kargo</div>
-                <div class="legend-item"><div class="l-dot" style="border:1px dashed #ef4444;"></div> Hedef</div>
-            </div>
-
-        </div> <!-- Layout End -->
-    </div>
-
-    <!-- İSTATİSTİK PANELİ -->
-    <div id="stats-overlay" class="overlay-base">
-        <div class="stats-window">
-            <div class="stats-header">
-                <h2 class="text-2xl font-light tracking-widest text-white">İSTATİSTİKLER</h2>
-                <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeStats()">✕</div>
-            </div>
-            <div class="stats-content">
-                <table class="stats-table" id="stats-table-content">
-                    <!-- JS ile doldurulacak -->
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- DEPO YÖNETİMİ (YENİ) -->
-    <div id="storage-overlay" class="overlay-base">
-        <div class="nexus-window" style="height: 800px;"> 
-            <div class="nexus-header">
-                <div>
-                    <h1 class="nexus-logo-text" style="font-size: 3rem;">MERKEZ DEPO</h1>
-                    <span class="text-xs text-gray-400 tracking-widest">SINIRSIZ SAKLAMA ALANI</span>
-                </div>
-                <div class="cursor-pointer text-2xl opacity-50 hover:opacity-100" onclick="closeStorage()">✕</div>
-            </div>
-            <div class="nexus-content active" style="display:flex; gap:20px; height:100%; overflow:hidden;">
-                <!-- SOL: GEMİ (VATOZ) -->
-                <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
-                    <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                        <h3 class="text-sky-300 tracking-widest">GEMİ KARGOSU</h3>
-                        <span id="storage-ship-cap" class="text-xs text-gray-400">0 / 150</span>
-                    </div>
-                    <div id="storage-ship-list" class="p-4 overflow-y-auto flex-1 space-y-2">
-                        <!-- Items here -->
-                    </div>
-                    <div class="p-4 border-t border-white/10">
-                        <button onclick="depositAllToStorage()" class="w-full bg-white/5 hover:bg-white/10 text-sky-300 border border-sky-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ DEPOLA</button>
-                    </div>
-                </div>
-
-                <!-- ORTA: İKON -->
-                <div class="flex flex-col justify-center items-center text-gray-500">
-                    <div class="text-2xl">⇄</div>
-                </div>
-
-                <!-- SAĞ: MERKEZ DEPO -->
-                <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
-                    <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                        <h3 class="text-purple-300 tracking-widest">MERKEZ DEPO</h3>
-                        <span id="storage-center-count" class="text-xs text-gray-400">0 EŞYA</span>
-                    </div>
-                    <div id="storage-center-list" class="p-4 overflow-y-auto flex-1 space-y-2">
-                        <!-- Items here -->
-                    </div>
-                    <div class="p-4 border-t border-white/10">
-                        <button onclick="withdrawAllFromStorage()" class="w-full bg-white/5 hover:bg-white/10 text-purple-300 border border-purple-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AL</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ENVANTER -->
-    <div id="inventory-overlay" class="overlay-base">
-        <div class="inv-window">
-            <div style="display:flex; flex:1; overflow:hidden;">
-                <!-- Filtre Sidebar Kaldırıldı -->
-                <div class="inv-content">
-                    <div class="inv-header">
-                        <h2 class="text-2xl font-light tracking-[0.2em] text-white">ENVANTER</h2>
-                        <div class="cursor-pointer opacity-50 hover:opacity-100 text-xl" id="btn-close-inv">✕</div>
-                    </div>
-                    <div class="inv-table-container" id="inv-grid-content"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- YANKI ENVANTERI -->
-    <div id="echo-inventory-overlay" class="overlay-base">
-        <div class="inv-window" style="border-color: var(--echo-color); height: 500px; width: 700px;">
-            <div class="inv-content" style="background: rgba(0,0,0,0.3); padding: 20px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid rgba(103, 232, 249, 0.3); padding-bottom:10px;">
-                    <h2 class="text-2xl font-light tracking-widest text-cyan-300">YANKI DEPOSU</h2>
-                    <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeEchoInventory()">✕</div>
-                </div>
-                <div id="echo-inv-grid-content" style="overflow-y: auto; flex: 1;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NEXUS EKRANI -->
-    <div id="nexus-overlay" class="overlay-base">
-        <div class="nexus-window">
-            <div class="nexus-header">
-                <div>
-                    <h1 class="nexus-logo-text">NEXUS</h1>
-                    <span class="text-xs text-gray-400 tracking-widest">TİCARET VE GELİŞTİRME İSTASYONU</span>
-                </div>
-                <div class="nexus-tabs">
-                    <div class="nexus-tab active" onclick="switchNexusTab('market')">PAZAR</div>
-                    <div class="nexus-tab" onclick="switchNexusTab('upgrades')">HANGAR</div>
-                </div>
-                <div class="cursor-pointer text-2xl opacity-50 hover:opacity-100" onclick="exitNexus()">✕</div>
-            </div>
-            <div id="tab-market" class="nexus-content active">
-                <div class="flex justify-between items-center mb-6">
-                    <p class="text-gray-400">Elde edilen materyalleri Yıldız Tozu karşılığında takas et.</p>
-                    <button onclick="sellAll()" class="bg-white/10 text-white border border-white/20 px-6 py-2 rounded-sm hover:bg-white hover:text-black transition text-sm tracking-widest">TÜMÜNÜ SAT</button>
-                </div>
-                <div id="market-grid" class="market-grid"></div>
-            </div>
-            <div id="tab-upgrades" class="nexus-content">
-                <div class="upgrade-grid">
-                    <div><div class="upgrade-col-title text-sky-300">VOID RAY (SİZ)</div><div id="upg-player-list"></div></div>
-                    <div><div class="upgrade-col-title text-cyan-300">ECHO RAY (YANKI)</div><div id="upg-echo-list"></div></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- OYUN CANVAS -->
     <canvas id="gameCanvas"></canvas>
 
+    <!-- JS YÜKLEYİCİ VE BAŞLATICILAR -->
+    <script>
+        // Oyunun kontrollerini, chat'i ve olaylarını UI yüklendikten sonra başlatacağız
+        window.onUILoaded = function() {
+            console.log("Arayüz hazır, sistemler başlatılıyor...");
+            
+            // 1. Kontrolleri Başlat
+            if (typeof initControls === 'function') {
+                initControls();
+            }
+
+            // 2. Chat Sistemini Başlat (DÜZELTİLDİ)
+            if (typeof initChatSystem === 'function') {
+                initChatSystem();
+            }
+        };
+    </script>
+    <script src="js/loader.js"></script>
+
+    <!-- VERİ VE MANTIK -->
     <script src="js/data.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/game-rules.js"></script>
     <script src="js/ui.js"></script>
     
-    <!-- ENTITY DOSYALARI -->
+    <!-- VARLIKLAR -->
     <script src="js/entities/Nexus.js"></script>
     <script src="js/entities/StorageCenter.js"></script>
     <script src="js/entities/RepairStation.js"></script>
@@ -409,6 +61,7 @@
     <script src="js/entities/Planet.js"></script>
     <script src="js/entities/Particle.js"></script>
     
+    <!-- SİSTEMLER -->
     <script src="js/maps.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/controls.js"></script>

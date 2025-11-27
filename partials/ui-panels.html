@@ -1,0 +1,142 @@
+<!-- BÜYÜK HARİTA -->
+<div id="big-map-overlay">
+    <div class="big-map-layout">
+        <div class="big-map-container">
+            <canvas id="big-map-canvas"></canvas>
+            <div class="radar-info-wrapper">
+                <div class="radar-info-icon">?</div>
+                <div class="radar-info-tooltip">
+                    <h4 class="text-white font-bold mb-2 border-b border-white/20 pb-1 tracking-widest text-sm">RADAR SİSTEMİ</h4>
+                    <div class="radar-legend-item"><div class="r-dot scan"></div><div><span class="r-title text-emerald-400">TARAMA ALANI</span><p class="r-desc">Tam Görüş. Kaynakların içeriği net tespit edilir.</p></div></div>
+                    <div class="radar-legend-item"><div class="r-dot radar"></div><div><span class="r-title text-amber-400">RADAR ALANI</span><p class="r-desc">Kısmi Görüş. Nesneler sinyal olarak görünür.</p></div></div>
+                    <div class="radar-legend-item"><div class="r-dot unknown"></div><div><span class="r-title text-gray-400">BİLİNMEYEN BÖLGE</span><p class="r-desc">Kapsama alanı dışı.</p></div></div>
+                    <h4 class="text-white font-bold mb-2 mt-4 border-b border-white/20 pb-1 tracking-widest text-sm">HARİTA KONTROLLERİ</h4>
+                    <div class="radar-legend-item"><div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5);"></div><div><span class="r-title text-white">OTO-PİLOT</span><p class="r-desc">Noktaya tıklayarak rota oluşturun.</p></div></div>
+                    <div class="radar-legend-item"><div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); border-radius:50%;"></div><div><span class="r-title text-white">YAKINLAŞTIRMA</span><p class="r-desc">Fare tekerleği ile zoom yapın.</p></div></div>
+                    <div class="radar-legend-item"><div class="r-dot" style="background:transparent; border:1px solid rgba(255,255,255,0.5); border-radius:0;"></div><div><span class="r-title text-white">GEZİNME</span><p class="r-desc">Sol tık basılı tutarak kaydırın.</p></div></div>
+                </div>
+            </div>
+            <div class="absolute top-4 right-4 cursor-pointer text-white opacity-50 hover:opacity-100" onclick="closeMap()">✕</div>
+        </div>
+        <div class="big-map-info-overlay">
+            <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
+            <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
+            <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #fff;"></div> NEXUS</div>
+            <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div>
+            <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> DEPO MERKEZİ</div>
+            <div class="legend-item"><div class="l-dot" style="background:#67e8f9;"></div> YANKI</div>
+            <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
+            <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
+            <div class="legend-item"><div class="l-dot" style="background:#C7C0AE;"></div> Tardigrad</div>
+            <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> Kayıp Kargo</div>
+            <div class="legend-item"><div class="l-dot" style="border:1px dashed #ef4444;"></div> Hedef</div>
+        </div>
+    </div>
+</div>
+
+<!-- İSTATİSTİK PANELİ -->
+<div id="stats-overlay" class="overlay-base">
+    <div class="stats-window">
+        <div class="stats-header">
+            <h2 class="text-2xl font-light tracking-widest text-white">İSTATİSTİKLER</h2>
+            <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeStats()">✕</div>
+        </div>
+        <div class="stats-content">
+            <table class="stats-table" id="stats-table-content"></table>
+        </div>
+    </div>
+</div>
+
+<!-- DEPO YÖNETİMİ -->
+<div id="storage-overlay" class="overlay-base">
+    <div class="nexus-window" style="height: 800px;"> 
+        <div class="nexus-header">
+            <div>
+                <h1 class="nexus-logo-text" style="font-size: 3rem;">MERKEZ DEPO</h1>
+                <span class="text-xs text-gray-400 tracking-widest">SINIRSIZ SAKLAMA ALANI</span>
+            </div>
+            <div class="cursor-pointer text-2xl opacity-50 hover:opacity-100" onclick="closeStorage()">✕</div>
+        </div>
+        <div class="nexus-content active" style="display:flex; gap:20px; height:100%; overflow:hidden;">
+            <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="text-sky-300 tracking-widest">GEMİ KARGOSU</h3>
+                    <span id="storage-ship-cap" class="text-xs text-gray-400">0 / 150</span>
+                </div>
+                <div id="storage-ship-list" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
+                <div class="p-4 border-t border-white/10">
+                    <button onclick="depositAllToStorage()" class="w-full bg-white/5 hover:bg-white/10 text-sky-300 border border-sky-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ DEPOLA</button>
+                </div>
+            </div>
+            <div class="flex flex-col justify-center items-center text-gray-500"><div class="text-2xl">⇄</div></div>
+            <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="text-purple-300 tracking-widest">MERKEZ DEPO</h3>
+                    <span id="storage-center-count" class="text-xs text-gray-400">0 EŞYA</span>
+                </div>
+                <div id="storage-center-list" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
+                <div class="p-4 border-t border-white/10">
+                    <button onclick="withdrawAllFromStorage()" class="w-full bg-white/5 hover:bg-white/10 text-purple-300 border border-purple-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ENVANTER -->
+<div id="inventory-overlay" class="overlay-base">
+    <div class="inv-window">
+        <div style="display:flex; flex:1; overflow:hidden;">
+            <div class="inv-content">
+                <div class="inv-header">
+                    <h2 class="text-2xl font-light tracking-[0.2em] text-white">ENVANTER</h2>
+                    <div class="cursor-pointer opacity-50 hover:opacity-100 text-xl" id="btn-close-inv">✕</div>
+                </div>
+                <div class="inv-table-container" id="inv-grid-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- YANKI ENVANTERI -->
+<div id="echo-inventory-overlay" class="overlay-base">
+    <div class="inv-window" style="border-color: var(--echo-color); height: 500px; width: 700px;">
+        <div class="inv-content" style="background: rgba(0,0,0,0.3); padding: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid rgba(103, 232, 249, 0.3); padding-bottom:10px;">
+                <h2 class="text-2xl font-light tracking-widest text-cyan-300">YANKI DEPOSU</h2>
+                <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeEchoInventory()">✕</div>
+            </div>
+            <div id="echo-inv-grid-content" style="overflow-y: auto; flex: 1;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- NEXUS EKRANI -->
+<div id="nexus-overlay" class="overlay-base">
+    <div class="nexus-window">
+        <div class="nexus-header">
+            <div>
+                <h1 class="nexus-logo-text">NEXUS</h1>
+                <span class="text-xs text-gray-400 tracking-widest">TİCARET VE GELİŞTİRME İSTASYONU</span>
+            </div>
+            <div class="nexus-tabs">
+                <div class="nexus-tab active" onclick="switchNexusTab('market')">PAZAR</div>
+                <div class="nexus-tab" onclick="switchNexusTab('upgrades')">HANGAR</div>
+            </div>
+            <div class="cursor-pointer text-2xl opacity-50 hover:opacity-100" onclick="exitNexus()">✕</div>
+        </div>
+        <div id="tab-market" class="nexus-content active">
+            <div class="flex justify-between items-center mb-6">
+                <p class="text-gray-400">Elde edilen materyalleri Yıldız Tozu karşılığında takas et.</p>
+                <button onclick="sellAll()" class="bg-white/10 text-white border border-white/20 px-6 py-2 rounded-sm hover:bg-white hover:text-black transition text-sm tracking-widest">TÜMÜNÜ SAT</button>
+            </div>
+            <div id="market-grid" class="market-grid"></div>
+        </div>
+        <div id="tab-upgrades" class="nexus-content">
+            <div class="upgrade-grid">
+                <div><div class="upgrade-col-title text-sky-300">VOID RAY (SİZ)</div><div id="upg-player-list"></div></div>
+                <div><div class="upgrade-col-title text-cyan-300">ECHO RAY (YANKI)</div><div id="upg-echo-list"></div></div>
+            </div>
+        </div>
+    </div>
+</div>

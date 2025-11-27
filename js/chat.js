@@ -2,6 +2,7 @@
  * Void Ray - İletişim ve Bildirim Sistemi
  * * Sohbet geçmişi, sistem bildirimleri ve kullanıcı mesajlarını yönetir.
  * * AYRICA: Sürüklenebilir pencere mantığını içerir (Sınır korumalı).
+ * * DÜZELTME: Event listener'lar initChatSystem fonksiyonuna alındı.
  */
 
 // İletişim Sistemi (Loglar ve Mesajlar)
@@ -14,8 +15,6 @@ let activeChatTab = 'genel';
 
 /**
  * Ekrana ve chat paneline bildirim gönderir.
- * @param {Object} planet - Etkileşime girilen nesne veya olay objesi
- * @param {string} suffix - Mesajın sonuna eklenecek ek metin (örn: "x2")
  */
 function showNotification(planet, suffix) {
     let msg = "";
@@ -53,9 +52,6 @@ function showNotification(planet, suffix) {
 
 /**
  * Sohbet paneline yeni bir mesaj ekler.
- * @param {string} text - Mesaj içeriği
- * @param {string} type - Mesaj tipi (system, loot, alert, info)
- * @param {string} channel - Hangi kanala ekleneceği
  */
 function addChatMessage(text, type = 'system', channel = 'bilgi') {
     const now = new Date();
@@ -64,12 +60,10 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
     
     chatHistory[channel].push(msgObj);
     
-    // Bilgi kanalı hariç diğerlerini genele de ekle (opsiyonel mantık)
     if (channel !== 'genel') {
         chatHistory['genel'].push(msgObj);
     }
     
-    // Eğer şu an açık olan tab bu kanalsa veya genel ise ekrana yazdır
     if (activeChatTab === channel || activeChatTab === 'genel') {
         const chatContent = document.getElementById('chat-content');
         if (chatContent) {
@@ -82,9 +76,6 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
     }
 }
 
-/**
- * Sohbet sekmeleri arasında geçiş yapar.
- */
 function switchChatTab(tab) {
     activeChatTab = tab;
     
@@ -101,7 +92,6 @@ function switchChatTab(tab) {
     const chatContent = document.getElementById('chat-content');
     if(chatContent) {
         chatContent.innerHTML = '';
-        
         chatHistory[tab].forEach(msg => {
             const div = document.createElement('div');
             div.className = `chat-message ${msg.type}`;
@@ -112,9 +102,6 @@ function switchChatTab(tab) {
     }
 }
 
-/**
- * Kullanıcının yazdığı mesajı gönderir.
- */
 function sendUserMessage() {
     const input = document.getElementById('chat-input');
     if(!input) return;
@@ -126,30 +113,43 @@ function sendUserMessage() {
     
     addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
     
-    // Basit bir cevap simülasyonu
     setTimeout(() => {
         addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
     }, 200);
 }
 
-// Olay Dinleyicileri
-const sendBtn = document.getElementById('chat-send-btn');
-if(sendBtn) sendBtn.addEventListener('click', sendUserMessage);
+// --- BAŞLATMA FONKSİYONU (YENİ) ---
+// Bu fonksiyon index.html içindeki loader callback'inde çağrılacak.
+function initChatSystem() {
+    console.log("Chat sistemi başlatılıyor...");
 
-const chatInput = document.getElementById('chat-input');
-if(chatInput) {
-    chatInput.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter') sendUserMessage();
-    });
+    // Olay Dinleyicileri
+    const sendBtn = document.getElementById('chat-send-btn');
+    if(sendBtn) {
+        sendBtn.addEventListener('click', sendUserMessage);
+    } else {
+        console.warn("Chat gönder butonu bulunamadı.");
+    }
+
+    const chatInput = document.getElementById('chat-input');
+    if(chatInput) {
+        chatInput.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') sendUserMessage();
+        });
+    } else {
+        console.warn("Chat input alanı bulunamadı.");
+    }
+
+    // Chat Panelini Sürüklenebilir Yap
+    const chatPanelEl = document.getElementById('chat-panel');
+    const chatHeaderEl = document.querySelector('#chat-panel .chat-header');
+    
+    if(chatPanelEl && chatHeaderEl) {
+        makeElementDraggable(chatPanelEl, chatHeaderEl);
+    }
 }
 
-// --- SÜRÜKLE BIRAK SİSTEMİ (DRAG & DROP - SINIR KORUMALI) ---
-/**
- * Bir HTML elementini sürükle-bırak yapılabilir hale getirir.
- * Ekran sınırlarını aşmasını engeller.
- * @param {HTMLElement} el - Taşınacak ana pencere/element
- * @param {HTMLElement} handle - Tutulacak başlık/sap kısmı
- */
+// --- SÜRÜKLE BIRAK SİSTEMİ ---
 function makeElementDraggable(el, handle) {
     if (!el || !handle) return;
     
@@ -159,17 +159,14 @@ function makeElementDraggable(el, handle) {
     let startX, startY, startLeft, startTop;
     
     handle.addEventListener('mousedown', (e) => {
-        // Sadece sol tık ile sürüklensin
         if (e.button !== 0) return;
         
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
         
-        // Mevcut pozisyonu al (Hesaplanan stil)
         const rect = el.getBoundingClientRect();
         
-        // Elementin konumlandırmasını 'absolute' ve 'top/left'e sabitle
         el.style.bottom = 'auto';
         el.style.right = 'auto';
         el.style.left = rect.left + 'px';
@@ -179,7 +176,6 @@ function makeElementDraggable(el, handle) {
         startLeft = rect.left;
         startTop = rect.top;
         
-        // Seçimi engelle
         e.preventDefault();
         
         document.addEventListener('mousemove', onMouseMove);
@@ -195,12 +191,9 @@ function makeElementDraggable(el, handle) {
         let newLeft = startLeft + dx;
         let newTop = startTop + dy;
         
-        // --- SINIR KONTROLÜ (BOUNDARY CHECK) ---
         const maxLeft = window.innerWidth - el.offsetWidth;
         const maxTop = window.innerHeight - el.offsetHeight;
         
-        // 0'dan küçük olamaz (sol/üst sınır)
-        // maxLeft/maxTop'tan büyük olamaz (sağ/alt sınır)
         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
         newTop = Math.max(0, Math.min(newTop, maxTop));
         
@@ -214,7 +207,6 @@ function makeElementDraggable(el, handle) {
         document.removeEventListener('mouseup', onMouseUp);
     }
     
-    // Pencere yeniden boyutlandırıldığında element ekran dışında kaldıysa içeri çek
     window.addEventListener('resize', () => {
         const rect = el.getBoundingClientRect();
         const maxLeft = window.innerWidth - el.offsetWidth;
@@ -230,10 +222,3 @@ function makeElementDraggable(el, handle) {
         el.style.top = Math.max(0, newTop) + 'px';
     });
 }
-
-// Chat Panelini Sürüklenebilir Yap
-const chatPanelEl = document.getElementById('chat-panel');
-const chatHeaderEl = document.querySelector('#chat-panel .chat-header');
-
-// Başlat
-makeElementDraggable(chatPanelEl, chatHeaderEl);

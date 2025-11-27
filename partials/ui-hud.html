@@ -1,0 +1,82 @@
+<div class="hud-container">
+    <div class="hud-icon-group">
+        <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)">
+            ❖ <span id="inv-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#fff; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
+        </div>
+        
+        <div id="btn-stats-icon" class="hud-btn" title="İstatistikler">
+            ≣
+        </div>
+        
+        <div id="echo-wrapper-el" class="echo-wrapper">
+            <div id="btn-echo-icon" class="hud-btn">
+                ◎ <span id="echo-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#67e8f9; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
+            </div>
+            <div class="echo-dropdown">
+                <div class="echo-profile">
+                    <div class="echo-p-icon">◈</div>
+                    <div class="echo-p-stats">
+                        <span class="echo-p-name">YANKI V1</span>
+                        <span id="echo-rate-disp" class="echo-p-rate">Toplama Hızı: Normal</span>
+                    </div>
+                </div>
+                <div id="menu-roam" class="echo-menu-item active-mode" onclick="setEchoMode('roam')">◈ SERBEST</div>
+                <div id="menu-return" class="echo-menu-item" onclick="setEchoMode('return')">↪ ÇAĞIR</div>
+                <div id="menu-merge" class="echo-menu-item" onclick="echoManualMerge()">☌ BİRLEŞ</div>
+                <div class="echo-menu-item" onclick="openEchoInventory()">❖ ENVANTER</div>
+            </div>
+        </div>
+        
+        <div class="ai-controls">
+            <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (Q)">◈</div>
+            <div id="ai-mode-btn" class="ai-mode-switch" onclick="cycleAIMode()">TOPLA</div>
+        </div>
+    </div>
+
+    <div id="currency-display">
+        <span style="color: rgba(255,255,255,0.6);">◆</span> <span id="stardust-amount">0</span>
+    </div>
+    
+    <div id="xp-container">
+        <div class="level-text">EVRİM SEVİYESİ <span id="level-val" class="text-white font-bold text-lg">1</span></div>
+        <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+    </div>
+
+    <div id="btn-sound">♫</div>
+    <div id="sound-panel">
+        <div class="mb-4"><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div><input type="range" id="vol-music" min="0" max="100" value="50"></div>
+        <div><div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div><input type="range" id="vol-sfx" min="0" max="100" value="80"></div>
+    </div>
+
+    <div id="merge-prompt"></div>
+
+    <!-- CHAT PANELİ -->
+    <div id="chat-panel">
+        <div class="chat-header">
+            <div class="chat-tab active" id="tab-genel" onclick="switchChatTab('genel')">GENEL</div>
+            <div class="chat-tab" id="tab-grup" onclick="switchChatTab('grup')">GRUP</div>
+            <div class="chat-tab" id="tab-bilgi" onclick="switchChatTab('bilgi')">BİLGİ</div>
+        </div>
+        <div id="chat-content" class="chat-content">
+            <!-- Mesajlar JS ile eklenecek -->
+        </div>
+        <div id="chat-input-area" class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Mesaj yaz..." maxlength="64">
+            <button id="chat-send-btn">➤</button>
+        </div>
+    </div>
+
+    <!-- HIZ GÖSTERGESİ -->
+    <div id="speedometer">
+        <span class="speed-label">HIZ</span>
+        <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
+    </div>
+
+    <!-- MİNİ HARİTA VE BARLAR -->
+    <div id="minimap-wrapper">
+        <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
+        <div id="energy-bar-container" title="Enerji"><div id="energy-bar-fill"></div></div>
+        <div id="health-bar-container" title="Gövde Dayanıklılığı"><div id="health-bar-fill"></div></div>
+        <div class="coords" id="coords">0000 : 0000</div>
+    </div>
+</div>
