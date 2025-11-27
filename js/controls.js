@@ -5,7 +5,7 @@
  */
 
 // Tuş Durumları (Global erişim için)
-const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, Escape:false };
+const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, Escape:false };
 
 function initControls() {
     console.log("Kontroller başlatılıyor...");
@@ -26,6 +26,15 @@ function initControls() {
         else if(e.code === "Space") keys[" "] = true; 
         else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
         
+        // --- HUD TOGGLE (YENİ) ---
+        if(e.key.toLowerCase() === 'h') {
+             // js/ui.js içindeki fonksiyonu çağır
+             if (typeof toggleHUD === 'function') {
+                 toggleHUD();
+             }
+             keys.h = false; // Sürekli tetiklenmesin
+        }
+
         if(e.key.toLowerCase() === 'q') { 
             if (!autopilot) {
                 autopilot = true;
