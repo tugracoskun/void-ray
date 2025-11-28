@@ -211,8 +211,9 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     const offsetY = (canvas.height - worldSize * scale) / 2 + bigMapState.panY;
 
     // --- GRID SİSTEMİ ---
-    const GRID_STEP_MAJOR = 20000; // Her 20k birimde bir ana çizgi
-    const GRID_STEP_MINOR = 5000;  // Her 5k birimde bir ara çizgi (Zoom levela göre)
+    // Config'den alınan değerler
+    const GRID_STEP_MAJOR = MAP_CONFIG.grid.major; 
+    const GRID_STEP_MINOR = MAP_CONFIG.grid.minor; 
 
     ctx.save();
     
@@ -288,7 +289,8 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     ctx.lineWidth = 1;
     ctx.setLineDash([2, 4]);
 
-    const rings = [5000, 10000];
+    // Config'den alınan halka mesafeleri
+    const rings = MAP_CONFIG.grid.rings;
     rings.forEach(r => {
         const rScaled = r * scale;
         ctx.beginPath();

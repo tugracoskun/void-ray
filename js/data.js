@@ -1,6 +1,46 @@
 // --- OYUN AYARLARI VE SABİTLER ---
 const WORLD_SIZE = 120000; 
 
+// OYUN KONFİGÜRASYONU (SAYILAR BURADAN YÖNETİLİR)
+const GAME_CONFIG = {
+    WORLD_GEN: {
+        PLANET_COUNT: 1200,      // Toplam gezegen sayısı
+        STAR_COUNT: 5000,        // Arka plan yıldız sayısı
+        SAFE_ZONE_RADIUS: 2000   // Başlangıçta gezegen oluşmayacak güvenli alan yarıçapı
+    },
+    PLAYER: {
+        BASE_XP: 150,            // Level atlamak için gereken taban XP
+        BASE_HEALTH: 100,        // Başlangıç canı
+        BASE_ENERGY: 100,        // Başlangıç enerjisi
+        SCAN_RADIUS: 4000,       // Tarama (Görünürlük) menzili
+        RADAR_RADIUS: 10000,     // Radar (Sinyal) menzili
+        BASE_TAIL_COUNT: 20,     // Normal kuyruk uzunluğu
+        BOOST_TAIL_COUNT: 50,    // Hızlanınca kuyruk uzunluğu
+        ENERGY_COST: {
+            BOOST: 0.05,         // Space tuşu tüketimi
+            MOVE: 0.002,         // Hareket tüketimi
+            REGEN: 0.01          // Enerji dolum hızı
+        }
+    },
+    ECHO: {
+        BASE_ENERGY: 100,
+        SCAN_RADIUS: 4000,
+        RADAR_RADIUS: 10000,
+        DRAIN_RATE: 0.005,       // Normal enerji tüketimi
+        OUT_OF_BOUNDS_DRAIN: 0.5 // Radyasyon alanı tüketimi
+    },
+    PLANETS: {
+        RADIUS: {
+            LEGENDARY: 120,
+            TOXIC: 60,
+            LOST: 80,
+            TARDIGRADE: 50,
+            BASE: 40,            // Standart gezegen taban yarıçapı
+            VARIANCE: 60         // Rastgele eklenebilecek ek yarıçap
+        }
+    }
+};
+
 const RARITY = {
     COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.5, xp: 10, value: 10 },
     RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.2, xp: 40, value: 30 },
@@ -25,12 +65,12 @@ const UPGRADES = {
     playerSpeed: { name: "İyon Motorları", desc: "Maksimum uçuş hızı.", baseCost: 100, max: 5 },
     playerTurn:  { name: "Manevra İticileri", desc: "Dönüş kabiliyeti.", baseCost: 150, max: 5 },
     playerMagnet:{ name: "Çekim Alanı", desc: "Eşya toplama mesafesi.", baseCost: 200, max: 5 },
-    playerCapacity: { name: "Kargo Genişletme", desc: "Envanter kapasitesini artırır (+10).", baseCost: 300, max: 5 }, // YENİ
+    playerCapacity: { name: "Kargo Genişletme", desc: "Envanter kapasitesini artırır (+10).", baseCost: 300, max: 5 },
     
     echoSpeed:   { name: "Yankı Hızı", desc: "Yankı'nın uçuş hızı.", baseCost: 150, max: 5 },
     echoRange:   { name: "Sensör Ağı", desc: "Yankı'nın toplama çapı.", baseCost: 250, max: 5 },
     echoDurability: { name: "Yankı Bataryası", desc: "Enerji tüketim verimliliği.", baseCost: 200, max: 5 },
-    echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesi (+5).", baseCost: 250, max: 5 } // YENİ
+    echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesi (+5).", baseCost: 250, max: 5 }
 };
 
 const TIPS = [
@@ -44,6 +84,11 @@ const TIPS = [
 
 // --- HARİTA VE GÖRÜNÜM AYARLARI ---
 const MAP_CONFIG = {
+    grid: {
+        major: 20000,    // Ana grid çizgileri
+        minor: 5000,     // Ara grid çizgileri
+        rings: [5000, 10000] // Oyuncu etrafındaki mesafe halkaları
+    },
     minimap: {
         size: 180,           // Piksel cinsinden boyut
         bg: "rgba(0, 0, 0, 0.8)",

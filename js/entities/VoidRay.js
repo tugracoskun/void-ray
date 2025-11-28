@@ -17,23 +17,24 @@ class VoidRay {
         this.scale = 1; 
         this.level = 1; 
         this.xp = 0; 
-        this.maxXp = 150; 
-        this.energy = 100; 
-        this.maxEnergy = 100;
         
-        this.health = 100;
-        this.maxHealth = 100;
+        // CONFIG'DEN DEĞERLER ALINIYOR
+        this.maxXp = GAME_CONFIG.PLAYER.BASE_XP; 
+        this.energy = GAME_CONFIG.PLAYER.BASE_ENERGY; 
+        this.maxEnergy = GAME_CONFIG.PLAYER.BASE_ENERGY;
+        this.health = GAME_CONFIG.PLAYER.BASE_HEALTH;
+        this.maxHealth = GAME_CONFIG.PLAYER.BASE_HEALTH;
         
         this.outOfBoundsTimer = 0; 
         
         // Kuyruk Ayarları
-        this.baseTailCount = 20;
-        this.boostTailCount = 50; // Boost sırasında kuyruk uzasın
+        this.baseTailCount = GAME_CONFIG.PLAYER.BASE_TAIL_COUNT;
+        this.boostTailCount = GAME_CONFIG.PLAYER.BOOST_TAIL_COUNT; // Boost sırasında kuyruk uzasın
         this.tail = []; 
         for(let i=0; i<this.baseTailCount; i++) this.tail.push({x:this.x, y:this.y});
         
-        this.scanRadius = 4000;
-        this.radarRadius = 10000; 
+        this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS;
+        this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS; 
     }
     
     gainXp(amount) { 
@@ -117,9 +118,9 @@ class VoidRay {
         const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
         const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
         
-        // Radar menzillerini yükseltmelere göre güncelle
-        this.scanRadius = 4000 * magnetMult * (1 + this.scale * 0.1);
-        this.radarRadius = 10000 * magnetMult * (1 + this.scale * 0.1);
+        // Radar menzillerini yükseltmelere göre güncelle (Config'den taban değerleri alarak)
+        this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult * (1 + this.scale * 0.1);
+        this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS * magnetMult * (1 + this.scale * 0.1);
 
         const BOOST = keys[" "] ? 0.6 : 0; // Global keys nesnesi
         let ACCEL = 0.2 + BOOST;
@@ -166,15 +167,15 @@ class VoidRay {
         // Enerji Yönetimi
         // Global keys ve lowEnergyWarned
         if (isBoosting) {
-                const cost = 0.05;
+                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST;
                 this.energy = Math.max(0, this.energy - cost); 
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
-                const cost = 0.002;
+                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE;
                 this.energy = Math.max(0, this.energy - cost);
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
-                if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + 0.01);
+                if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + GAME_CONFIG.PLAYER.ENERGY_COST.REGEN);
         }
         
         if (this.energy < 10 && !lowEnergyWarned) {

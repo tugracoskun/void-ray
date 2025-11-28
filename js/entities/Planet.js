@@ -22,7 +22,18 @@ class Planet {
             this.lootContent = []; 
         }
         this.name = this.type.id === 'lost' ? "KAYIP KARGO" : LOOT_DB[this.type.id][Math.floor(Math.random()*LOOT_DB[this.type.id].length)];
-        this.radius = this.type.id==='legendary'?120 : (this.type.id==='toxic'? 60 : (this.type.id==='lost' ? 80 : (this.type.id === 'tardigrade' ? 50 : 40+Math.random()*60)));
+        
+        // CONFIG'DEN DEĞERLER AL
+        const R = GAME_CONFIG.PLANETS.RADIUS;
+        let baseRadius = R.BASE;
+        
+        if (this.type.id === 'legendary') baseRadius = R.LEGENDARY;
+        else if (this.type.id === 'toxic') baseRadius = R.TOXIC;
+        else if (this.type.id === 'lost') baseRadius = R.LOST;
+        else if (this.type.id === 'tardigrade') baseRadius = R.TARDIGRADE;
+        else baseRadius = R.BASE + Math.random() * R.VARIANCE;
+
+        this.radius = baseRadius;
     }
     
     draw(ctx, visibility = 2) {
