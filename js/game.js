@@ -267,9 +267,13 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    for(let i=0; i<1200; i++) planets.push(new Planet());
+    // Gezegen ve Yıldız sayılarını config'den al
+    for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) planets.push(new Planet());
     
-    stars = []; for(let i=0; i<5000; i++) stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
+    stars = []; 
+    for(let i=0; i < GAME_CONFIG.WORLD_GEN.STAR_COUNT; i++) {
+        stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
+    }
     
     player.updateUI(); 
     updateInventoryCount(); 
@@ -341,12 +345,17 @@ function loop() {
             renderStats();
         }
 
-        // Gezegen Spawn
+        // Gezegen Spawn (Config'den sınır alınıyor)
         planets = planets.filter(p => !p.collected);
-        if (planets.length < 1200) {
-            const needed = 1200 - planets.length;
+        if (planets.length < GAME_CONFIG.WORLD_GEN.PLANET_COUNT) {
+            const needed = GAME_CONFIG.WORLD_GEN.PLANET_COUNT - planets.length;
             for(let i=0; i<needed; i++) {
-                let px, py, d; do { px = Math.random() * WORLD_SIZE; py = Math.random() * WORLD_SIZE; d = Math.hypot(px - player.x, py - player.y); } while(d < 2000);
+                let px, py, d; 
+                do { 
+                    px = Math.random() * WORLD_SIZE; 
+                    py = Math.random() * WORLD_SIZE; 
+                    d = Math.hypot(px - player.x, py - player.y); 
+                } while(d < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS);
                 planets.push(new Planet(px, py));
             }
         }

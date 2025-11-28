@@ -13,15 +13,17 @@ class EchoRay {
         this.lootBag = []; 
         this.attached = false; 
         this.mode = 'roam'; 
-        this.energy = 100;
+        // CONFIG'DEN DEĞER AL
+        this.energy = GAME_CONFIG.ECHO.BASE_ENERGY;
         this.energyDisplayTimer = 0; 
         this.fullNotified = false;
         
         this.wingPhase = 0; 
         this.pendingMerge = false;
         
-        this.scanRadius = 4000;
-        this.radarRadius = 10000;
+        // CONFIG'DEN DEĞER AL
+        this.scanRadius = GAME_CONFIG.ECHO.SCAN_RADIUS;
+        this.radarRadius = GAME_CONFIG.ECHO.RADAR_RADIUS;
 
         // --- RENK YÖNETİMİ ---
         this.colorLerp = 0; // 0: Normal, 1: Tamamen Oyuncu Rengi
@@ -38,11 +40,11 @@ class EchoRay {
         // Global değişkenler ve fonksiyonlar
         const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
         
-        this.scanRadius = 4000 * rangeMult;
-        this.radarRadius = 10000 * rangeMult;
+        this.scanRadius = GAME_CONFIG.ECHO.SCAN_RADIUS * rangeMult;
+        this.radarRadius = GAME_CONFIG.ECHO.RADAR_RADIUS * rangeMult;
 
         const durabilityMult = 1 + (playerData.upgrades.echoDurability * 0.5);
-        let drain = 0.005 / durabilityMult; 
+        let drain = GAME_CONFIG.ECHO.DRAIN_RATE / durabilityMult; 
 
         // --- RENK GEÇİŞ MANTIĞI ---
         // Eğer bağlıysa oyuncu rengine yaklaş (ama tam aynısı olma, örn: 0.7)
@@ -56,7 +58,7 @@ class EchoRay {
         // Global WORLD_SIZE
         const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
         if (isOutOfBounds) {
-            drain = 0.5; // Radyasyon altında pil çok hızlı biter
+            drain = GAME_CONFIG.ECHO.OUT_OF_BOUNDS_DRAIN; // Radyasyon altında pil çok hızlı biter
         }
         
         if (this.mode !== 'recharge') {
