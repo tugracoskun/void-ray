@@ -17,16 +17,21 @@ var repairStation = null;
 var storageCenter = null;
 var audio; 
 
-// OYUN AYARLARI (GÜNCELLENDİ: KAMERA OFFSET)
+// OYUN AYARLARI (GÜNCELLENDİ: KAMERA OFFSET VE ADAPTİF MOD)
 window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
     showStorageArrow: false,
     hudOpacity: 1.0,
     hudHoverEffect: false,
-    cameraOffsetX: 0, // Yatay kamera kaydırma (piksel)
-    cameraOffsetY: 0  // Dikey kamera kaydırma (piksel)
+    cameraOffsetX: 0, 
+    cameraOffsetY: 0,
+    adaptiveCamera: false // Yeni ayar
 };
+
+// Render işlemi için kullanılan dinamik ofset değerleri (Geçişler için)
+let currentRenderOffsetX = 0;
+let currentRenderOffsetY = 0;
 
 let playerData = { 
     stardust: 0, 
@@ -93,6 +98,8 @@ window.initSettingsListeners = function() {
     // Kamera Kontrolleri
     const camXInput = document.getElementById('cam-offset-x');
     const camYInput = document.getElementById('cam-offset-y');
+    const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
+    const manualCamControls = document.getElementById('manual-camera-controls');
 
     if (nexusToggle) {
         nexusToggle.addEventListener('change', (e) => {
@@ -115,8 +122,6 @@ window.initSettingsListeners = function() {
     if (hudHoverToggle) {
         hudHoverToggle.addEventListener('change', (e) => {
             window.gameSettings.hudHoverEffect = e.target.checked;
-            
-            // Ayar değiştiğinde, eğer fare zaten üzerindeyse anında güncelle
             hudElements.forEach(el => {
                 if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
                     el.style.opacity = '1';
@@ -135,22 +140,9 @@ window.initSettingsListeners = function() {
         const el = document.querySelector(sel);
         if(el) {
             hudElements.push(el);
-            // Geçiş efektini yumuşat
             el.style.transition = 'opacity 0.3s ease';
-            
-            // Hover Olayları
-            el.addEventListener('mouseenter', () => {
-                if (window.gameSettings.hudHoverEffect) {
-                    el.style.opacity = '1';
-                }
-            });
-            
-            el.addEventListener('mouseleave', () => {
-                // Eğer hover efekti açıksa eski haline dön, değilse zaten sabittir
-                if (window.gameSettings.hudHoverEffect) {
-                    el.style.opacity = window.gameSettings.hudOpacity;
-                }
-            });
+            el.addEventListener('mouseenter', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = '1'; });
+            el.addEventListener('mouseleave', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = window.gameSettings.hudOpacity; });
         }
     });
 
@@ -158,19 +150,37 @@ window.initSettingsListeners = function() {
         hudOpacityInput.addEventListener('input', (e) => {
             const val = e.target.value / 100;
             window.gameSettings.hudOpacity = val;
-
             const valDisp = document.getElementById('val-hud-opacity');
             if(valDisp) valDisp.innerText = e.target.value + '%';
-            
-            // HUD elementlerine opaklık uygula
             hudElements.forEach(el => {
-                // Eğer hover efekti açıksa ve şu an farenin altındaysa, opaklığı değiştirme (1 kalsın)
                 if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
                     el.style.opacity = '1';
                 } else {
                     el.style.opacity = val;
                 }
             });
+        });
+    }
+
+    // Adaptif Kamera Toggle
+    if (adaptiveCamToggle) {
+        adaptiveCamToggle.addEventListener('change', (e) => {
+            window.gameSettings.adaptiveCamera = e.target.checked;
+            
+            // Manuel kontrolleri devre dışı bırak/aktif et (Görsel olarak)
+            if (manualCamControls) {
+                if (window.gameSettings.adaptiveCamera) {
+                    manualCamControls.style.opacity = '0.3';
+                    manualCamControls.style.pointerEvents = 'none';
+                    if(camXInput) camXInput.disabled = true;
+                    if(camYInput) camYInput.disabled = true;
+                } else {
+                    manualCamControls.style.opacity = '1';
+                    manualCamControls.style.pointerEvents = 'auto';
+                    if(camXInput) camXInput.disabled = false;
+                    if(camYInput) camYInput.disabled = false;
+                }
+            }
         });
     }
 
@@ -475,9 +485,38 @@ function loop() {
 
         ctx.save(); 
         
-        // KAMERA KAYDIRMA (OFFSET) UYGULAMASI (YENİ)
-        // Ekranın ortasına git + Kullanıcının belirlediği offset'i ekle
-        ctx.translate(width/2 + window.gameSettings.cameraOffsetX, height/2 + window.gameSettings.cameraOffsetY); 
+        // --- KAMERA OFFSET MANTIĞI ---
+        let targetOffsetX = window.gameSettings.cameraOffsetX;
+        let targetOffsetY = window.gameSettings.cameraOffsetY;
+
+        // Adaptif Mod: Gemi hızına göre offset hesapla (Ters yönde)
+        // Eğer gemi sağa gidiyorsa (+x), kamera sağa kaymalı ki gemi sola (geriye) düşsün.
+        // Bu sayede sağ tarafta (gidilen yön) daha çok boşluk olur.
+        if (window.gameSettings.adaptiveCamera) {
+            const lookAheadFactor = 30; // Hız başına kaç piksel kayacak
+            const maxAdaptiveOffset = 400; // Maksimum kayma miktarı
+
+            // player.vx pozitif (sağ) ise, hedef offset negatif (sola kaydırma) olmalı Kİ
+            // ekranın merkezi sola kaysın, böylece gemi sağa (ileriye) gitsin...
+            // HAYIR: Translate(width/2 + offset) yapıyoruz.
+            // Offset POZİTİF ise kamera merkezi SAĞA kayar. Gemi (0,0) SOLDA kalır.
+            // Gemi SAĞA (+vx) gidiyorsa, geminin SOLDA kalmasını istiyoruz (Daha çok sağ alan).
+            // O halde offset'i NEGATİF yapmalıyız.
+            
+            targetOffsetX = -player.vx * lookAheadFactor;
+            targetOffsetY = -player.vy * lookAheadFactor;
+            
+            // Sınırla
+            targetOffsetX = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetX));
+            targetOffsetY = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetY));
+        }
+
+        // Yumuşak geçiş (Lerp)
+        currentRenderOffsetX += (targetOffsetX - currentRenderOffsetX) * 0.05;
+        currentRenderOffsetY += (targetOffsetY - currentRenderOffsetY) * 0.05;
+
+        // Hesaplanan offseti uygula
+        ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
         
         ctx.scale(currentZoom, currentZoom); 
         ctx.translate(-player.x, -player.y);

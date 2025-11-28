@@ -40,7 +40,7 @@
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: KAMERA KONUMU EKLENDİ) -->
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: ADAPTİF MOD EKLENDİ) -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <h3 class="text-white text-sm font-bold tracking-widest mb-4 border-b border-white/10 pb-2">AYARLAR</h3>
@@ -84,15 +84,26 @@
             </div>
         </div>
 
-        <!-- KAMERA KONUMU AYARLARI (YENİ) -->
+        <!-- KAMERA KONUMU AYARLARI (GÜNCELLENDİ) -->
         <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
-        <div class="mb-2">
-            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
-            <input type="range" id="cam-offset-x" min="-400" max="400" value="0">
+        
+        <div class="toggle-row mb-3">
+            <span title="Gemi hızına göre kamerayı otomatik kaydırır">ADAPTİF MOD</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-adaptive-cam">
+                <span class="slider"></span>
+            </label>
         </div>
-        <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
-            <input type="range" id="cam-offset-y" min="-300" max="300" value="0">
+
+        <div id="manual-camera-controls" style="transition: opacity 0.3s;">
+            <div class="mb-2">
+                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
+                <input type="range" id="cam-offset-x" min="-400" max="400" value="0">
+            </div>
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
+                <input type="range" id="cam-offset-y" min="-300" max="300" value="0">
+            </div>
         </div>
 
         <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">SES YÖNETİMİ</div>
