@@ -40,7 +40,7 @@
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: OPAKLIK VE İPUCU EKLENDİ) -->
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: KAMERA KONUMU EKLENDİ) -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <h3 class="text-white text-sm font-bold tracking-widest mb-4 border-b border-white/10 pb-2">AYARLAR</h3>
@@ -84,7 +84,18 @@
             </div>
         </div>
 
-        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">SES YÖNETİMİ</div>
+        <!-- KAMERA KONUMU AYARLARI (YENİ) -->
+        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
+        <div class="mb-2">
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
+            <input type="range" id="cam-offset-x" min="-400" max="400" value="0">
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
+            <input type="range" id="cam-offset-y" min="-300" max="300" value="0">
+        </div>
+
+        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">SES YÖNETİMİ</div>
         <div class="mb-4">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>
             <input type="range" id="vol-music" min="0" max="100" value="50">
@@ -94,7 +105,6 @@
             <input type="range" id="vol-sfx" min="0" max="100" value="80">
         </div>
 
-        <!-- İPUCU BÖLÜMÜ -->
         <div class="mt-4 pt-3 border-t border-white/10 text-[10px] text-gray-500 font-mono">
             <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASARAK ARAYÜZÜ GİZLEYEBİLİRSİNİZ.
         </div>

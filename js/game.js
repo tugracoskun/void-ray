@@ -17,13 +17,15 @@ var repairStation = null;
 var storageCenter = null;
 var audio; 
 
-// OYUN AYARLARI (GÜNCELLENDİ: OK VE OPAKLIK)
+// OYUN AYARLARI (GÜNCELLENDİ: KAMERA OFFSET)
 window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
     showStorageArrow: false,
-    hudOpacity: 1.0, // Varsayılan HUD opaklığı
-    hudHoverEffect: false // Akıllı opaklık (Hover) varsayılan kapalı
+    hudOpacity: 1.0,
+    hudHoverEffect: false,
+    cameraOffsetX: 0, // Yatay kamera kaydırma (piksel)
+    cameraOffsetY: 0  // Dikey kamera kaydırma (piksel)
 };
 
 let playerData = { 
@@ -77,7 +79,7 @@ let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
 // -------------------------------------------------------------------------
-// AYAR DİNLEYİCİLERİ
+// AYAR DİNLEYİCİLERİ (GÜNCELLENDİ: KAMERA KONTROLLERİ)
 // -------------------------------------------------------------------------
 window.initSettingsListeners = function() {
     console.log("Ayar dinleyicileri başlatılıyor...");
@@ -87,6 +89,10 @@ window.initSettingsListeners = function() {
     const storageToggle = document.getElementById('toggle-storage-arrow');
     const hudOpacityInput = document.getElementById('vol-hud-opacity');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
+    
+    // Kamera Kontrolleri
+    const camXInput = document.getElementById('cam-offset-x');
+    const camYInput = document.getElementById('cam-offset-y');
 
     if (nexusToggle) {
         nexusToggle.addEventListener('change', (e) => {
@@ -165,6 +171,25 @@ window.initSettingsListeners = function() {
                     el.style.opacity = val;
                 }
             });
+        });
+    }
+
+    // Kamera Offset Dinleyicileri
+    if (camXInput) {
+        camXInput.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            window.gameSettings.cameraOffsetX = val;
+            const valDisp = document.getElementById('val-cam-x');
+            if(valDisp) valDisp.innerText = val;
+        });
+    }
+
+    if (camYInput) {
+        camYInput.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            window.gameSettings.cameraOffsetY = val;
+            const valDisp = document.getElementById('val-cam-y');
+            if(valDisp) valDisp.innerText = val;
         });
     }
 };
@@ -448,7 +473,15 @@ function loop() {
         ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
         ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
 
-        ctx.save(); ctx.translate(width/2, height/2); ctx.scale(currentZoom, currentZoom); ctx.translate(-player.x, -player.y);
+        ctx.save(); 
+        
+        // KAMERA KAYDIRMA (OFFSET) UYGULAMASI (YENİ)
+        // Ekranın ortasına git + Kullanıcının belirlediği offset'i ekle
+        ctx.translate(width/2 + window.gameSettings.cameraOffsetX, height/2 + window.gameSettings.cameraOffsetY); 
+        
+        ctx.scale(currentZoom, currentZoom); 
+        ctx.translate(-player.x, -player.y);
+        
         nexus.draw(ctx);
         repairStation.draw(ctx); 
         storageCenter.draw(ctx); 
