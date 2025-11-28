@@ -122,6 +122,8 @@ window.initSettingsListeners = function() {
     if (hudHoverToggle) {
         hudHoverToggle.addEventListener('change', (e) => {
             window.gameSettings.hudHoverEffect = e.target.checked;
+            
+            // Ayar değiştiğinde, eğer fare zaten üzerindeyse anında güncelle
             hudElements.forEach(el => {
                 if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
                     el.style.opacity = '1';
@@ -140,9 +142,22 @@ window.initSettingsListeners = function() {
         const el = document.querySelector(sel);
         if(el) {
             hudElements.push(el);
+            // Geçiş efektini yumuşat
             el.style.transition = 'opacity 0.3s ease';
-            el.addEventListener('mouseenter', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = '1'; });
-            el.addEventListener('mouseleave', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = window.gameSettings.hudOpacity; });
+            
+            // Hover Olayları
+            el.addEventListener('mouseenter', () => {
+                if (window.gameSettings.hudHoverEffect) {
+                    el.style.opacity = '1';
+                }
+            });
+            
+            el.addEventListener('mouseleave', () => {
+                // Eğer hover efekti açıksa eski haline dön, değilse zaten sabittir
+                if (window.gameSettings.hudHoverEffect) {
+                    el.style.opacity = window.gameSettings.hudOpacity;
+                }
+            });
         }
     });
 
@@ -150,9 +165,13 @@ window.initSettingsListeners = function() {
         hudOpacityInput.addEventListener('input', (e) => {
             const val = e.target.value / 100;
             window.gameSettings.hudOpacity = val;
+
             const valDisp = document.getElementById('val-hud-opacity');
             if(valDisp) valDisp.innerText = e.target.value + '%';
+            
+            // HUD elementlerine opaklık uygula
             hudElements.forEach(el => {
+                // Eğer hover efekti açıksa ve şu an farenin altındaysa, opaklığı değiştirme (1 kalsın)
                 if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
                     el.style.opacity = '1';
                 } else {

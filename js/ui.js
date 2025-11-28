@@ -570,6 +570,23 @@ function switchNexusTab(tabName) {
     }
 }
 
+// --- SETTINGS TABS (YENİ) ---
+window.switchSettingsTab = function(tabName) {
+    // Tüm sekmelerden active sınıfını kaldır
+    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.settings-content').forEach(c => c.classList.remove('active'));
+    
+    // Seçilen sekmeyi aktif yap
+    const btnId = 'tab-btn-' + tabName;
+    const contentId = 'set-tab-' + tabName;
+    
+    const btn = document.getElementById(btnId);
+    const content = document.getElementById(contentId);
+    
+    if (btn) btn.classList.add('active');
+    if (content) content.classList.add('active');
+};
+
 function renderMarket() {
     const grid = document.getElementById('market-grid'); 
     grid.innerHTML = '';

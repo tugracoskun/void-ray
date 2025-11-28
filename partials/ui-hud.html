@@ -40,112 +40,126 @@
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: ADAPTİF MOD EKLENDİ) -->
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: SEKMELİ YAPI) -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
-        <h3 class="text-white text-sm font-bold tracking-widest mb-4 border-b border-white/10 pb-2">AYARLAR</h3>
+        <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
+            <h3 class="text-white text-sm font-bold tracking-widest">AYARLAR</h3>
+        </div>
         
-        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">NAVİGASYON</div>
-        <div class="mb-4">
-            <div class="toggle-row">
-                <span>ÜS OKU (NEXUS)</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-nexus-arrow" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="toggle-row">
-                <span>TAMİR OKU</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-repair-arrow">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="toggle-row">
-                <span>DEPO OKU</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-storage-arrow">
-                    <span class="slider"></span>
-                </label>
-            </div>
+        <!-- SEKMELER -->
+        <div class="settings-tabs">
+            <div id="tab-btn-game" class="settings-tab active" onclick="switchSettingsTab('game')">OYUN</div>
+            <div id="tab-btn-view" class="settings-tab" onclick="switchSettingsTab('view')">GÖRÜNÜM</div>
+            <div id="tab-btn-audio" class="settings-tab" onclick="switchSettingsTab('audio')">SES</div>
         </div>
 
-        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">GÖRÜNÜM</div>
-        <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>HUD OPAKLIĞI</span><span id="val-hud-opacity">100%</span></div>
-            <input type="range" id="vol-hud-opacity" min="20" max="100" value="100">
-            
-            <div class="toggle-row mt-3">
-                <span>ÜZERİNE GELİNCE %100</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-hud-hover">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
-
-        <!-- KAMERA KONUMU AYARLARI (GÜNCELLENDİ) -->
-        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
-        
-        <div class="toggle-row mb-3">
-            <span title="Gemi hızına göre kamerayı otomatik kaydırır">ADAPTİF MOD</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="toggle-adaptive-cam">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div id="manual-camera-controls" style="transition: opacity 0.3s;">
-            <div class="mb-2">
-                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
-                <input type="range" id="cam-offset-x" min="-400" max="400" value="0">
-            </div>
+        <!-- SEKME 1: OYUN (NAVİGASYON) -->
+        <div id="set-tab-game" class="settings-content active">
+            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">NAVİGASYON OKLARI</div>
             <div class="mb-4">
-                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
-                <input type="range" id="cam-offset-y" min="-300" max="300" value="0">
+                <div class="toggle-row">
+                    <span>ÜS (NEXUS)</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-nexus-arrow" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <span>TAMİR İSTASYONU</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-repair-arrow">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <span>DEPO MERKEZİ</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-storage-arrow">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
 
-        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">SES YÖNETİMİ</div>
-        <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>
-            <input type="range" id="vol-music" min="0" max="100" value="50">
+        <!-- SEKME 2: GÖRÜNÜM -->
+        <div id="set-tab-view" class="settings-content">
+            <!-- HUD -->
+            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">ARAYÜZ (HUD)</div>
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>OPAKLIK</span><span id="val-hud-opacity">100%</span></div>
+                <input type="range" id="vol-hud-opacity" min="20" max="100" value="100">
+                
+                <div class="toggle-row mt-3">
+                    <span>ÜZERİNE GELİNCE %100</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-hud-hover">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- KAMERA -->
+            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
+            
+            <div class="toggle-row mb-3">
+                <span title="Gemi hızına göre kamerayı otomatik kaydırır">ADAPTİF MOD</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-adaptive-cam">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div id="manual-camera-controls" style="transition: opacity 0.3s;">
+                <div class="mb-2">
+                    <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
+                    <input type="range" id="cam-offset-x" min="-400" max="400" value="0">
+                </div>
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
+                    <input type="range" id="cam-offset-y" min="-300" max="300" value="0">
+                </div>
+            </div>
         </div>
-        <div>
-            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div>
-            <input type="range" id="vol-sfx" min="0" max="100" value="80">
+
+        <!-- SEKME 3: SES -->
+        <div id="set-tab-audio" class="settings-content">
+            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">SES DÜZEYİ</div>
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>
+                <input type="range" id="vol-music" min="0" max="100" value="50">
+            </div>
+            <div>
+                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div>
+                <input type="range" id="vol-sfx" min="0" max="100" value="80">
+            </div>
         </div>
 
         <div class="mt-4 pt-3 border-t border-white/10 text-[10px] text-gray-500 font-mono">
-            <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASARAK ARAYÜZÜ GİZLEYEBİLİRSİNİZ.
+            <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASINIZ.
         </div>
     </div>
 
     <div id="merge-prompt"></div>
 
-    <!-- CHAT PANELİ -->
     <div id="chat-panel">
         <div class="chat-header">
             <div class="chat-tab active" id="tab-genel" onclick="switchChatTab('genel')">GENEL</div>
             <div class="chat-tab" id="tab-grup" onclick="switchChatTab('grup')">GRUP</div>
             <div class="chat-tab" id="tab-bilgi" onclick="switchChatTab('bilgi')">BİLGİ</div>
         </div>
-        <div id="chat-content" class="chat-content">
-            <!-- Mesajlar JS ile eklenecek -->
-        </div>
+        <div id="chat-content" class="chat-content"></div>
         <div id="chat-input-area" class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Mesaj yaz..." maxlength="64">
             <button id="chat-send-btn">➤</button>
         </div>
     </div>
 
-    <!-- HIZ GÖSTERGESİ -->
     <div id="speedometer">
         <span class="speed-label">HIZ</span>
         <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
     </div>
 
-    <!-- MİNİ HARİTA VE BARLAR -->
     <div id="minimap-wrapper">
         <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
         <div id="energy-bar-container" title="Enerji"><div id="energy-bar-fill"></div></div>

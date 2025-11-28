@@ -6,14 +6,12 @@
 .hud-container { pointer-events: none; position: absolute; inset: 0; z-index: 50; }
 .pointer-events-auto { pointer-events: auto; }
 
-/* --- HUD GİZLEME ÖZELLİĞİ (YENİ) --- */
-/* #ui-hud ve #ui-panels elementlerine bu sınıf eklendiğinde arayüz gizlenir */
+/* --- HUD GİZLEME ÖZELLİĞİ --- */
 .hidden-ui {
     opacity: 0 !important;
     pointer-events: none !important;
 }
 
-/* Geçiş efektleri için kapsayıcılar */
 #ui-hud, #ui-panels {
     transition: opacity 0.5s ease;
     opacity: 1;
@@ -91,8 +89,8 @@
 .chat-header {
     display: flex; border-bottom: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.02);
-    cursor: move; /* Sürükleme imleci */
-    user-select: none; /* Metin seçimini engelle */
+    cursor: move;
+    user-select: none;
 }
 
 .chat-tab {
@@ -154,17 +152,44 @@
 .speed-val { font-size: 2rem; color: #e2e8f0; font-weight: 300; font-family: monospace; line-height: 1; }
 .speed-unit { font-size: 0.8rem; color: rgba(255,255,255,0.3); margin-left: 5px; font-weight: 300; }
 
-/* Settings Menu (GÜNCELLENDİ) */
+/* Settings Menu */
 #btn-settings { position: absolute; top: 30px; right: 30px; width: 50px; height: 50px; border-radius: var(--soft-radius); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 90; color: rgba(255,255,255,0.6); transition: all 0.3s; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); pointer-events: auto; font-size: 1.5rem; }
 #btn-settings:hover { border-color: white; color: white; transform: rotate(90deg); }
 
-#settings-panel { position: absolute; top: 90px; right: 30px; width: 260px; background: var(--glass-bg); border-radius: var(--soft-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
+#settings-panel { position: absolute; top: 90px; right: 30px; width: 280px; background: var(--glass-bg); border-radius: var(--soft-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
 #settings-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* --- SETTINGS TABS (YENİ) --- */
+.settings-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.settings-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 0.7rem;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.settings-tab:hover { color: white; background: rgba(255,255,255,0.05); }
+.settings-tab.active { color: var(--ray-color); border-bottom-color: var(--ray-color); background: rgba(56, 189, 248, 0.05); }
+
+.settings-content { display: none; animation: fadeInMsg 0.2s ease; }
+.settings-content.active { display: block; }
 
 input[type=range] { width: 100%; -webkit-appearance: none; height: 2px; background: rgba(255,255,255,0.1); outline: none; margin-top: 10px; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: white; cursor: pointer; border-radius: 0; }
 
-/* --- TOGGLE SWITCH (YENİ) --- */
+/* --- TOGGLE SWITCH --- */
 .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.75rem; color: #94a3b8; letter-spacing: 1px; }
 .toggle-switch { position: relative; display: inline-block; width: 34px; height: 18px; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
