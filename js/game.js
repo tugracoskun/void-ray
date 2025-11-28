@@ -8,8 +8,6 @@
 // GLOBAL DEĞİŞKENLER VE OYUN DURUMU
 // -------------------------------------------------------------------------
 
-// 'let' yerine 'var' kullanarak TDZ (Temporal Dead Zone) hatasını engelliyoruz.
-// Bu sayede player değişkeni window objesine güvenli bir şekilde bağlanır.
 var player; 
 var echoRay = null;
 var nexus = null;
@@ -17,7 +15,7 @@ var repairStation = null;
 var storageCenter = null;
 var audio; 
 
-// OYUN AYARLARI (GÜNCELLENDİ: KAMERA OFFSET VE ADAPTİF MOD)
+// OYUN AYARLARI
 window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
@@ -26,10 +24,10 @@ window.gameSettings = {
     hudHoverEffect: false,
     cameraOffsetX: 0, 
     cameraOffsetY: 0,
-    adaptiveCamera: false // Yeni ayar
+    adaptiveCamera: false 
 };
 
-// Render işlemi için kullanılan dinamik ofset değerleri (Geçişler için)
+// Render işlemi için kullanılan dinamik ofset değerleri
 let currentRenderOffsetX = 0;
 let currentRenderOffsetY = 0;
 
@@ -68,71 +66,33 @@ let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
 
-// Grafik Bağlamları (Canvas Contexts)
-// NOT: Canvas elementini init() içinde almak daha güvenlidir çünkü sayfa yüklenmemiş olabilir.
 let canvas, ctx, mmCanvas, mmCtx, bmCanvas, bmCtx;
-
-// Varlıklar ve Koleksiyonlar
 let width, height;
 let planets = [], stars = [], collectedItems = [], particles = [];
 let centralStorage = [];
 
-// Otopilot ve Yapay Zeka
 let autopilot = false;
-let aiMode = 'gather'; // gather | base | travel | deposit
+let aiMode = 'gather'; 
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
 // -------------------------------------------------------------------------
-// AYAR DİNLEYİCİLERİ (GÜNCELLENDİ: KAMERA KONTROLLERİ)
+// AYAR DİNLEYİCİLERİ
 // -------------------------------------------------------------------------
 window.initSettingsListeners = function() {
     console.log("Ayar dinleyicileri başlatılıyor...");
     
+    // Toggle Switch Elementleri
     const nexusToggle = document.getElementById('toggle-nexus-arrow');
     const repairToggle = document.getElementById('toggle-repair-arrow');
     const storageToggle = document.getElementById('toggle-storage-arrow');
-    const hudOpacityInput = document.getElementById('vol-hud-opacity');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
+    const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     
-    // Kamera Kontrolleri
+    // UI Kontrol Alanları
+    const manualCamControls = document.getElementById('manual-camera-controls');
     const camXInput = document.getElementById('cam-offset-x');
     const camYInput = document.getElementById('cam-offset-y');
-    const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
-    const manualCamControls = document.getElementById('manual-camera-controls');
-
-    if (nexusToggle) {
-        nexusToggle.addEventListener('change', (e) => {
-            window.gameSettings.showNexusArrow = e.target.checked;
-        });
-    }
-
-    if (repairToggle) {
-        repairToggle.addEventListener('change', (e) => {
-            window.gameSettings.showRepairArrow = e.target.checked;
-        });
-    }
-
-    if (storageToggle) {
-        storageToggle.addEventListener('change', (e) => {
-            window.gameSettings.showStorageArrow = e.target.checked;
-        });
-    }
-
-    if (hudHoverToggle) {
-        hudHoverToggle.addEventListener('change', (e) => {
-            window.gameSettings.hudHoverEffect = e.target.checked;
-            
-            // Ayar değiştiğinde, eğer fare zaten üzerindeyse anında güncelle
-            hudElements.forEach(el => {
-                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
-                    el.style.opacity = '1';
-                } else {
-                    el.style.opacity = window.gameSettings.hudOpacity;
-                }
-            });
-        });
-    }
 
     // Etkilenecek HUD Elementleri
     const hudSelectors = ['.hud-icon-group', '#xp-container', '#chat-panel', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt'];
@@ -142,51 +102,30 @@ window.initSettingsListeners = function() {
         const el = document.querySelector(sel);
         if(el) {
             hudElements.push(el);
-            // Geçiş efektini yumuşat
             el.style.transition = 'opacity 0.3s ease';
-            
-            // Hover Olayları
-            el.addEventListener('mouseenter', () => {
-                if (window.gameSettings.hudHoverEffect) {
-                    el.style.opacity = '1';
-                }
-            });
-            
-            el.addEventListener('mouseleave', () => {
-                // Eğer hover efekti açıksa eski haline dön, değilse zaten sabittir
-                if (window.gameSettings.hudHoverEffect) {
-                    el.style.opacity = window.gameSettings.hudOpacity;
-                }
-            });
+            el.addEventListener('mouseenter', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = '1'; });
+            el.addEventListener('mouseleave', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = window.gameSettings.hudOpacity; });
         }
     });
 
-    if (hudOpacityInput) {
-        hudOpacityInput.addEventListener('input', (e) => {
-            const val = e.target.value / 100;
-            window.gameSettings.hudOpacity = val;
+    // --- TOGGLE EVENT LİSTENERS ---
+    if (nexusToggle) nexusToggle.addEventListener('change', (e) => window.gameSettings.showNexusArrow = e.target.checked);
+    if (repairToggle) repairToggle.addEventListener('change', (e) => window.gameSettings.showRepairArrow = e.target.checked);
+    if (storageToggle) storageToggle.addEventListener('change', (e) => window.gameSettings.showStorageArrow = e.target.checked);
 
-            const valDisp = document.getElementById('val-hud-opacity');
-            if(valDisp) valDisp.innerText = e.target.value + '%';
-            
-            // HUD elementlerine opaklık uygula
+    if (hudHoverToggle) {
+        hudHoverToggle.addEventListener('change', (e) => {
+            window.gameSettings.hudHoverEffect = e.target.checked;
             hudElements.forEach(el => {
-                // Eğer hover efekti açıksa ve şu an farenin altındaysa, opaklığı değiştirme (1 kalsın)
-                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
-                    el.style.opacity = '1';
-                } else {
-                    el.style.opacity = val;
-                }
+                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) el.style.opacity = '1';
+                else el.style.opacity = window.gameSettings.hudOpacity;
             });
         });
     }
 
-    // Adaptif Kamera Toggle
     if (adaptiveCamToggle) {
         adaptiveCamToggle.addEventListener('change', (e) => {
             window.gameSettings.adaptiveCamera = e.target.checked;
-            
-            // Manuel kontrolleri devre dışı bırak/aktif et (Görsel olarak)
             if (manualCamControls) {
                 if (window.gameSettings.adaptiveCamera) {
                     manualCamControls.style.opacity = '0.3';
@@ -203,24 +142,95 @@ window.initSettingsListeners = function() {
         });
     }
 
-    // Kamera Offset Dinleyicileri
-    if (camXInput) {
-        camXInput.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            window.gameSettings.cameraOffsetX = val;
-            const valDisp = document.getElementById('val-cam-x');
-            if(valDisp) valDisp.innerText = val;
-        });
-    }
+    // --- AKILLI SLIDER YÖNETİMİ (Tekil Tanımlamalar Yerine Genel Sınıf) ---
+    // HTML'de 'smart-slider' sınıfı olan tüm inputları topla
+    const smartSliders = document.querySelectorAll('.smart-slider');
+    
+    smartSliders.forEach(slider => {
+        // 1. Değişiklik Dinleyicisi
+        slider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            const id = e.target.id;
 
-    if (camYInput) {
-        camYInput.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            window.gameSettings.cameraOffsetY = val;
-            const valDisp = document.getElementById('val-cam-y');
-            if(valDisp) valDisp.innerText = val;
+            // ID'ye göre işlem yap
+            if (id === 'vol-hud-opacity') {
+                const opacity = val / 100;
+                window.gameSettings.hudOpacity = opacity;
+                const disp = document.getElementById('val-hud-opacity');
+                if(disp) disp.innerText = val + '%';
+                
+                hudElements.forEach(el => {
+                    if (window.gameSettings.hudHoverEffect && el.matches(':hover')) el.style.opacity = '1';
+                    else el.style.opacity = opacity;
+                });
+            } 
+            else if (id === 'cam-offset-x') {
+                window.gameSettings.cameraOffsetX = val;
+                const disp = document.getElementById('val-cam-x');
+                if(disp) disp.innerText = Math.round(val);
+            }
+            else if (id === 'cam-offset-y') {
+                window.gameSettings.cameraOffsetY = val;
+                const disp = document.getElementById('val-cam-y');
+                if(disp) disp.innerText = Math.round(val);
+            }
+            else if (id === 'vol-music') {
+                // Audio nesnesi varsa güncelle (Audio.js global volMusic'i dinliyor ama biz yine de set edelim)
+                // Not: Audio sınıfı kendi input listener'ını kuruyor olabilir ama çakışma olmaz.
+                // Burada UI güncellemesi yapıyoruz.
+                const disp = document.getElementById('val-m');
+                if(disp) disp.innerText = val + '%';
+                // Global değişkene yaz (audio.js kullanıyor)
+                if (typeof volMusic !== 'undefined') {
+                    // audio.js'deki global değişkene erişim için window scope'una bakıyoruz veya olay tetikliyoruz
+                    // En temiz yolu: input event'i zaten audio.js tarafından da dinleniyor olabilir.
+                    // Ancak audio.js'deki bindUI sadece 1 kere çalışır.
+                    // Biz burada manuel tetikleyelim.
+                    const event = new Event('input');
+                    // Bu fonksiyonun içinde kendi eventimizi tetiklemeyelim (sonsuz döngü),
+                    // Sadece UI textini güncelleyelim, asıl ses mantığı audio.js'de.
+                }
+            }
+            else if (id === 'vol-sfx') {
+                const disp = document.getElementById('val-s');
+                if(disp) disp.innerText = val + '%';
+            }
         });
-    }
+
+        // 2. Çift Tıklama ile Sıfırlama
+        slider.addEventListener('dblclick', () => {
+            const defaultVal = slider.getAttribute('data-default');
+            if (defaultVal !== null) {
+                slider.value = defaultVal;
+                slider.dispatchEvent(new Event('input')); // Değişikliği uygula
+            }
+        });
+
+        // 3. Mouse Tekerleği ile Kontrol
+        slider.addEventListener('wheel', (e) => {
+            // Sayfa kaymasını engelle
+            e.preventDefault();
+            
+            // Yönü belirle (Yukarı: Artır, Aşağı: Azalt)
+            const delta = Math.sign(e.deltaY) * -1;
+            
+            // Adım aralığı (Step) - Varsayılan 5 birim, kamera için 10
+            let step = 5;
+            if (slider.id.includes('cam')) step = 10;
+            
+            let currentVal = parseFloat(slider.value);
+            let newVal = currentVal + (delta * step);
+            
+            // Min/Max sınırlarına uy
+            const min = parseFloat(slider.min);
+            const max = parseFloat(slider.max);
+            newVal = Math.max(min, Math.min(max, newVal));
+            
+            // Değeri uygula ve eventi tetikle
+            slider.value = newVal;
+            slider.dispatchEvent(new Event('input'));
+        }, { passive: false });
+    });
 };
 
 // -------------------------------------------------------------------------
@@ -509,18 +519,9 @@ function loop() {
         let targetOffsetY = window.gameSettings.cameraOffsetY;
 
         // Adaptif Mod: Gemi hızına göre offset hesapla (Ters yönde)
-        // Eğer gemi sağa gidiyorsa (+x), kamera sağa kaymalı ki gemi sola (geriye) düşsün.
-        // Bu sayede sağ tarafta (gidilen yön) daha çok boşluk olur.
         if (window.gameSettings.adaptiveCamera) {
             const lookAheadFactor = 30; // Hız başına kaç piksel kayacak
             const maxAdaptiveOffset = 400; // Maksimum kayma miktarı
-
-            // player.vx pozitif (sağ) ise, hedef offset negatif (sola kaydırma) olmalı Kİ
-            // ekranın merkezi sola kaysın, böylece gemi sağa (ileriye) gitsin...
-            // HAYIR: Translate(width/2 + offset) yapıyoruz.
-            // Offset POZİTİF ise kamera merkezi SAĞA kayar. Gemi (0,0) SOLDA kalır.
-            // Gemi SAĞA (+vx) gidiyorsa, geminin SOLDA kalmasını istiyoruz (Daha çok sağ alan).
-            // O halde offset'i NEGATİF yapmalıyız.
             
             targetOffsetX = -player.vx * lookAheadFactor;
             targetOffsetY = -player.vy * lookAheadFactor;

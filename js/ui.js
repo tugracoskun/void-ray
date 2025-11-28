@@ -23,7 +23,7 @@ globalTooltip.id = 'global-tooltip';
 document.body.appendChild(globalTooltip);
 
 /**
- * Tooltip'i gösterir ve içeriğini doldurur.
+ * Eşya ve XP için Tooltip gösterir.
  */
 function showTooltip(e, name, xp) {
     if (!isHudVisible) return; // HUD gizliyse tooltip gösterme
@@ -37,14 +37,47 @@ function showTooltip(e, name, xp) {
 }
 
 /**
+ * Ayarlar ve Bilgilendirme için Basit Tooltip (YENİ)
+ * Sadece metin içerir, oyunun tasarım diline uygundur.
+ */
+window.showInfoTooltip = function(e, text) {
+    if (!isHudVisible) return;
+    
+    globalTooltip.innerHTML = `
+        <span class="tooltip-desc" style="color:#e2e8f0; font-size:0.75rem; letter-spacing:0.5px;">${text}</span>
+    `;
+    globalTooltip.style.display = 'block';
+    moveTooltip(e);
+};
+
+/**
  * Tooltip'i farenin konumuna göre hareket ettirir.
+ * DÜZELTME: Ekran sınırlarını dinamik hesaplar.
  */
 function moveTooltip(e) {
-    // Fare imlecinin biraz sağına ve altına konumlandır
-    const x = e.clientX + 15;
-    const y = e.clientY + 15;
+    // Tooltip'in anlık boyutlarını al
+    const width = globalTooltip.offsetWidth;
+    const height = globalTooltip.offsetHeight;
+    const offset = 15; // Fareye olan mesafe
+
+    // Varsayılan pozisyon (Farenin sağ altı)
+    let x = e.clientX + offset;
+    let y = e.clientY + offset;
     
-    // Ekranın dışına taşmasını engellemek için basit kontrol (geliştirilebilir)
+    // Sağ kenar kontrolü: Eğer ekranın sağına taşıyorsa, farenin soluna al
+    if (x + width > window.innerWidth) {
+        x = e.clientX - width - offset;
+    }
+    
+    // Alt kenar kontrolü: Eğer ekranın altına taşıyorsa, farenin yukarısına al
+    if (y + height > window.innerHeight) {
+        y = e.clientY - height - offset;
+    }
+
+    // Sol ve Üst kenar güvenliği (Negatif koordinatları engelle)
+    x = Math.max(0, x);
+    y = Math.max(0, y);
+
     globalTooltip.style.left = x + 'px';
     globalTooltip.style.top = y + 'px';
 }
@@ -52,9 +85,9 @@ function moveTooltip(e) {
 /**
  * Tooltip'i gizler.
  */
-function hideTooltip() {
+window.hideTooltip = function() {
     globalTooltip.style.display = 'none';
-}
+};
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
 
