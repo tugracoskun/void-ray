@@ -17,11 +17,13 @@ var repairStation = null;
 var storageCenter = null;
 var audio; 
 
-// OYUN AYARLARI (GÜNCELLENDİ: OK GÖRÜNÜRLÜĞÜ)
+// OYUN AYARLARI (GÜNCELLENDİ: OK VE OPAKLIK)
 window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
-    showStorageArrow: false
+    showStorageArrow: false,
+    hudOpacity: 1.0, // Varsayılan HUD opaklığı
+    hudHoverEffect: false // Akıllı opaklık (Hover) varsayılan kapalı
 };
 
 let playerData = { 
@@ -75,7 +77,7 @@ let echoDeathLevel = 0;
 let lowEnergyWarned = false;
 
 // -------------------------------------------------------------------------
-// AYAR DİNLEYİCİLERİ (YENİ)
+// AYAR DİNLEYİCİLERİ
 // -------------------------------------------------------------------------
 window.initSettingsListeners = function() {
     console.log("Ayar dinleyicileri başlatılıyor...");
@@ -83,6 +85,8 @@ window.initSettingsListeners = function() {
     const nexusToggle = document.getElementById('toggle-nexus-arrow');
     const repairToggle = document.getElementById('toggle-repair-arrow');
     const storageToggle = document.getElementById('toggle-storage-arrow');
+    const hudOpacityInput = document.getElementById('vol-hud-opacity');
+    const hudHoverToggle = document.getElementById('toggle-hud-hover');
 
     if (nexusToggle) {
         nexusToggle.addEventListener('change', (e) => {
@@ -101,6 +105,68 @@ window.initSettingsListeners = function() {
             window.gameSettings.showStorageArrow = e.target.checked;
         });
     }
+
+    if (hudHoverToggle) {
+        hudHoverToggle.addEventListener('change', (e) => {
+            window.gameSettings.hudHoverEffect = e.target.checked;
+            
+            // Ayar değiştiğinde, eğer fare zaten üzerindeyse anında güncelle
+            hudElements.forEach(el => {
+                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
+                    el.style.opacity = '1';
+                } else {
+                    el.style.opacity = window.gameSettings.hudOpacity;
+                }
+            });
+        });
+    }
+
+    // Etkilenecek HUD Elementleri
+    const hudSelectors = ['.hud-icon-group', '#xp-container', '#chat-panel', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt'];
+    const hudElements = [];
+    
+    hudSelectors.forEach(sel => {
+        const el = document.querySelector(sel);
+        if(el) {
+            hudElements.push(el);
+            // Geçiş efektini yumuşat
+            el.style.transition = 'opacity 0.3s ease';
+            
+            // Hover Olayları
+            el.addEventListener('mouseenter', () => {
+                if (window.gameSettings.hudHoverEffect) {
+                    el.style.opacity = '1';
+                }
+            });
+            
+            el.addEventListener('mouseleave', () => {
+                // Eğer hover efekti açıksa eski haline dön, değilse zaten sabittir
+                if (window.gameSettings.hudHoverEffect) {
+                    el.style.opacity = window.gameSettings.hudOpacity;
+                }
+            });
+        }
+    });
+
+    if (hudOpacityInput) {
+        hudOpacityInput.addEventListener('input', (e) => {
+            const val = e.target.value / 100;
+            window.gameSettings.hudOpacity = val;
+
+            const valDisp = document.getElementById('val-hud-opacity');
+            if(valDisp) valDisp.innerText = e.target.value + '%';
+            
+            // HUD elementlerine opaklık uygula
+            hudElements.forEach(el => {
+                // Eğer hover efekti açıksa ve şu an farenin altındaysa, opaklığı değiştirme (1 kalsın)
+                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
+                    el.style.opacity = '1';
+                } else {
+                    el.style.opacity = val;
+                }
+            });
+        });
+    }
 };
 
 // -------------------------------------------------------------------------
@@ -110,7 +176,9 @@ window.initSettingsListeners = function() {
 function spawnEcho(x, y) { 
     echoRay = new EchoRay(x, y); 
     const wrapper = document.getElementById('echo-wrapper-el');
-    if(wrapper) wrapper.style.display = 'flex'; 
+    if(wrapper) {
+        wrapper.style.display = 'flex'; 
+    }
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
 }
 

@@ -40,7 +40,7 @@
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: NAVİGASYON BÖLÜMÜ EKLENDİ) -->
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: OPAKLIK VE İPUCU EKLENDİ) -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <h3 class="text-white text-sm font-bold tracking-widest mb-4 border-b border-white/10 pb-2">AYARLAR</h3>
@@ -70,6 +70,20 @@
             </div>
         </div>
 
+        <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">GÖRÜNÜM</div>
+        <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>HUD OPAKLIĞI</span><span id="val-hud-opacity">100%</span></div>
+            <input type="range" id="vol-hud-opacity" min="20" max="100" value="100">
+            
+            <div class="toggle-row mt-3">
+                <span>ÜZERİNE GELİNCE %100</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-hud-hover">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
         <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80">SES YÖNETİMİ</div>
         <div class="mb-4">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>
@@ -78,6 +92,11 @@
         <div>
             <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div>
             <input type="range" id="vol-sfx" min="0" max="100" value="80">
+        </div>
+
+        <!-- İPUCU BÖLÜMÜ -->
+        <div class="mt-4 pt-3 border-t border-white/10 text-[10px] text-gray-500 font-mono">
+            <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASARAK ARAYÜZÜ GİZLEYEBİLİRSİNİZ.
         </div>
     </div>
 
