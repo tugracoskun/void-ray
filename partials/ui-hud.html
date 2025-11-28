@@ -1,15 +1,15 @@
 <div class="hud-container">
     <div class="hud-icon-group">
-        <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)">
+        <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)" onmouseenter="showInfoTooltip(event, 'ENVANTER (I): Toplanan kaynakları ve kargoyu gösterir.')" onmouseleave="hideTooltip()">
             ❖ <span id="inv-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#fff; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
         </div>
         
-        <div id="btn-stats-icon" class="hud-btn" title="İstatistikler">
+        <div id="btn-stats-icon" class="hud-btn" title="İstatistikler" onmouseenter="showInfoTooltip(event, 'İSTATİSTİKLER: Oyun verilerini ve sayaçları gösterir.')" onmouseleave="hideTooltip()">
             ≣
         </div>
         
         <div id="echo-wrapper-el" class="echo-wrapper">
-            <div id="btn-echo-icon" class="hud-btn">
+            <div id="btn-echo-icon" class="hud-btn" onmouseenter="showInfoTooltip(event, 'YANKI KONTROL: Yardımcı dron modunu değiştirir.')" onmouseleave="hideTooltip()">
                 ◎ <span id="echo-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#67e8f9; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
             </div>
             <div class="echo-dropdown">
@@ -28,19 +28,17 @@
         </div>
         
         <div class="ai-controls">
-            <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (Q)">◈</div>
+            <div id="btn-ai-toggle" class="hud-btn" title="Oto-Pilot (Q)" onmouseenter="showInfoTooltip(event, 'OTO-PİLOT (Q): Otomatik toplama ve navigasyonu açar/kapatır.')" onmouseleave="hideTooltip()">◈</div>
             <div id="ai-mode-btn" class="ai-mode-switch" onclick="cycleAIMode()">TOPLA</div>
         </div>
     </div>
 
-    <!-- Currency Display Removed from HUD -->
-    
-    <div id="xp-container">
+    <div id="xp-container" onmouseenter="showInfoTooltip(event, 'EVRİM DURUMU: Seviye atlamak için gereken biyokütle.')" onmouseleave="hideTooltip()">
         <div class="level-text">EVRİM SEVİYESİ <span id="level-val" class="text-white font-bold text-lg">1</span></div>
         <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ: SEKMELİ YAPI) -->
+    <!-- AYARLAR BUTONU VE PANELİ -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
@@ -58,21 +56,21 @@
         <div id="set-tab-game" class="settings-content active">
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">NAVİGASYON OKLARI</div>
             <div class="mb-4">
-                <div class="toggle-row">
+                <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'ÜS OKU: Nexus ana üssünün yönünü gösteren oku açar.')" onmouseleave="hideTooltip()">
                     <span>ÜS (NEXUS)</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggle-nexus-arrow" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div class="toggle-row">
+                <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'TAMİR OKU: Tamir istasyonunun yönünü gösteren oku açar.')" onmouseleave="hideTooltip()">
                     <span>TAMİR İSTASYONU</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggle-repair-arrow">
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div class="toggle-row">
+                <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'DEPO OKU: Depolama merkezinin yönünü gösteren oku açar.')" onmouseleave="hideTooltip()">
                     <span>DEPO MERKEZİ</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggle-storage-arrow">
@@ -87,10 +85,10 @@
             <!-- HUD -->
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">ARAYÜZ (HUD)</div>
             <div class="mb-4">
-                <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>OPAKLIK</span><span id="val-hud-opacity">100%</span></div>
-                <input type="range" id="vol-hud-opacity" min="20" max="100" value="100">
+                <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'OPAKLIK: Arayüz elementlerinin şeffaflığını ayarlar.')" onmouseleave="hideTooltip()"><span>OPAKLIK</span><span id="val-hud-opacity">100%</span></div>
+                <input type="range" id="vol-hud-opacity" class="smart-slider" data-default="100" min="20" max="100" value="100" onmouseenter="showInfoTooltip(event, 'Varsayılan (%100) için çift tıklayın.')" onmouseleave="hideTooltip()">
                 
-                <div class="toggle-row mt-3">
+                <div class="toggle-row mt-3" onmouseenter="showInfoTooltip(event, 'AKILLI GÖRÜNÜRLÜK: Fare ile üzerine gelindiğinde arayüzü tam netleştirir.')" onmouseleave="hideTooltip()">
                     <span>ÜZERİNE GELİNCE %100</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggle-hud-hover">
@@ -102,8 +100,8 @@
             <!-- KAMERA -->
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
             
-            <div class="toggle-row mb-3">
-                <span title="Gemi hızına göre kamerayı otomatik kaydırır">ADAPTİF MOD</span>
+            <div class="toggle-row mb-3" onmouseenter="showInfoTooltip(event, 'ADAPTİF MOD: Kamerayı geminin hızına göre otomatik kaydırır.')" onmouseleave="hideTooltip()">
+                <span>ADAPTİF MOD</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-adaptive-cam">
                     <span class="slider"></span>
@@ -111,37 +109,46 @@
             </div>
 
             <div id="manual-camera-controls" style="transition: opacity 0.3s;">
-                <div class="mb-2">
+                <div class="mb-2" onmouseenter="showInfoTooltip(event, 'YATAY KONUM: Kamerayı yatay eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
                     <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
-                    <input type="range" id="cam-offset-x" min="-400" max="400" value="0">
+                    <input type="range" id="cam-offset-x" class="smart-slider" data-default="0" min="-400" max="400" value="0">
                 </div>
-                <div class="mb-4">
+                <div class="mb-4" onmouseenter="showInfoTooltip(event, 'DİKEY KONUM: Kamerayı dikey eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
                     <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
-                    <input type="range" id="cam-offset-y" min="-300" max="300" value="0">
+                    <input type="range" id="cam-offset-y" class="smart-slider" data-default="0" min="-300" max="300" value="0">
                 </div>
+            </div>
+
+            <!-- SADECE GÖRÜNÜM SEKMESİ İÇİN İPUÇLARI -->
+            <div class="mt-4 pt-3 border-t border-white/10 text-[9px] text-gray-500 font-mono text-center tracking-widest">
+                VARSAYILAN DEĞER İÇİN ÇİFT TIKLAYIN
+            </div>
+            <div class="mt-1 text-[10px] text-gray-500 font-mono border-t border-white/5 pt-2">
+                <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASINIZ.
             </div>
         </div>
 
         <!-- SEKME 3: SES -->
         <div id="set-tab-audio" class="settings-content">
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">SES DÜZEYİ</div>
-            <div class="mb-4">
+            <div class="mb-4" onmouseenter="showInfoTooltip(event, 'MÜZİK: Arka plan müziklerinin ses şiddetini ayarlar.')" onmouseleave="hideTooltip()">
                 <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">50%</span></div>
-                <input type="range" id="vol-music" min="0" max="100" value="50">
+                <input type="range" id="vol-music" class="smart-slider" data-default="50" min="0" max="100" value="50">
             </div>
-            <div>
+            <div onmouseenter="showInfoTooltip(event, 'ATMOSFER: Efekt ve çevre seslerinin şiddetini ayarlar.')" onmouseleave="hideTooltip()">
                 <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>ATMOSFER</span><span id="val-s">80%</span></div>
-                <input type="range" id="vol-sfx" min="0" max="100" value="80">
+                <input type="range" id="vol-sfx" class="smart-slider" data-default="80" min="0" max="100" value="80">
             </div>
-        </div>
 
-        <div class="mt-4 pt-3 border-t border-white/10 text-[10px] text-gray-500 font-mono">
-            <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASINIZ.
+            <div class="mt-4 pt-3 border-t border-white/10 text-[9px] text-gray-500 font-mono text-center tracking-widest">
+                VARSAYILAN DEĞER İÇİN ÇİFT TIKLAYIN
+            </div>
         </div>
     </div>
 
     <div id="merge-prompt"></div>
 
+    <!-- CHAT PANELİ -->
     <div id="chat-panel">
         <div class="chat-header">
             <div class="chat-tab active" id="tab-genel" onclick="switchChatTab('genel')">GENEL</div>
@@ -155,12 +162,14 @@
         </div>
     </div>
 
+    <!-- HIZ GÖSTERGESİ -->
     <div id="speedometer">
         <span class="speed-label">HIZ</span>
         <div><span id="speed-val" class="speed-val">0</span><span class="speed-unit">KM/S</span></div>
     </div>
 
-    <div id="minimap-wrapper">
+    <!-- MİNİ HARİTA VE BARLAR -->
+    <div id="minimap-wrapper" onmouseenter="showInfoTooltip(event, 'RADAR: Yakındaki kaynakları ve tehditleri gösterir.')" onmouseleave="hideTooltip()">
         <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
         <div id="energy-bar-container" title="Enerji"><div id="energy-bar-fill"></div></div>
         <div id="health-bar-container" title="Gövde Dayanıklılığı"><div id="health-bar-fill"></div></div>
