@@ -10,9 +10,13 @@ let mapOpen = false;
 // Büyük Harita Durumu (Zoom ve Pan Kontrolü)
 const bigMapState = {
     zoom: 1,
+    targetZoom: 1, // Hedef Zoom (Soft geçiş için)
     panX: 0,
+    targetPanX: 0, // Hedef Pan X
     panY: 0,
-    isDragging: false
+    targetPanY: 0, // Hedef Pan Y
+    isDragging: false,
+    isTracking: false // Takip modu
 };
 
 function openMap() {
@@ -25,12 +29,61 @@ function closeMap() {
     document.getElementById('big-map-overlay').classList.remove('active');
 }
 
+/**
+ * Haritayı OYUNCUNUN o anki konumuna odaklar.
+ * Pan değerlerini oyuncunun dünya üzerindeki konumuna ve zoom seviyesine göre hesaplar.
+ */
+window.centerMapOnPlayer = function() {
+    const canvas = document.getElementById('big-map-canvas');
+    if (!canvas || typeof player === 'undefined' || typeof WORLD_SIZE === 'undefined') return;
+
+    const container = canvas.parentElement;
+    const cWidth = container.clientWidth;
+    const cHeight = container.clientHeight;
+    
+    const margin = MAP_CONFIG.bigmap.margin;
+    // Hedef hesaplamalarında targetZoom kullanıyoruz ki kararlı olsun
+    const baseScale = Math.min((cWidth - margin*2) / WORLD_SIZE, (cHeight - margin*2) / WORLD_SIZE);
+    const scale = baseScale * bigMapState.targetZoom;
+
+    // Hedef Pan değerlerini ayarla
+    bigMapState.targetPanX = (WORLD_SIZE / 2 - player.x) * scale;
+    bigMapState.targetPanY = (WORLD_SIZE / 2 - player.y) * scale;
+}
+
+/**
+ * Oyuncu Takip Modunu Açar/Kapatır (Toggle)
+ */
+window.toggleMapTracking = function() {
+    bigMapState.isTracking = !bigMapState.isTracking;
+    updateTrackButtonState();
+    
+    if (bigMapState.isTracking) {
+        // Takip açıldığında hemen odakla ama animasyonlu gitmesi için sadece target'ı set et
+        centerMapOnPlayer(); 
+    }
+}
+
+function updateTrackButtonState() {
+    const btn = document.getElementById('btn-map-track');
+    if (!btn) return;
+    
+    if (bigMapState.isTracking) {
+        btn.classList.remove('text-white', 'bg-white/10');
+        btn.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+    } else {
+        btn.classList.remove('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+        btn.classList.add('text-white', 'bg-white/10');
+    }
+}
+
 function initMapListeners(canvasElement, worldSize, onTargetSelected) {
     if (!canvasElement) return;
 
     let dragStartX = 0;
     let dragStartY = 0;
     let hasDragged = false;
+    const coordsDisplay = document.getElementById('big-map-coords');
 
     // Zoom (Tekerlek) - Mouse Konumuna Göre
     canvasElement.addEventListener('wheel', (e) => {
@@ -41,10 +94,13 @@ function initMapListeners(canvasElement, worldSize, onTargetSelected) {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        const zoomSensitivity = 0.001;
-        const oldZoom = bigMapState.zoom;
+        // --- SOFT ZOOM AYARLARI ---
+        const zoomSensitivity = 0.0008; // Daha düşük hassasiyet
+        const oldZoom = bigMapState.targetZoom; // Hesaplamayı hedef zoom üzerinden yap
+        
+        // Yeni hedef zoom'u hesapla
         let newZoom = oldZoom + (e.deltaY * -zoomSensitivity * 2); 
-        newZoom = Math.min(Math.max(1, newZoom), 8);
+        newZoom = Math.min(Math.max(1, newZoom), 8); // Limitler
 
         if (newZoom !== oldZoom) {
             const canvasCenterX = canvasElement.width / 2;
@@ -54,15 +110,13 @@ function initMapListeners(canvasElement, worldSize, onTargetSelected) {
 
             const zoomFactor = newZoom / oldZoom;
             
-            bigMapState.panX = mouseRelX - (mouseRelX - bigMapState.panX) * zoomFactor;
-            bigMapState.panY = mouseRelY - (mouseRelY - bigMapState.panY) * zoomFactor;
+            // Mouse imlecini koruyacak şekilde Pan hedefini güncelle
+            bigMapState.targetPanX = mouseRelX - (mouseRelX - bigMapState.targetPanX) * zoomFactor;
+            bigMapState.targetPanY = mouseRelY - (mouseRelY - bigMapState.targetPanY) * zoomFactor;
 
-            bigMapState.zoom = newZoom;
-
-            if (bigMapState.zoom === 1) {
-                bigMapState.panX = 0;
-                bigMapState.panY = 0;
-            }
+            bigMapState.targetZoom = newZoom;
+            
+            // Zoom yaparken takip modunu kapatmaya gerek yok, oyuncu odaklı zoom yapmak isteyebilir
         }
     });
 
@@ -72,29 +126,66 @@ function initMapListeners(canvasElement, worldSize, onTargetSelected) {
         dragStartX = e.clientX;
         dragStartY = e.clientY;
         hasDragged = false;
+        
+        // Kullanıcı haritayı elle kaydırırsa takibi bırak
+        if (bigMapState.isTracking) {
+            bigMapState.isTracking = false;
+            updateTrackButtonState();
+        }
     });
 
-    // Sürükleme
+    // Sürükleme ve Koordinat Gösterimi
     window.addEventListener('mousemove', (e) => {
+        // 1. Sürükleme İşlemi
         if (bigMapState.isDragging) {
             const dx = e.clientX - dragStartX;
             const dy = e.clientY - dragStartY;
             
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged = true;
 
+            // Sürüklemede anında tepki için hem target hem current güncellenir
             bigMapState.panX += dx;
             bigMapState.panY += dy;
+            bigMapState.targetPanX = bigMapState.panX;
+            bigMapState.targetPanY = bigMapState.panY;
 
             dragStartX = e.clientX;
             dragStartY = e.clientY;
         }
+
+        // 2. Koordinat Hesaplama
+        if (mapOpen && coordsDisplay && e.target === canvasElement) {
+            const rect = canvasElement.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const margin = MAP_CONFIG.bigmap.margin;
+            const cWidth = canvasElement.width;
+            const cHeight = canvasElement.height;
+
+            // Görseldeki anlık zoom değerini (bigMapState.zoom) kullanarak doğru koordinatı göster
+            const baseScale = Math.min((cWidth - margin*2) / worldSize, (cHeight - margin*2) / worldSize);
+            const finalScale = baseScale * bigMapState.zoom;
+            
+            const offsetX = (cWidth - worldSize * finalScale) / 2 + bigMapState.panX;
+            const offsetY = (cHeight - worldSize * finalScale) / 2 + bigMapState.panY;
+            
+            const worldX = (mouseX - offsetX) / finalScale;
+            const worldY = (mouseY - offsetY) / finalScale;
+            
+            if (worldX >= 0 && worldX <= worldSize && worldY >= 0 && worldY <= worldSize) {
+                coordsDisplay.innerText = `${Math.floor(worldX)} : ${Math.floor(worldY)}`;
+            } else {
+                coordsDisplay.innerText = "- : -";
+            }
+        }
     });
 
-    // Sürükleme Bitişi / Tıklama
     window.addEventListener('mouseup', (e) => {
         bigMapState.isDragging = false;
         
         if (!hasDragged && e.target === canvasElement) {
+            // Tıklama ile hedef seçme mantığı...
             const rect = canvasElement.getBoundingClientRect();
             const clickX = e.clientX - rect.left; 
             const clickY = e.clientY - rect.top;
@@ -126,6 +217,26 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     canvas.width = container.clientWidth; 
     canvas.height = container.clientHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // --- İNTERPOLASYON (SOFT ZOOM/PAN) ---
+    // Mevcut değerleri hedef değerlere %10 oranında yaklaştır (Lerp)
+    const lerpSpeed = 0.1;
+    
+    bigMapState.zoom += (bigMapState.targetZoom - bigMapState.zoom) * lerpSpeed;
+    bigMapState.panX += (bigMapState.targetPanX - bigMapState.panX) * lerpSpeed;
+    bigMapState.panY += (bigMapState.targetPanY - bigMapState.panY) * lerpSpeed;
+
+    // Titremeyi önlemek için çok küçük farkları yoksay
+    if (Math.abs(bigMapState.targetZoom - bigMapState.zoom) < 0.001) bigMapState.zoom = bigMapState.targetZoom;
+    // Pan için tolerans biraz daha yüksek olabilir
+    if (Math.abs(bigMapState.targetPanX - bigMapState.panX) < 0.1) bigMapState.panX = bigMapState.targetPanX;
+    if (Math.abs(bigMapState.targetPanY - bigMapState.panY) < 0.1) bigMapState.panY = bigMapState.targetPanY;
+
+    // --- TAKİP MODU ---
+    // Takip açıksa hedefi sürekli güncelle, lerp sayesinde yumuşak takip eder
+    if (bigMapState.isTracking) {
+        centerMapOnPlayer();
+    }
 
     const margin = MAP_CONFIG.bigmap.margin;
     
@@ -143,7 +254,7 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     ctx.textBaseline = "top";
     ctx.shadowColor = "rgba(0,0,0,0.8)";
     ctx.shadowBlur = 4;
-    // Sağ üst köşeye yazdır
+    // Hedef zoom yerine o anki görsel zoom'u göstermek daha doğal hissettirir
     ctx.fillText(`ZOOM: ${bigMapState.zoom.toFixed(1)}x`, canvas.width - 20, 20);
     ctx.restore();
 
