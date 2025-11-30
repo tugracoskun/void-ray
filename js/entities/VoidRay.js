@@ -394,6 +394,27 @@ class VoidRay {
                 targetWingState = -0.8; this.wingPhase += 0.2;
             } else { this.wingPhase += 0.05; }
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
+
+            // --- MANUEL MOD İÇİN DEBUG HEDEFİ ---
+            // Otopilot kapalıyken bile, eğer manuel bir hedef varsa veya yakında gezegen varsa göster
+            // Bu, geliştiricinin rotasını kontrol etmesini sağlar
+            if (typeof manualTarget !== 'undefined' && manualTarget) {
+                this.debugTarget = {x: manualTarget.x, y: manualTarget.y};
+            } else {
+                // Hedef yoksa en yakın gezegeni referans al (Otopilot açılsa gidilecek yer)
+                let nearest = null, minDist = Infinity;
+                if (typeof planets !== 'undefined') {
+                    for(let p of planets) {
+                        if(!p.collected && p.type.id !== 'toxic') {
+                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
+                            if(d < minDist) { minDist = d; nearest = p; }
+                        }
+                    }
+                }
+                if(nearest) {
+                    this.debugTarget = {x: nearest.x, y: nearest.y};
+                }
+            }
         }
 
         // Çekim Alanı
@@ -641,11 +662,14 @@ class VoidRay {
                 ctx.setLineDash([]); // Normale dön
             }
 
-            // B) HEDEF VEKTÖRÜ (YENİ AYAR) - OTOPİLOT
-            if (window.gameSettings.showTargetVectors && autopilot && this.debugTarget) {
+            // B) HEDEF VEKTÖRÜ VE AÇI HESABI
+            // 'autopilot' şartını kaldırdık, böylece manuel modda da debugTarget varsa çizilir
+            if (window.gameSettings.showTargetVectors && this.debugTarget) {
                  const relTx = this.debugTarget.x - this.x;
                  const relTy = this.debugTarget.y - this.y;
+                 const targetAngle = Math.atan2(relTy, relTx);
                  
+                 // 1. Hedef Çizgisi
                  ctx.beginPath();
                  ctx.moveTo(0, 0);
                  ctx.lineTo(relTx, relTy);
@@ -653,6 +677,7 @@ class VoidRay {
                  ctx.lineWidth = 1;
                  ctx.setLineDash([5, 5]);
                  ctx.stroke();
+                 ctx.setLineDash([]);
                  
                  // Hedef noktası
                  ctx.beginPath();
@@ -662,7 +687,74 @@ class VoidRay {
                  
                  // Hedef Etiketi
                  ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
+                 ctx.font = "10px monospace";
                  ctx.fillText("AI TARGET", relTx + 8, relTy);
+
+                 // --- 2. AÇI HESAPLAMALARI ---
+
+                 // A) BURUN AÇISI FARKI (HEADING DELTA - ΔH)
+                 // Geminin baktığı yön ile hedef arasındaki fark (Dönüş için kritik)
+                 let hDiff = targetAngle - this.angle;
+                 while (hDiff < -Math.PI) hDiff += Math.PI * 2;
+                 while (hDiff > Math.PI) hDiff -= Math.PI * 2;
+                 
+                 const hDeg = (hDiff * 180 / Math.PI).toFixed(1);
+                 
+                 // Heading Yayı (Dış Halka - Kalın)
+                 const arcRadius = 40;
+                 ctx.beginPath();
+                 ctx.arc(0, 0, arcRadius, this.angle, this.angle + hDiff, hDiff < 0);
+                 
+                 // Renk: Kırmızı (Ters), Sarı (Dönüyor), Yeşil (Hizalı)
+                 const absHDeg = Math.abs(parseFloat(hDeg));
+                 let hColor;
+                 if (absHDeg < 5) hColor = "rgba(74, 222, 128, 0.8)"; 
+                 else if (absHDeg < 45) hColor = "rgba(250, 204, 21, 0.8)"; 
+                 else hColor = "rgba(248, 113, 113, 0.8)"; 
+                 
+                 ctx.strokeStyle = hColor;
+                 ctx.lineWidth = 3;
+                 ctx.stroke();
+
+                 // Metin ΔH - Renkli ve Konumlu
+                 ctx.fillStyle = hColor;
+                 ctx.font = "bold 12px monospace";
+                 ctx.fillText(`HEAD: ${hDeg}°`, 45, -20); // Biraz daha uzağa ve yukarı
+
+                 // B) HIZ VEKTÖRÜ FARKI (VELOCITY DELTA - ΔV)
+                 // Geminin gittiği yön ile hedef arasındaki fark (Drift için kritik)
+                 // Sadece belli bir hızın üzerindeyken anlamlıdır
+                 const speed = Math.hypot(this.vx, this.vy);
+                 if (speed > 1.0) {
+                     const vAngle = Math.atan2(this.vy, this.vx);
+                     let vDiff = targetAngle - vAngle;
+                     while (vDiff < -Math.PI) vDiff += Math.PI * 2;
+                     while (vDiff > Math.PI) vDiff -= Math.PI * 2;
+                     
+                     const vDeg = (vDiff * 180 / Math.PI).toFixed(1);
+                     
+                     // Velocity Yayı (İç Halka - İnce/Kesikli)
+                     const vRadius = 25;
+                     ctx.beginPath();
+                     ctx.arc(0, 0, vRadius, vAngle, vAngle + vDiff, vDiff < 0);
+                     
+                     // Renk: Mavi (Rota dışı), Yeşil (Rota hizalı)
+                     const absVDeg = Math.abs(parseFloat(vDeg));
+                     let vColor;
+                     if (absVDeg < 10) vColor = "rgba(56, 189, 248, 0.9)"; // Mavi/Cyan (İyi rota)
+                     else vColor = "rgba(251, 146, 60, 0.8)"; // Turuncu (Drift var)
+                     
+                     ctx.strokeStyle = vColor;
+                     ctx.lineWidth = 2;
+                     ctx.setLineDash([2, 2]); // Kesikli çizgi ile ayrıştır
+                     ctx.stroke();
+                     ctx.setLineDash([]);
+                     
+                     // Metin ΔV (Daha küçük font) - Renkli ve Konumlu
+                     ctx.fillStyle = vColor;
+                     ctx.font = "11px monospace";
+                     ctx.fillText(`VEL : ${vDeg}°`, 45, -5); // H'nin altına hizalı
+                 }
             }
 
             ctx.restore();

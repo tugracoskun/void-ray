@@ -360,7 +360,6 @@ class EchoRay {
             // A) VEKTÖRLER (Hız ve Yönelim)
             if (window.gameSettings.showVectors) {
                 // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
-                // Hız eşiği kontrolü
                 const speed = Math.hypot(this.vx, this.vy);
                 if (speed > 0.1) {
                     const speedScale = 20;
@@ -386,7 +385,6 @@ class EchoRay {
                 }
 
                 // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
-                // Yankı hareket halindeyse (hızı 0.1'den büyükse) itki vektörünü göster
                 if (speed > 0.1) {
                     const thrustLen = 30; // Sabit uzunluk
                     const tx = Math.cos(this.angle) * thrustLen;
@@ -425,13 +423,12 @@ class EchoRay {
                 ctx.setLineDash([]); // Normale dön
             }
 
-            // B) HEDEF VEKTÖRÜ (YENİ AYAR)
+            // B) HEDEF VEKTÖRÜ VE AÇI HESABI
             if (window.gameSettings.showTargetVectors && this.debugTarget) {
-                // Hedef global koordinat sisteminde. Biz şu an (this.x, this.y) merkezindeyiz.
-                // O yüzden hedefin bize göre bağıl konumunu bulmalıyız.
                 const relTx = this.debugTarget.x - this.x;
                 const relTy = this.debugTarget.y - this.y;
                 
+                // 1. Hedef Çizgisi
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.lineTo(relTx, relTy);
@@ -439,6 +436,7 @@ class EchoRay {
                 ctx.lineWidth = 1;
                 ctx.setLineDash([5, 5]);
                 ctx.stroke();
+                ctx.setLineDash([]);
                 
                 // Hedef noktası
                 ctx.beginPath();
@@ -448,7 +446,35 @@ class EchoRay {
                 
                 // Hedef Etiketi
                 ctx.fillStyle = "rgba(255,255,255,0.7)";
+                ctx.font = "10px monospace";
                 ctx.fillText("TARGET", relTx + 8, relTy);
+
+                // 2. AÇI HESABI VE GÖRSELLEŞTİRME
+                const targetAngle = Math.atan2(relTy, relTx);
+                let angleDiff = targetAngle - this.angle;
+                // Açıyı -PI ile PI arasına normalle
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                
+                const angleDeg = (angleDiff * 180 / Math.PI).toFixed(1);
+                
+                // Dönüş Yönü ve Açı Yayı
+                const arcRadius = 30;
+                ctx.beginPath();
+                ctx.arc(0, 0, arcRadius, this.angle, this.angle + angleDiff, angleDiff < 0);
+                
+                // Renk Kodlaması: Büyük açı = Kırmızı, Küçük açı = Yeşil
+                const absDeg = Math.abs(parseFloat(angleDeg));
+                if (absDeg < 5) ctx.strokeStyle = "rgba(74, 222, 128, 0.8)"; // Yeşil
+                else if (absDeg < 45) ctx.strokeStyle = "rgba(250, 204, 21, 0.8)"; // Sarı
+                else ctx.strokeStyle = "rgba(248, 113, 113, 0.8)"; // Kırmızı
+                
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Açı Metni
+                ctx.fillStyle = "#fff";
+                ctx.fillText(`Δ: ${angleDeg}°`, 10, -10);
             }
 
             ctx.restore();
