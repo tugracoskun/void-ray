@@ -264,6 +264,22 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
         }
     });
 
+    // --- GÜVENLİ BÖLGE (YENİ) ---
+    // Nexus ve çevresini kapsayan alan
+    const SAFE_ZONE_R = 1500;
+    const nx = offsetX + entities.nexus.x * scale;
+    const ny = offsetY + entities.nexus.y * scale;
+
+    ctx.beginPath();
+    ctx.arc(nx, ny, SAFE_ZONE_R * scale, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.3)"; // Mavi-Yeşil ton
+    ctx.lineWidth = 1;
+    ctx.setLineDash([10, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(56, 189, 248, 0.05)";
+    ctx.fill();
+
     // Üsler
     const drawBaseIcon = (entity, color, label) => {
         const bx = offsetX + entity.x * scale;

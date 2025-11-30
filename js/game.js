@@ -65,6 +65,9 @@ let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
 
+// Güvenli Bölge Kontrolü
+let isInSafeZone = false;
+
 let canvas, ctx, mmCanvas, mmCtx, bmCanvas, bmCtx;
 let width, height;
 let planets = [], stars = [], collectedItems = [], particles = [];
@@ -176,6 +179,11 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
+    // Başlangıçta güvenli bölge durumunu kontrol et
+    // Eğer oyun başında zaten içerideysek bildirim göstermemek için durumu true yapıyoruz
+    const startSafeDist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+    isInSafeZone = startSafeDist < 1500;
+
     for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) planets.push(new Planet());
     
     stars = []; 
@@ -244,6 +252,22 @@ function loop() {
         repairStation.update();
         storageCenter.update();
 
+        // --- GÜVENLİ BÖLGE KONTROLÜ ---
+        const SAFE_ZONE_R = 1500;
+        const distToNexusSafe = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+        
+        if (distToNexusSafe < SAFE_ZONE_R) {
+            if (!isInSafeZone) {
+                isInSafeZone = true;
+                showNotification({name: "GÜVENLİ BÖLGEYE VARILDI", type:{color:'#38bdf8'}}, "Nexus Koruma Alanı");
+            }
+        } else {
+            if (isInSafeZone) {
+                isInSafeZone = false;
+                showNotification({name: "GÜVENLİ BÖLGEDEN AYRILDINIZ", type:{color:'#fbbf24'}}, "Dikkatli Olun");
+            }
+        }
+
         if(autopilot) {
             playerData.stats.timeAI += dt;
         }
@@ -303,6 +327,29 @@ function loop() {
         ctx.scale(currentZoom, currentZoom); 
         ctx.translate(-player.x, -player.y);
         
+        // --- GÜVENLİ BÖLGE GÖRSELİ (Yazı Yok, Sadece Halka) ---
+        ctx.save();
+        ctx.translate(nexus.x, nexus.y);
+        
+        // Dönen dış çember
+        ctx.rotate(Date.now() * 0.0001);
+        ctx.beginPath();
+        ctx.arc(0, 0, SAFE_ZONE_R, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; // Çok hafif mavi
+        ctx.lineWidth = 20;
+        ctx.setLineDash([100, 100]); // Kesikli çizgi
+        ctx.stroke();
+        
+        // İç statik çember
+        ctx.beginPath();
+        ctx.arc(0, 0, SAFE_ZONE_R - 50, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.05)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        ctx.restore();
+
         nexus.draw(ctx);
         repairStation.draw(ctx); 
         storageCenter.draw(ctx); 
