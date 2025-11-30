@@ -1,16 +1,18 @@
 /**
  * Void Ray - Kullanıcı Arayüzü (UI) Yönetimi
  * * Menüler, ortak araçlar (tooltip, grid), bildirimler ve diğer pencereleri yönetir.
- * * Oyuncu Envanteri (inventory.js) buradan ayrılmıştır.
+ * * Ayrılan Modüller:
+ * * - Oyuncu Envanteri (js/windows/inventory.js)
+ * * - İstatistikler (js/windows/stats.js)
  */
 
 // Arayüz Durumları (Global Erişim İçin)
-// inventoryOpen artık js/windows/inventory.js içinde
+// inventoryOpen -> inventory.js
+// statsOpen -> stats.js
 let echoInvOpen = false;
 let nexusOpen = false;
 let mapOpen = false;
 let storageOpen = false;
-let statsOpen = false;
 
 // HUD Görünürlük Durumu
 let isHudVisible = true;
@@ -125,7 +127,7 @@ function showToxicEffect() {
 // --- GRID (IZGARA) OLUŞTURUCU YARDIMCI ---
 /**
  * HTML container içine envanter ızgarası çizer.
- * Bu fonksiyon geneldir ve diğer pencereler (Depo, Yankı, Envanter) tarafından kullanılır.
+ * Diğer modüller tarafından kullanılır.
  */
 function renderGrid(container, items, capacity, onClickAction, isUnlimited = false) {
     if (!container) return;
@@ -414,44 +416,6 @@ function openMap() {
 function closeMap() {
     mapOpen = false;
     document.getElementById('big-map-overlay').classList.remove('active');
-}
-
-// --- İSTATİSTİK ARAYÜZÜ ---
-
-function openStats() {
-    statsOpen = true;
-    document.getElementById('stats-overlay').classList.add('open');
-    renderStats();
-}
-
-function closeStats() {
-    statsOpen = false;
-    document.getElementById('stats-overlay').classList.remove('open');
-}
-
-function renderStats() {
-    if(!statsOpen) return;
-    const table = document.getElementById('stats-table-content');
-    
-    const now = Date.now();
-    const gameTime = now - gameStartTime;
-    const distStr = Math.floor(playerData.stats.distance / 100) + " km";
-
-    table.innerHTML = `
-        <tr><th>EVREN SÜRESİ</th><td>${formatTime(gameTime)}</td></tr>
-        <tr><th>HAREKET SÜRESİ</th><td>${formatTime(playerData.stats.timeMoving)}</td></tr>
-        <tr><th>BEKLEME SÜRESİ</th><td>${formatTime(playerData.stats.timeIdle)}</td></tr>
-        <tr><th>AI (OTOPİLOT) SÜRESİ</th><td>${formatTime(playerData.stats.timeAI)}</td></tr>
-        <tr><th>VATOZ MAX HIZ</th><td>${Math.floor(playerData.stats.maxSpeed * 10)} KM/S</td></tr>
-        <tr><th>YANKI MAX HIZ</th><td>${Math.floor(playerData.stats.echoMaxSpeed * 10)} KM/S</td></tr>
-        <tr><th>TOPLAM MESAFE</th><td>${distStr}</td></tr>
-        <tr><th>TOPLANAN KAYNAK</th><td>${playerData.stats.totalResources} ADET</td></tr>
-        <tr><th>KAZANILAN KRİSTAL</th><td>${playerData.stats.totalStardust} ◆</td></tr>
-        <tr><th>HARCANAN KRİSTAL</th><td>${playerData.stats.totalSpentStardust} ◆</td></tr>
-        <tr><th>HARCANAN ENERJİ</th><td>${Math.floor(playerData.stats.totalEnergySpent)} BİRİM</td></tr>
-        <tr><th>ENVANTER KAPASİTESİ</th><td>${collectedItems.length} / ${getPlayerCapacity()}</td></tr>
-        <tr><th>DEPO (MERKEZ)</th><td>${centralStorage.length} EŞYA</td></tr>
-    `;
 }
 
 // --- NEXUS ARAYÜZÜ ---
