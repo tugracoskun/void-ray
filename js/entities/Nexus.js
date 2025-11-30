@@ -1,6 +1,19 @@
 /**
- * Void Ray - Varlık Sınıfı: NEXUS (ÜS)
+ * -------------------------------------------------------------------------
+ * DEVELOPER NOTE: NEXUS (ENTITY / PHYSICAL OBJECT) MODULE
+ * -------------------------------------------------------------------------
+ * Bu dosya, Nexus istasyonunun "Fiziksel Varlık" (Entity) mantığını yönetir.
+ * * Sorumlulukları:
+ * - Uzaydaki konumu (x, y) ve yarıçapı.
+ * - Çizim mantığı (draw fonksiyonu, Canvas API).
+ * - Animasyon güncellemeleri (update fonksiyonu, dönme açısı vb.).
+ * * Kapsam Dışı (Burada OLMAMASI gerekenler):
+ * - HTML arayüzü, market butonları veya sekmeler.
+ * - DOM etkileşimleri.
+ * * İlgili UI Dosyası: js/windows/nexus.js
+ * -------------------------------------------------------------------------
  */
+
 class Nexus {
     constructor() { 
         this.x = GameRules.LOCATIONS.NEXUS.x; 

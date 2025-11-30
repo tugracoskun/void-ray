@@ -6,13 +6,13 @@
  * * - İstatistikler (js/windows/stats.js)
  * * - Ayarlar (js/windows/settings.js)
  * * - Depo (js/windows/storage.js)
+ * * - Nexus (js/windows/nexus.js)
  */
 
 // Arayüz Durumları (Global Erişim İçin)
 let echoInvOpen = false;
-let nexusOpen = false;
 let mapOpen = false;
-// storageOpen buradan kaldırıldı -> js/windows/storage.js
+// nexusOpen buradan kaldırıldı -> js/windows/nexus.js
 
 // HUD Görünürlük Durumu
 let isHudVisible = true;
@@ -195,7 +195,7 @@ function openEchoInventory() {
     
     if (!echoRay.attached) {
         showNotification({name: "BAĞLANTI YOK", type:{color:'#ef4444'}}, "Yankı envanterine erişmek için birleşin.");
-        audio.playToxic();
+        if(audio) audio.playToxic();
         return;
     }
     
@@ -329,10 +329,6 @@ window.transferAllToPlayer = function() {
     updateInventoryCount();
 };
 
-// --- DEPO MERKEZİ (STORAGE) ARAYÜZÜ ---
-// openStorage, closeStorage, renderStorageUI ve diğer depo fonksiyonları kaldırıldı.
-// Artık js/windows/storage.js içinde.
-
 // --- HARİTA ARAYÜZÜ ---
 
 function openMap() {
@@ -346,145 +342,7 @@ function closeMap() {
 }
 
 // --- NEXUS ARAYÜZÜ ---
-
-function enterNexus() { 
-    nexusOpen = true; 
-    document.getElementById('nexus-overlay').classList.add('open'); 
-    switchNexusTab('market'); 
-}
-
-function exitNexus() { 
-    nexusOpen = false; 
-    document.getElementById('nexus-overlay').classList.remove('open'); 
-}
-
-function switchNexusTab(tabName) {
-    document.querySelectorAll('.nexus-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nexus-content').forEach(c => c.classList.remove('active'));
-    
-    if(tabName === 'market') { 
-        document.querySelector('.nexus-tab:nth-child(1)').classList.add('active'); 
-        document.getElementById('tab-market').classList.add('active'); 
-        renderMarket(); 
-    } else { 
-        document.querySelector('.nexus-tab:nth-child(2)').classList.add('active'); 
-        document.getElementById('tab-upgrades').classList.add('active'); 
-        renderUpgrades(); 
-    }
-}
-
-function renderMarket() {
-    const grid = document.getElementById('market-grid'); 
-    grid.innerHTML = '';
-    
-    if(collectedItems.length === 0) { 
-        grid.innerHTML = '<div class="col-span-full text-center text-gray-500 mt-10">Satılacak eşya yok.</div>'; 
-        return; 
-    }
-    
-    const grouped = {}; 
-    collectedItems.forEach(item => { 
-        if (!grouped[item.name]) grouped[item.name] = { ...item, count: 0 }; 
-        grouped[item.name].count++; 
-    });
-    
-    Object.values(grouped).forEach(item => {
-        if(item.type.value > 0) {
-            const totalVal = item.count * item.type.value;
-            const div = document.createElement('div'); div.className = 'market-card';
-            div.innerHTML = `<div class="text-2xl" style="color:${item.type.color}">●</div><div class="font-bold text-white">${item.name}</div><div class="text-sm text-gray-400">x${item.count}</div><div class="text-white font-mono text-lg opacity-80">${totalVal} <span class="text-xs">KRİSTAL</span></div><button class="sell-btn" onclick="sellItem('${item.name}', ${item.type.value}, ${item.count})">SAT</button>`;
-            grid.appendChild(div);
-        }
-    });
-}
-
-function renderUpgrades() {
-    const pList = document.getElementById('upg-player-list'); 
-    const eList = document.getElementById('upg-echo-list'); 
-    pList.innerHTML = ''; 
-    eList.innerHTML = '';
-    
-    const createCard = (key, data, isEcho = false) => {
-        const currentLvl = playerData.upgrades[key]; 
-        const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
-        const isMax = currentLvl >= data.max;
-        
-        let isDisabled = isMax || playerData.stardust < cost;
-        let btnText = isMax ? 'MAX' : 'GELİŞTİR';
-        let btnClass = 'buy-btn';
-
-        if (isEcho) {
-             if (!echoRay) {
-                isDisabled = true;
-                btnText = 'YANKI YOK';
-                btnClass += ' disabled-echo'; 
-             } else if (!echoRay.attached) {
-                isDisabled = true;
-                btnText = 'BAĞLI DEĞİL';
-                btnClass += ' disabled-echo';
-             }
-        }
-
-        let pips = ''; for(let i=0; i<data.max; i++) pips += `<div class="lvl-pip ${i<currentLvl?'filled':''}"></div>`;
-        
-        return `
-        <div class="upgrade-item">
-            <div class="upg-info">
-                <h4>${data.name}</h4>
-                <p>${data.desc}</p>
-                <div class="upg-level">${pips}</div>
-            </div>
-            <button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="buyUpgrade('${key}')">
-                ${btnText} ${(!isMax && btnText !== 'YANKI YOK' && btnText !== 'BAĞLI DEĞİL') ? `<span class="cost-text">${cost} ◆</span>` : ''}
-            </button>
-        </div>`;
-    };
-    
-    ['playerSpeed', 'playerTurn', 'playerMagnet', 'playerCapacity'].forEach(k => pList.innerHTML += createCard(k, UPGRADES[k], false));
-    ['echoSpeed', 'echoRange', 'echoDurability', 'echoCapacity'].forEach(k => eList.innerHTML += createCard(k, UPGRADES[k], true));
-}
-
-window.buyUpgrade = function(key) {
-    if (key.startsWith('echo')) {
-        if (!echoRay) {
-             showNotification({name: "YANKI MEVCUT DEĞİL!", type:{color:'#ef4444'}}, "");
-             return;
-        }
-        if (!echoRay.attached) {
-            showNotification({name: "YANKI BAĞLI DEĞİL!", type:{color:'#ef4444'}}, "Yükseltme için birleşin.");
-            audio.playToxic(); 
-            return;
-        }
-    }
-
-    const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
-    const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
-    if(playerData.stardust >= cost) { 
-        playerData.stardust -= cost; 
-        playerData.upgrades[key]++; 
-        playerData.stats.totalSpentStardust += cost;
-        audio.playCash(); player.updateUI(); renderUpgrades(); updateEchoDropdownUI(); updateInventoryCount(); 
-    }
-};
-
-window.sellItem = function(name, unitPrice, count) {
-    collectedItems = collectedItems.filter(i => i.name !== name);
-    const totalEarned = count * unitPrice;
-    playerData.stardust += totalEarned; 
-    playerData.stats.totalStardust += totalEarned;
-    audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket();
-};
-
-window.sellAll = function() {
-    let total = 0; let toKeep = [];
-    collectedItems.forEach(item => { if(item.type.value > 0) total += item.type.value; else toKeep.push(item); });
-    if(total > 0) { 
-        collectedItems = toKeep; 
-        playerData.stardust += total; 
-        playerData.stats.totalStardust += total;
-        audio.playCash(); player.updateUI(); updateInventoryCount(); renderMarket(); showNotification({name: `${total} KRİSTAL KAZANILDI`, type:{color:'#fbbf24'}}, ""); 
-    }
-};
+// enterNexus, exitNexus, switchNexusTab, renderMarket, renderUpgrades kaldırıldı -> js/windows/nexus.js
 
 function updateAIButton() {
     const btn = document.getElementById('ai-mode-btn');
