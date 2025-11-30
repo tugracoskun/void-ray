@@ -35,6 +35,11 @@ class VoidRay {
         
         this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS;
         this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS; 
+        
+        // --- GHOST MODE (GÖRÜNMEZLİK) ---
+        this.idleTimer = 0;
+        this.isGhost = false;
+        this.currentAlpha = 1.0; // Yumuşak geçiş için mevcut opaklık
     }
     
     gainXp(amount) { 
@@ -102,6 +107,9 @@ class VoidRay {
         this.outOfBoundsTimer = 0;
         this.x = GameRules.LOCATIONS.PLAYER_RESPAWN.x; 
         this.y = GameRules.LOCATIONS.PLAYER_RESPAWN.y;
+        this.isGhost = false;
+        this.idleTimer = 0;
+        this.currentAlpha = 1.0;
         
         // Arayüzü Temizle
         const deathScreen = document.getElementById('death-screen');
@@ -254,6 +262,39 @@ class VoidRay {
                 aiBtn.classList.remove('warn-blink');
             }
         }
+
+        // --- GHOST MODE & HAREKET MANTIĞI ---
+        const isInputActive = keys.w || keys.a || keys.s || keys.d || keys[" "];
+        const currentSpeed = Math.hypot(this.vx, this.vy);
+        
+        let targetAlpha = 1.0;
+
+        // Eğer otopilot kapalıysa, girdi yoksa ve hız çok düşükse sayacı artır
+        if (!autopilot && !isInputActive && currentSpeed < 0.5) {
+            this.idleTimer++;
+            // 2 saniye (120 frame) bekle, sonra ghost moduna geç
+            if (this.idleTimer > 120) {
+                if (!this.isGhost) {
+                     this.isGhost = true;
+                     if(playerData.stats) playerData.stats.timeIdle += dt;
+                }
+                
+                // Nefes alma efekti (Sine dalgası)
+                // 0.10 ile 0.25 arasında gidip gelir
+                const breath = (Math.sin(Date.now() * 0.003) + 1) * 0.5; // 0 ile 1 arası
+                targetAlpha = 0.10 + (breath * 0.15); 
+            }
+        } else {
+            // Hareket başladıysa veya tuşa basıldıysa
+            if (this.isGhost) {
+                this.isGhost = false;
+            }
+            this.idleTimer = 0;
+            targetAlpha = 1.0;
+        }
+
+        // Opaklık değerini hedefe doğru yumuşat (Yavaş geçiş için 0.02)
+        this.currentAlpha += (targetAlpha - this.currentAlpha) * 0.02;
 
         // Hareket Mantığı
         // Global autopilot, aiMode, nexus, storageCenter, planets, collectedItems, manualTarget, updateAIButton, depositToStorage, showNotification, getPlayerCapacity
@@ -426,6 +467,11 @@ class VoidRay {
     }
     
     draw(ctx) {
+        // --- GHOST MODE (GÖRÜNMEZLİK EFEKTİ) ---
+        ctx.save();
+        // Opaklık artık yumuşak geçişli currentAlpha değerinden alınıyor
+        ctx.globalAlpha = this.currentAlpha;
+
         // --- ENERJİYE GÖRE DOYGUNLUK HESAPLAMA ---
         // Enerji %0 ise doygunluk 0 (gri), %100 ise doygunluk 100 (canlı mavi)
         const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
@@ -483,7 +529,9 @@ class VoidRay {
 
         if (!window.cinematicMode) {
             const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; // Pulse şiddeti de enerjiye bağlı
-            ctx.shadowBlur = 30 + pulse;
+            // Gölge de opaklığa göre azalsın ama tamamen yok olmasın
+            const shadowIntensity = Math.max(0.3, this.currentAlpha); 
+            ctx.shadowBlur = (30 + pulse) * shadowIntensity; 
             ctx.shadowColor = dynamicShadow; 
         } else {
             ctx.shadowBlur = 10;
@@ -502,7 +550,9 @@ class VoidRay {
         ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; // Merkez nokta sabit kalabilir veya hafif renk değiştirebilir
         
         if (!window.cinematicMode) {
-            ctx.shadowBlur = 40; ctx.shadowColor = dynamicShadow; 
+            // Gölge opaklığa göre
+            ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); 
+            ctx.shadowColor = dynamicShadow; 
         }
         
         ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
@@ -582,5 +632,7 @@ class VoidRay {
 
             ctx.restore();
         }
+        
+        ctx.restore();
     }
 }
