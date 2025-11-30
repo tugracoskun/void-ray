@@ -1,23 +1,21 @@
 /**
  * Void Ray - Kullanıcı Arayüzü (UI) Yönetimi
- * * Menüler, envanter ekranları, bildirimler ve HUD güncellemelerini yönetir.
- * * game.js içinden ayrıştırılmıştır.
- * * Grid (Kutu Kutu) envanter sistemi ve Global Tooltip eklendi.
+ * * Menüler, ortak araçlar (tooltip, grid), bildirimler ve diğer pencereleri yönetir.
+ * * Oyuncu Envanteri (inventory.js) buradan ayrılmıştır.
  */
 
 // Arayüz Durumları (Global Erişim İçin)
-let inventoryOpen = false;
+// inventoryOpen artık js/windows/inventory.js içinde
 let echoInvOpen = false;
 let nexusOpen = false;
 let mapOpen = false;
 let storageOpen = false;
 let statsOpen = false;
 
-// HUD Görünürlük Durumu (YENİ)
+// HUD Görünürlük Durumu
 let isHudVisible = true;
 
 // --- GLOBAL TOOLTIP YÖNETİMİ ---
-// Tooltip elementini JS ile oluşturup body'ye ekliyoruz
 const globalTooltip = document.createElement('div');
 globalTooltip.id = 'global-tooltip';
 document.body.appendChild(globalTooltip);
@@ -26,8 +24,7 @@ document.body.appendChild(globalTooltip);
  * Eşya ve XP için Tooltip gösterir.
  */
 function showTooltip(e, name, xp) {
-    if (!isHudVisible) return; // HUD gizliyse tooltip gösterme
-    
+    if (!isHudVisible) return;
     globalTooltip.innerHTML = `
         <span class="tooltip-title">${name}</span>
         <span class="tooltip-xp">${xp} XP</span>
@@ -37,12 +34,10 @@ function showTooltip(e, name, xp) {
 }
 
 /**
- * Ayarlar ve Bilgilendirme için Basit Tooltip (YENİ)
- * Sadece metin içerir, oyunun tasarım diline uygundur.
+ * Ayarlar ve Bilgilendirme için Basit Tooltip
  */
 window.showInfoTooltip = function(e, text) {
     if (!isHudVisible) return;
-    
     globalTooltip.innerHTML = `
         <span class="tooltip-desc" style="color:#e2e8f0; font-size:0.75rem; letter-spacing:0.5px;">${text}</span>
     `;
@@ -50,31 +45,16 @@ window.showInfoTooltip = function(e, text) {
     moveTooltip(e);
 };
 
-/**
- * Tooltip'i farenin konumuna göre hareket ettirir.
- * DÜZELTME: Ekran sınırlarını dinamik hesaplar.
- */
 function moveTooltip(e) {
-    // Tooltip'in anlık boyutlarını al
     const width = globalTooltip.offsetWidth;
     const height = globalTooltip.offsetHeight;
-    const offset = 15; // Fareye olan mesafe
-
-    // Varsayılan pozisyon (Farenin sağ altı)
+    const offset = 15;
     let x = e.clientX + offset;
     let y = e.clientY + offset;
     
-    // Sağ kenar kontrolü: Eğer ekranın sağına taşıyorsa, farenin soluna al
-    if (x + width > window.innerWidth) {
-        x = e.clientX - width - offset;
-    }
-    
-    // Alt kenar kontrolü: Eğer ekranın altına taşıyorsa, farenin yukarısına al
-    if (y + height > window.innerHeight) {
-        y = e.clientY - height - offset;
-    }
+    if (x + width > window.innerWidth) x = e.clientX - width - offset;
+    if (y + height > window.innerHeight) y = e.clientY - height - offset;
 
-    // Sol ve Üst kenar güvenliği (Negatif koordinatları engelle)
     x = Math.max(0, x);
     y = Math.max(0, y);
 
@@ -82,25 +62,17 @@ function moveTooltip(e) {
     globalTooltip.style.top = y + 'px';
 }
 
-/**
- * Tooltip'i gizler.
- */
 window.hideTooltip = function() {
     globalTooltip.style.display = 'none';
 };
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
 
-/**
- * HUD ve Panelleri Gizle/Göster (YENİ)
- * Sinematik mod veya ekran görüntüsü için kullanılır.
- */
 window.toggleHUD = function() {
     isHudVisible = !isHudVisible;
     const hudContainer = document.getElementById('ui-hud');
     const panelsContainer = document.getElementById('ui-panels');
     
-    // Sınıfı ekle/çıkar (CSS transition opacity kullanacak)
     if (hudContainer) {
         if (isHudVisible) hudContainer.classList.remove('hidden-ui');
         else hudContainer.classList.add('hidden-ui');
@@ -111,10 +83,8 @@ window.toggleHUD = function() {
         else panelsContainer.classList.add('hidden-ui');
     }
     
-    // Eğer gizleniyorsa açık tooltip varsa kapat
     if (!isHudVisible) hideTooltip();
     
-    // Bildirim göster (Sadece geri açıldığında veya gizlenirken konsola yazılabilir)
     if (isHudVisible) {
         showNotification({name: "ARAYÜZ AKTİF", type:{color:'#fff'}}, "");
     }
@@ -155,18 +125,13 @@ function showToxicEffect() {
 // --- GRID (IZGARA) OLUŞTURUCU YARDIMCI ---
 /**
  * HTML container içine envanter ızgarası çizer.
- * @param {HTMLElement} container - Gridin ekleneceği div
- * @param {Array} items - Eşya listesi
- * @param {number} capacity - Toplam slot sayısı
- * @param {Function} onClickAction - Tıklama olayı (item parametresi alır)
- * @param {boolean} isUnlimited - Depo gibi limitsiz alanlar için
+ * Bu fonksiyon geneldir ve diğer pencereler (Depo, Yankı, Envanter) tarafından kullanılır.
  */
 function renderGrid(container, items, capacity, onClickAction, isUnlimited = false) {
-    if (!container) return; // Güvenlik kontrolü
+    if (!container) return;
     container.innerHTML = '';
     container.className = 'inventory-grid-container';
     
-    // Limitsiz ise en az mevcut item kadar + biraz boşluk göster
     const displayCount = isUnlimited ? Math.max(items.length + 20, 100) : capacity;
 
     for (let i = 0; i < displayCount; i++) {
@@ -177,26 +142,21 @@ function renderGrid(container, items, capacity, onClickAction, isUnlimited = fal
             const item = items[i];
             slot.classList.add('has-item');
             
-            // Renkli kutu (İkon yerine)
             const itemBox = document.createElement('div');
             itemBox.className = 'item-box';
             itemBox.style.backgroundColor = item.type.color;
             
-            // DÜZELTME: İSMİN BAŞ HARFİNİ EKLE
             if (item.name) {
-                // İsmin ilk harfini al, büyük harfe çevir
                 itemBox.innerText = item.name.charAt(0).toUpperCase();
             }
             
             slot.appendChild(itemBox);
             
-            // Olaylar
             slot.onclick = () => {
-                hideTooltip(); // Tıklayınca gizle ki takılı kalmasın
+                hideTooltip();
                 onClickAction(item);
             };
             
-            // Yeni JS tabanlı Tooltip olayları
             slot.onmouseenter = (e) => showTooltip(e, item.name, item.type.xp);
             slot.onmousemove = (e) => moveTooltip(e);
             slot.onmouseleave = () => hideTooltip();
@@ -204,65 +164,6 @@ function renderGrid(container, items, capacity, onClickAction, isUnlimited = fal
         
         container.appendChild(slot);
     }
-}
-
-// --- ENVANTER VE DEPO ARAYÜZÜ ---
-
-function updateInventoryCount() {
-    const badge = document.getElementById('inv-total-badge'); 
-    const count = collectedItems.length;
-    const capacity = getPlayerCapacity();
-    
-    if(badge) {
-        badge.innerText = count; 
-        badge.style.display = count > 0 ? 'flex' : 'none';
-        
-        if (count >= capacity) {
-            badge.style.background = '#ef4444';
-            badge.style.color = '#fff';
-        } else if (count >= capacity * 0.9) {
-            badge.style.background = '#f59e0b';
-            badge.style.color = '#000';
-        } else {
-            badge.style.background = '#fff';
-            badge.style.color = '#000';
-        }
-    }
-    
-    // Sidebar kaldırıldığı için bu elementler artık yok, ancak
-    // kod güvenliği için null kontrolü ile bırakıldı.
-    const elCountAll = document.getElementById('count-all');
-    if(elCountAll) {
-        elCountAll.innerText = count;
-        document.getElementById('count-legendary').innerText = collectedItems.filter(i => i.type.id === 'legendary').length;
-        document.getElementById('count-epic').innerText = collectedItems.filter(i => i.type.id === 'epic').length;
-        document.getElementById('count-rare').innerText = collectedItems.filter(i => i.type.id === 'rare').length;
-    }
-}
-
-function renderInventory() {
-    const gridContainer = document.getElementById('inv-grid-content');
-    if(!gridContainer) return;
-    
-    const invHeader = document.querySelector('.inv-header h2');
-    const cap = getPlayerCapacity();
-    const count = collectedItems.length;
-    const color = count >= cap ? '#ef4444' : '#94a3b8';
-    
-    if(invHeader) {
-        invHeader.innerHTML = `ENVANTER <span style="font-size:0.5em; vertical-align:middle; color:${color}; letter-spacing:1px; margin-left:10px;">${count} / ${cap}</span>`;
-    }
-
-    // Filtreleme mantığı kaldırıldı, direkt tüm eşyalar gösteriliyor.
-    renderGrid(gridContainer, collectedItems, cap, (item) => {
-        // Envanterdeki eşyaya tıklanınca yapılacak işlem (Şimdilik boş)
-    });
-}
-
-function closeInventory() { 
-    inventoryOpen = false; 
-    document.getElementById('inventory-overlay').classList.remove('open'); 
-    hideTooltip(); // Kapanırken tooltip'i de gizle
 }
 
 // --- YANKI (ECHO) ARAYÜZÜ ---
@@ -287,10 +188,6 @@ function updateEchoDropdownUI() {
     else document.getElementById('menu-roam').classList.add('active-mode');
 }
 
-/**
- * Yankı envanterini açar.
- * GÜNCELLENDİ: Sadece Yankı bağlıyken (merge) açılır.
- */
 function openEchoInventory() { 
     if(!echoRay) return; 
     
@@ -311,10 +208,6 @@ function closeEchoInventory() {
     hideTooltip();
 }
 
-/**
- * Yankı envanter arayüzünü çizer.
- * GÜNCELLENDİ: Depo mantığı ile iki ızgara gösterir (Oyuncu <-> Yankı).
- */
 function renderEchoInventory() {
     if(!echoRay || !echoInvOpen) return;
     
@@ -329,20 +222,16 @@ function renderEchoInventory() {
     if(playerCapLabel) playerCapLabel.innerText = `${collectedItems.length} / ${pCap}`;
     if(echoCapLabel) echoCapLabel.innerText = `${echoRay.lootBag.length} / ${eCap}`;
 
-    // SOL Taraf: Oyuncu Envanteri (Yankı'ya aktar)
     renderGrid(playerContainer, collectedItems, pCap, (item) => {
         transferToEcho(item);
     });
 
-    // SAĞ Taraf: Yankı Deposu (Oyuncuya al)
     renderGrid(echoContainer, echoRay.lootBag, eCap, (item) => {
         transferToPlayer(item);
     });
 }
 
 // Global Transfer Fonksiyonları (Yankı için)
-
-// TEKİL TRANSFER
 window.transferToEcho = function(item) {
     if (!echoRay) return;
     if (echoRay.lootBag.length >= getEchoCapacity()) {
@@ -367,7 +256,6 @@ window.transferToPlayer = function(item) {
     if (idx > -1) {
         echoRay.lootBag.splice(idx, 1);
         
-        // Tardigrad ise tüket, değilse envantere al
         if (item.type.id === 'tardigrade') {
             player.energy = Math.min(player.energy + 50, player.maxEnergy);
             const xp = calculatePlanetXp(item.type);
@@ -382,15 +270,13 @@ window.transferToPlayer = function(item) {
     }
 }
 
-// TOPLU TRANSFER (YENİ)
 window.transferAllToEcho = function() {
     if (!echoRay) return;
     const eCap = getEchoCapacity();
     let movedCount = 0;
 
-    // Yankı dolana kadar veya oyuncu envanteri bitene kadar
     while (echoRay.lootBag.length < eCap && collectedItems.length > 0) {
-        const item = collectedItems.shift(); // En baştan al
+        const item = collectedItems.shift();
         echoRay.lootBag.push(item);
         movedCount++;
     }
@@ -412,15 +298,11 @@ window.transferAllToPlayer = function() {
     const pCap = getPlayerCapacity();
     let movedCount = 0;
 
-    // Oyuncu dolana kadar veya yankı bitene kadar
-    // Dikkat: Tardigradlar yer kaplamaz (tüketilir), bu yüzden özel kontrol
     while (echoRay.lootBag.length > 0) {
-        // Kontrol: Sadece envantere eklenecekse kapasiteye bak, yoksa (tardigrad) devam et
         const nextItem = echoRay.lootBag[0];
-        
         if (nextItem.type.id !== 'tardigrade' && collectedItems.length >= pCap) {
              showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
-             break; // Kapasite doldu
+             break;
         }
 
         const item = echoRay.lootBag.shift();
@@ -444,7 +326,6 @@ window.transferAllToPlayer = function() {
     renderEchoInventory();
     updateInventoryCount();
 };
-
 
 // --- DEPO MERKEZİ (STORAGE) ARAYÜZÜ ---
 
@@ -471,12 +352,10 @@ function renderStorageUI() {
     shipCap.innerText = `${collectedItems.length} / ${getPlayerCapacity()}`;
     centerCount.innerText = `${centralStorage.length} EŞYA`;
 
-    // Sol Taraf: Gemi Envanteri (Grid)
     renderGrid(shipListContainer, collectedItems, getPlayerCapacity(), (item) => {
         depositItem(item.name);
     });
 
-    // Sağ Taraf: Merkez Depo (Grid - Limitsiz Görünüm)
     renderGrid(centerListContainer, centralStorage, 0, (item) => {
         withdrawItem(item.name);
     }, true);
@@ -603,13 +482,10 @@ function switchNexusTab(tabName) {
     }
 }
 
-// --- SETTINGS TABS (YENİ) ---
 window.switchSettingsTab = function(tabName) {
-    // Tüm sekmelerden active sınıfını kaldır
     document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.settings-content').forEach(c => c.classList.remove('active'));
     
-    // Seçilen sekmeyi aktif yap
     const btnId = 'tab-btn-' + tabName;
     const contentId = 'set-tab-' + tabName;
     
@@ -656,20 +532,16 @@ function renderUpgrades() {
         const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
         const isMax = currentLvl >= data.max;
         
-        // YANKI BAĞLANTI KONTROLÜ
         let isDisabled = isMax || playerData.stardust < cost;
         let btnText = isMax ? 'MAX' : 'GELİŞTİR';
         let btnClass = 'buy-btn';
 
-        // YANKI DURUMLARINI AYRIŞTIRMA
         if (isEcho) {
              if (!echoRay) {
-                // Yankı henüz hiç doğmadı
                 isDisabled = true;
                 btnText = 'YANKI YOK';
                 btnClass += ' disabled-echo'; 
              } else if (!echoRay.attached) {
-                // Yankı var ama bağlı değil (Bağımsız uçuyor veya sabit duruyor)
                 isDisabled = true;
                 btnText = 'BAĞLI DEĞİL';
                 btnClass += ' disabled-echo';
@@ -737,14 +609,11 @@ window.sellAll = function() {
     }
 };
 
-// --- AI ARAYÜZÜ ---
-
 function updateAIButton() {
     const btn = document.getElementById('ai-mode-btn');
     const aiToggle = document.getElementById('btn-ai-toggle');
     const modeBtn = document.getElementById('ai-mode-btn');
     
-    // Manuel müdahale uyarısını temizle
     aiToggle.classList.remove('warn-blink');
 
     if(!autopilot) {
