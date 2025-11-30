@@ -13,39 +13,12 @@ class ZenAudio {
 
     init() { 
         if(this.ctx.state === 'suspended') this.ctx.resume(); 
-        this.bindUI();
+        // bindUI kaldırıldı çünkü artık UI olayları settings.js içinde yönetiliyor.
     }
     
-    bindUI() {
-        // Ayarlar paneli kontrollerini bağla (GÜNCELLENDİ: btn-settings ve settings-panel)
-        const settingsPanel = document.getElementById('settings-panel');
-        const btnSettings = document.getElementById('btn-settings');
-        const volMusicInput = document.getElementById('vol-music');
-        const volSfxInput = document.getElementById('vol-sfx');
-
-        if (btnSettings && settingsPanel) {
-            btnSettings.addEventListener('click', () => settingsPanel.classList.toggle('open'));
-        }
-
-        if (volMusicInput) {
-            volMusicInput.addEventListener('input', (e) => { 
-                const val = e.target.value / 100; 
-                if(this.bgMusic) this.bgMusic.volume = val; 
-                const valDisp = document.getElementById('val-m');
-                if(valDisp) valDisp.innerText = e.target.value + '%'; 
-                volMusic = val; 
-            });
-        }
-
-        if (volSfxInput) {
-            volSfxInput.addEventListener('input', (e) => { 
-                const val = e.target.value / 100; 
-                volSFX = val; 
-                const valDisp = document.getElementById('val-s');
-                if(valDisp) valDisp.innerText = e.target.value + '%'; 
-            });
-        }
-    }
+    // UI binding fonksiyonu tamamen kaldırıldı.
+    // Artık slider'lar global volMusic ve volSFX değişkenlerini güncelliyor.
+    // Ses çalma fonksiyonları bu değişkenleri kullanıyor.
     
     playChime(rarity) {
         const now = this.ctx.currentTime;

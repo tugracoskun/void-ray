@@ -1,7 +1,7 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
  * * Bu dosya oyunun ana döngüsünü ve durum yönetimini kontrol eder.
- * * initControls() çağrısı kaldırıldı, artık loader.js tarafından tetikleniyor.
+ * * Ayarlar ve UI mantığı ilgili dosyalara (settings.js, ui.js) taşınmıştır.
  */
 
 // -------------------------------------------------------------------------
@@ -15,7 +15,7 @@ var repairStation = null;
 var storageCenter = null;
 var audio; 
 
-// OYUN AYARLARI
+// OYUN AYARLARI (Varsayılanlar, settings.js tarafından güncellenir)
 window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
@@ -75,163 +75,6 @@ let autopilot = false;
 let aiMode = 'gather'; 
 let echoDeathLevel = 0;
 let lowEnergyWarned = false;
-
-// -------------------------------------------------------------------------
-// AYAR DİNLEYİCİLERİ
-// -------------------------------------------------------------------------
-window.initSettingsListeners = function() {
-    console.log("Ayar dinleyicileri başlatılıyor...");
-    
-    // Toggle Switch Elementleri
-    const nexusToggle = document.getElementById('toggle-nexus-arrow');
-    const repairToggle = document.getElementById('toggle-repair-arrow');
-    const storageToggle = document.getElementById('toggle-storage-arrow');
-    const hudHoverToggle = document.getElementById('toggle-hud-hover');
-    const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
-    
-    // UI Kontrol Alanları
-    const manualCamControls = document.getElementById('manual-camera-controls');
-    const camXInput = document.getElementById('cam-offset-x');
-    const camYInput = document.getElementById('cam-offset-y');
-
-    // Etkilenecek HUD Elementleri
-    const hudSelectors = ['.hud-icon-group', '#xp-container', '#chat-panel', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt'];
-    const hudElements = [];
-    
-    hudSelectors.forEach(sel => {
-        const el = document.querySelector(sel);
-        if(el) {
-            hudElements.push(el);
-            el.style.transition = 'opacity 0.3s ease';
-            el.addEventListener('mouseenter', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = '1'; });
-            el.addEventListener('mouseleave', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = window.gameSettings.hudOpacity; });
-        }
-    });
-
-    // --- TOGGLE EVENT LİSTENERS ---
-    if (nexusToggle) nexusToggle.addEventListener('change', (e) => window.gameSettings.showNexusArrow = e.target.checked);
-    if (repairToggle) repairToggle.addEventListener('change', (e) => window.gameSettings.showRepairArrow = e.target.checked);
-    if (storageToggle) storageToggle.addEventListener('change', (e) => window.gameSettings.showStorageArrow = e.target.checked);
-
-    if (hudHoverToggle) {
-        hudHoverToggle.addEventListener('change', (e) => {
-            window.gameSettings.hudHoverEffect = e.target.checked;
-            hudElements.forEach(el => {
-                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) el.style.opacity = '1';
-                else el.style.opacity = window.gameSettings.hudOpacity;
-            });
-        });
-    }
-
-    if (adaptiveCamToggle) {
-        adaptiveCamToggle.addEventListener('change', (e) => {
-            window.gameSettings.adaptiveCamera = e.target.checked;
-            if (manualCamControls) {
-                if (window.gameSettings.adaptiveCamera) {
-                    manualCamControls.style.opacity = '0.3';
-                    manualCamControls.style.pointerEvents = 'none';
-                    if(camXInput) camXInput.disabled = true;
-                    if(camYInput) camYInput.disabled = true;
-                } else {
-                    manualCamControls.style.opacity = '1';
-                    manualCamControls.style.pointerEvents = 'auto';
-                    if(camXInput) camXInput.disabled = false;
-                    if(camYInput) camYInput.disabled = false;
-                }
-            }
-        });
-    }
-
-    // --- AKILLI SLIDER YÖNETİMİ (Tekil Tanımlamalar Yerine Genel Sınıf) ---
-    // HTML'de 'smart-slider' sınıfı olan tüm inputları topla
-    const smartSliders = document.querySelectorAll('.smart-slider');
-    
-    smartSliders.forEach(slider => {
-        // 1. Değişiklik Dinleyicisi
-        slider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            const id = e.target.id;
-
-            // ID'ye göre işlem yap
-            if (id === 'vol-hud-opacity') {
-                const opacity = val / 100;
-                window.gameSettings.hudOpacity = opacity;
-                const disp = document.getElementById('val-hud-opacity');
-                if(disp) disp.innerText = val + '%';
-                
-                hudElements.forEach(el => {
-                    if (window.gameSettings.hudHoverEffect && el.matches(':hover')) el.style.opacity = '1';
-                    else el.style.opacity = opacity;
-                });
-            } 
-            else if (id === 'cam-offset-x') {
-                window.gameSettings.cameraOffsetX = val;
-                const disp = document.getElementById('val-cam-x');
-                if(disp) disp.innerText = Math.round(val);
-            }
-            else if (id === 'cam-offset-y') {
-                window.gameSettings.cameraOffsetY = val;
-                const disp = document.getElementById('val-cam-y');
-                if(disp) disp.innerText = Math.round(val);
-            }
-            else if (id === 'vol-music') {
-                // Audio nesnesi varsa güncelle (Audio.js global volMusic'i dinliyor ama biz yine de set edelim)
-                // Not: Audio sınıfı kendi input listener'ını kuruyor olabilir ama çakışma olmaz.
-                // Burada UI güncellemesi yapıyoruz.
-                const disp = document.getElementById('val-m');
-                if(disp) disp.innerText = val + '%';
-                // Global değişkene yaz (audio.js kullanıyor)
-                if (typeof volMusic !== 'undefined') {
-                    // audio.js'deki global değişkene erişim için window scope'una bakıyoruz veya olay tetikliyoruz
-                    // En temiz yolu: input event'i zaten audio.js tarafından da dinleniyor olabilir.
-                    // Ancak audio.js'deki bindUI sadece 1 kere çalışır.
-                    // Biz burada manuel tetikleyelim.
-                    const event = new Event('input');
-                    // Bu fonksiyonun içinde kendi eventimizi tetiklemeyelim (sonsuz döngü),
-                    // Sadece UI textini güncelleyelim, asıl ses mantığı audio.js'de.
-                }
-            }
-            else if (id === 'vol-sfx') {
-                const disp = document.getElementById('val-s');
-                if(disp) disp.innerText = val + '%';
-            }
-        });
-
-        // 2. Çift Tıklama ile Sıfırlama
-        slider.addEventListener('dblclick', () => {
-            const defaultVal = slider.getAttribute('data-default');
-            if (defaultVal !== null) {
-                slider.value = defaultVal;
-                slider.dispatchEvent(new Event('input')); // Değişikliği uygula
-            }
-        });
-
-        // 3. Mouse Tekerleği ile Kontrol
-        slider.addEventListener('wheel', (e) => {
-            // Sayfa kaymasını engelle
-            e.preventDefault();
-            
-            // Yönü belirle (Yukarı: Artır, Aşağı: Azalt)
-            const delta = Math.sign(e.deltaY) * -1;
-            
-            // Adım aralığı (Step) - Varsayılan 5 birim, kamera için 10
-            let step = 5;
-            if (slider.id.includes('cam')) step = 10;
-            
-            let currentVal = parseFloat(slider.value);
-            let newVal = currentVal + (delta * step);
-            
-            // Min/Max sınırlarına uy
-            const min = parseFloat(slider.min);
-            const max = parseFloat(slider.max);
-            newVal = Math.max(min, Math.min(max, newVal));
-            
-            // Değeri uygula ve eventi tetikle
-            slider.value = newVal;
-            slider.dispatchEvent(new Event('input'));
-        }, { passive: false });
-    });
-};
 
 // -------------------------------------------------------------------------
 // OYUN MEKANİKLERİ VE MANTIK
@@ -339,18 +182,11 @@ function setEchoMode(mode) {
     updateEchoDropdownUI();
 }
 
-/**
- * GÜNCELLENDİ: Artık eşyaları otomatik transfer etmiyor.
- * Sadece birleşme durumunu (attached) aktif ediyor.
- */
 function echoManualMerge() {
     if(!echoRay) return;
     const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
     
     if (dist < 350) {
-        // Otomatik transfer kaldırıldı.
-        // Sadece birleşme gerçekleşiyor.
-        
         if(audio) audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
@@ -382,7 +218,6 @@ function cycleAIMode() {
 // -------------------------------------------------------------------------
 
 function init() {
-    // Canvas elementlerini burada alıyoruz (HTML yüklendikten sonra)
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     mmCanvas = document.getElementById('minimap-canvas');
@@ -399,7 +234,6 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    // Gezegen ve Yıldız sayılarını config'den al
     for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) planets.push(new Planet());
     
     stars = []; 
@@ -412,7 +246,6 @@ function init() {
     isPaused = false;
     startTipsCycle();
     
-    // HARİTA DİNLEYİCİSİ
     if (bmCanvas && typeof initMapListeners === 'function') {
         initMapListeners(bmCanvas, WORLD_SIZE, (worldX, worldY) => {
             manualTarget = {x: worldX, y: worldY};
@@ -443,7 +276,7 @@ function startLoop() {
 }
 
 function loop() {
-    if(!isPaused && ctx) { // ctx kontrolü eklendi
+    if(!isPaused && ctx) {
         const now = Date.now();
         const dt = now - lastFrameTime;
         lastFrameTime = now;
@@ -477,7 +310,6 @@ function loop() {
             renderStats();
         }
 
-        // Gezegen Spawn (Config'den sınır alınıyor)
         planets = planets.filter(p => !p.collected);
         if (planets.length < GAME_CONFIG.WORLD_GEN.PLANET_COUNT) {
             const needed = GAME_CONFIG.WORLD_GEN.PLANET_COUNT - planets.length;
@@ -492,7 +324,7 @@ function loop() {
             }
         }
 
-        // ESC Kontrolü (GÜNCELLENDİ)
+        // ESC Kontrolü
         if (keys.Escape) { 
             if (inventoryOpen) closeInventory();
             else if (echoInvOpen) closeEchoInventory();
@@ -500,44 +332,35 @@ function loop() {
             else if (storageOpen) closeStorage(); 
             else if (mapOpen) closeMap();
             else if (statsOpen) closeStats();
-            // BURADA AYARLAR PANELİ KONTROLÜ
-            else if (document.getElementById('settings-panel') && document.getElementById('settings-panel').classList.contains('open')) {
-                document.getElementById('settings-panel').classList.remove('open');
+            // YENİ: Ayarlar penceresi kontrolü settings.js fonksiyonu ile
+            else if (typeof settingsOpen !== 'undefined' && settingsOpen) {
+                closeSettings();
             }
             else togglePause();
             keys.Escape = false;
         }
 
-        // Çizim
         ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
         ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
 
         ctx.save(); 
         
-        // --- KAMERA OFFSET MANTIĞI ---
         let targetOffsetX = window.gameSettings.cameraOffsetX;
         let targetOffsetY = window.gameSettings.cameraOffsetY;
 
-        // Adaptif Mod: Gemi hızına göre offset hesapla (Ters yönde)
         if (window.gameSettings.adaptiveCamera) {
-            const lookAheadFactor = 30; // Hız başına kaç piksel kayacak
-            const maxAdaptiveOffset = 400; // Maksimum kayma miktarı
-            
+            const lookAheadFactor = 30; 
+            const maxAdaptiveOffset = 400; 
             targetOffsetX = -player.vx * lookAheadFactor;
             targetOffsetY = -player.vy * lookAheadFactor;
-            
-            // Sınırla
             targetOffsetX = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetX));
             targetOffsetY = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetY));
         }
 
-        // Yumuşak geçiş (Lerp)
         currentRenderOffsetX += (targetOffsetX - currentRenderOffsetX) * 0.05;
         currentRenderOffsetY += (targetOffsetY - currentRenderOffsetY) * 0.05;
 
-        // Hesaplanan offseti uygula
         ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
-        
         ctx.scale(currentZoom, currentZoom); 
         ctx.translate(-player.x, -player.y);
         
@@ -569,12 +392,10 @@ function loop() {
                     ctx.beginPath();
                     ctx.moveTo(echoRay.x, echoRay.y);
                     ctx.lineTo(player.x, player.y);
-                    
                     ctx.strokeStyle = MAP_CONFIG.colors.echo; 
                     ctx.lineWidth = 2;
                     ctx.setLineDash([15, 10]); 
                     ctx.lineDashOffset = -Date.now() / 50; 
-
                     ctx.globalAlpha = lineAlpha;
                     ctx.stroke();
                     ctx.globalAlpha = 1.0;
@@ -628,10 +449,7 @@ function loop() {
                             p.collected = true;
                             const xp = calculatePlanetXp(p.type);
                             player.gainXp(xp);
-                            showNotification({
-                                name: `+${xp} XP`, 
-                                type: { color: '#94a3b8' } 
-                            }, "(Veri Analizi)");
+                            showNotification({ name: `+${xp} XP`, type: { color: '#94a3b8' } }, "(Veri Analizi)");
                         } else {
                             let addedCount = 0;
                             let totalXp = 0;
@@ -660,7 +478,6 @@ function loop() {
         if(echoRay) echoRay.draw(ctx);
         player.draw(ctx); ctx.restore();
         
-        // PROMPT VE İNDİKATÖR
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
             const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
@@ -685,7 +502,6 @@ function loop() {
             drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }
 
-        // GÜNCELLENDİ: OK ÇİZİMLERİ AYARLARA BAĞLANDI
         if (window.gameSettings.showNexusArrow) {
             drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
         }
@@ -728,6 +544,3 @@ function resize() {
     if(mmCanvas) { mmCanvas.width = 180; mmCanvas.height = 180; }
     if(bmCanvas) { bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
 }
-
-// ÖNEMLİ: initControls() buradan kaldırıldı. 
-// Artık loader.js tarafından UI yüklendikten sonra çağrılacak.
