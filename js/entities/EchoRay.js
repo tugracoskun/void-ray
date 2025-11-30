@@ -15,6 +15,7 @@ class EchoRay {
         this.mode = 'roam'; 
         // CONFIG'DEN DEĞER AL
         this.energy = GAME_CONFIG.ECHO.BASE_ENERGY;
+        this.maxEnergy = GAME_CONFIG.ECHO.BASE_ENERGY; // Maksimum enerji referansı
         this.energyDisplayTimer = 0; 
         this.fullNotified = false;
         
@@ -239,10 +240,25 @@ class EchoRay {
         ctx.scale(0.6, 0.6); 
         
         // --- DİNAMİK RENK HESAPLAMA ---
-        const r = Math.round(this.baseColor.r + (this.targetColor.r - this.baseColor.r) * this.colorLerp);
-        const g = Math.round(this.baseColor.g + (this.targetColor.g - this.baseColor.g) * this.colorLerp);
-        const b = Math.round(this.baseColor.b + (this.targetColor.b - this.baseColor.b) * this.colorLerp);
-        const dynamicColor = `rgb(${r},${g},${b})`;
+        // 1. Mod'a göre temel RGB rengini hesapla (Orijinal Kod)
+        const baseR = Math.round(this.baseColor.r + (this.targetColor.r - this.baseColor.r) * this.colorLerp);
+        const baseG = Math.round(this.baseColor.g + (this.targetColor.g - this.baseColor.g) * this.colorLerp);
+        const baseB = Math.round(this.baseColor.b + (this.targetColor.b - this.baseColor.b) * this.colorLerp);
+
+        // 2. Enerjiye göre doygunluk (Saturation) hesapla
+        // Gri tonlamalı değer (Luminance)
+        const gray = baseR * 0.3 + baseG * 0.59 + baseB * 0.11;
+        
+        // Enerji oranı (0.0 ile 1.0 arası)
+        const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
+
+        // Gri ile Renk arasında enerjiye göre geçiş yap
+        // Enerji 0 ise tamamen gri, 100 ise tamamen canlı renk
+        const finalR = Math.floor(gray + (baseR - gray) * energyRatio);
+        const finalG = Math.floor(gray + (baseG - gray) * energyRatio);
+        const finalB = Math.floor(gray + (baseB - gray) * energyRatio);
+
+        const dynamicColor = `rgb(${finalR},${finalG},${finalB})`;
 
         // Global nexus
         if (this.mode === 'recharge' && Math.hypot(this.x - nexus.x, this.y - nexus.y) < 150) {
@@ -251,8 +267,7 @@ class EchoRay {
              ctx.shadowColor = "#cbd5e1"; // Gri parıltı (Şarj olurken nötr renk)
              ctx.fillStyle = `rgba(203, 213, 225, ${0.5 + pulse * 0.5})`; 
         } else {
-             ctx.shadowBlur = 20; 
-             // Gölge rengi dinamik
+             ctx.shadowBlur = 20 * energyRatio; // Enerji azsa gölge de azalsın
              ctx.shadowColor = dynamicColor;
         }
         
@@ -262,7 +277,8 @@ class EchoRay {
         let wingFlap = Math.sin(this.wingPhase) * 5; 
         
         // Gövde (Koyu Uzay Grisi - Hafifçe renk tonu alabilir ama şimdilik sabit tutuyoruz)
-        ctx.fillStyle = "rgba(30, 41, 59, 0.95)"; 
+        // Gövde de biraz enerjiye göre tepki verebilir
+        ctx.fillStyle = `rgba(${30 * (0.5 + energyRatio * 0.5)}, ${41 * (0.5 + energyRatio * 0.5)}, ${59 * (0.5 + energyRatio * 0.5)}, 0.95)`; 
         
         ctx.beginPath(); 
         ctx.moveTo(0, -30); 
@@ -283,7 +299,7 @@ class EchoRay {
         ctx.fillStyle = "#f1f5f9"; 
         
         if (this.mode !== 'recharge') {
-             ctx.shadowBlur = 40; 
+             ctx.shadowBlur = 40 * energyRatio; 
              ctx.shadowColor = dynamicColor; // Göz parlaması da dinamik
         }
         
@@ -293,7 +309,7 @@ class EchoRay {
         if (this.energyDisplayTimer > 0) {
             ctx.globalAlpha = Math.min(1, this.energyDisplayTimer / 30); 
             ctx.fillStyle = "#334155"; ctx.fillRect(-20, -40, 40, 4);
-            ctx.fillStyle = "#7dd3fc"; 
+            ctx.fillStyle = dynamicColor; // Bar rengi de dinamik
             ctx.fillRect(-20, -40, 40 * (this.energy/100), 4);
             ctx.globalAlpha = 1;
         }
