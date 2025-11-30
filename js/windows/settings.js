@@ -21,6 +21,7 @@ if (!window.gameSettings) {
         showGravityFields: false,
         showHitboxes: false,
         showVectors: false,
+        showTargetVectors: false,
         showFps: false,
         godMode: false
     };
@@ -51,6 +52,7 @@ function initSettings() {
     const gravityToggle = document.getElementById('toggle-gravity-debug');
     const hitboxToggle = document.getElementById('toggle-hitboxes');
     const vectorToggle = document.getElementById('toggle-vectors');
+    const targetVectorToggle = document.getElementById('toggle-target-vectors');
     const fpsToggle = document.getElementById('toggle-fps-counter');
     const godModeToggle = document.getElementById('toggle-god-mode');
     
@@ -126,12 +128,14 @@ function initSettings() {
                     window.gameSettings.showGravityFields = false;
                     window.gameSettings.showHitboxes = false;
                     window.gameSettings.showVectors = false;
+                    window.gameSettings.showTargetVectors = false;
                     window.gameSettings.showFps = false;
                     window.gameSettings.godMode = false;
                     
                     if(gravityToggle) gravityToggle.checked = false;
                     if(hitboxToggle) hitboxToggle.checked = false;
                     if(vectorToggle) vectorToggle.checked = false;
+                    if(targetVectorToggle) targetVectorToggle.checked = false;
                     if(fpsToggle) fpsToggle.checked = false;
                     if(godModeToggle) godModeToggle.checked = false;
                     
@@ -154,6 +158,10 @@ function initSettings() {
 
     if (vectorToggle) {
         vectorToggle.addEventListener('change', (e) => window.gameSettings.showVectors = e.target.checked);
+    }
+
+    if (targetVectorToggle) {
+        targetVectorToggle.addEventListener('change', (e) => window.gameSettings.showTargetVectors = e.target.checked);
     }
 
     if (fpsToggle) {
