@@ -1,7 +1,6 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
- * * Bu dosya oyunun ana döngüsünü ve durum yönetimini kontrol eder.
- * * Ayarlar ve UI mantığı ilgili dosyalara (settings.js, ui.js) taşınmıştır.
+ * * Depo mantığı js/windows/storage.js dosyasına taşınmıştır.
  */
 
 // -------------------------------------------------------------------------
@@ -89,64 +88,7 @@ function spawnEcho(x, y) {
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
 }
 
-function depositToStorage(sourceArray, sourceName) {
-    if (sourceArray.length === 0) return;
-    const count = sourceArray.length;
-    const itemsToStore = sourceArray.filter(i => i.type.id !== 'tardigrade');
-    itemsToStore.forEach(item => centralStorage.push(item));
-    sourceArray.length = 0;
-    
-    if(audio) audio.playCash(); 
-    showNotification({name: `${sourceName}: ${count} EŞYA DEPOYA AKTARILDI`, type:{color:'#a855f7'}}, "");
-    
-    updateInventoryCount();
-    if(inventoryOpen) renderInventory();
-    if(echoInvOpen) renderEchoInventory();
-    if(storageOpen) renderStorageUI();
-}
-
-// Global UI Fonksiyonları
-window.depositItem = function(name) {
-    const index = collectedItems.findIndex(i => i.name === name);
-    if (index !== -1) {
-        const item = collectedItems.splice(index, 1)[0];
-        centralStorage.push(item);
-        renderStorageUI();
-        updateInventoryCount();
-    }
-};
-
-window.depositAllToStorage = function() {
-    depositToStorage(collectedItems, "VATOZ"); 
-};
-
-window.withdrawItem = function(name) {
-    if (collectedItems.length >= getPlayerCapacity()) {
-        showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
-        return;
-    }
-    const index = centralStorage.findIndex(i => i.name === name);
-    if (index !== -1) {
-        const item = centralStorage.splice(index, 1)[0];
-        collectedItems.push(item);
-        renderStorageUI();
-        updateInventoryCount();
-    }
-};
-
-window.withdrawAllFromStorage = function() {
-    const cap = getPlayerCapacity();
-    let moved = 0;
-    while(centralStorage.length > 0 && collectedItems.length < cap) {
-        collectedItems.push(centralStorage.pop());
-        moved++;
-    }
-    if (moved > 0) showNotification({name: `${moved} EŞYA GEMİYE ALINDI`, type:{color:'#38bdf8'}}, "");
-    else if (centralStorage.length > 0) showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
-    
-    renderStorageUI();
-    updateInventoryCount();
-};
+// depositToStorage fonksiyonu buradan kaldırıldı -> js/windows/storage.js
 
 function addItemToInventory(planet) { 
     const currentCount = collectedItems.length;
@@ -162,7 +104,7 @@ function addItemToInventory(planet) {
     collectedItems.push(planet); 
     playerData.stats.totalResources++; 
     updateInventoryCount(); 
-    if(inventoryOpen) renderInventory();
+    if(typeof inventoryOpen !== 'undefined' && inventoryOpen) renderInventory();
     return true; 
 }
 
@@ -306,7 +248,7 @@ function loop() {
             playerData.stats.timeAI += dt;
         }
 
-        if(statsOpen) {
+        if(typeof statsOpen !== 'undefined' && statsOpen) {
             renderStats();
         }
 
@@ -326,16 +268,13 @@ function loop() {
 
         // ESC Kontrolü
         if (keys.Escape) { 
-            if (inventoryOpen) closeInventory();
-            else if (echoInvOpen) closeEchoInventory();
-            else if (nexusOpen) exitNexus();
-            else if (storageOpen) closeStorage(); 
-            else if (mapOpen) closeMap();
-            else if (statsOpen) closeStats();
-            // YENİ: Ayarlar penceresi kontrolü settings.js fonksiyonu ile
-            else if (typeof settingsOpen !== 'undefined' && settingsOpen) {
-                closeSettings();
-            }
+            if (typeof inventoryOpen !== 'undefined' && inventoryOpen) closeInventory();
+            else if (typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory();
+            else if (typeof nexusOpen !== 'undefined' && nexusOpen) exitNexus();
+            else if (typeof storageOpen !== 'undefined' && storageOpen) closeStorage(); 
+            else if (typeof mapOpen !== 'undefined' && mapOpen) closeMap();
+            else if (typeof statsOpen !== 'undefined' && statsOpen) closeStats();
+            else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
             else togglePause();
             keys.Escape = false;
         }
@@ -417,7 +356,7 @@ function loop() {
                     if(p.type.id === 'toxic') { 
                         if(audio) audio.playToxic(); showToxicEffect(); 
                         for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16')); 
-                        if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}}, ""); } 
+                        if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}}, ""); } 
                         else { 
                             const now = Date.now(); 
                             if (now - lastToxicNotification > 2000) { showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}}, ""); lastToxicNotification = now; } 
@@ -483,12 +422,16 @@ function loop() {
             const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
             const distStorage = Math.hypot(player.x - storageCenter.x, player.y - storageCenter.y);
             
-            let showNexusPrompt = (distNexus < nexus.radius + 200) && !nexusOpen;
-            let showStoragePrompt = (distStorage < storageCenter.radius + 200) && !storageOpen;
+            // nexusOpen ve storageOpen kontrolleri global scope'ta veya ilgili modülde
+            let isNexusOpen = (typeof nexusOpen !== 'undefined' && nexusOpen);
+            let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
+
+            let showNexusPrompt = (distNexus < nexus.radius + 200) && !isNexusOpen;
+            let showStoragePrompt = (distStorage < storageCenter.radius + 200) && !isStorageOpen;
 
             if (showNexusPrompt) { promptEl.innerText = "[E] NEXUS'A GİRİŞ YAP"; promptEl.className = 'visible'; if (keys.e) { if(document.activeElement !== document.getElementById('chat-input')) { enterNexus(); keys.e = false; } } } 
             else if (showStoragePrompt) { promptEl.innerText = "[E] DEPO YÖNETİMİ"; promptEl.className = 'visible'; if (keys.e) { if(document.activeElement !== document.getElementById('chat-input')) { openStorage(); keys.e = false; } } }
-            else if (echoRay && !nexusOpen && !storageOpen && !mapOpen) {
+            else if (echoRay && !isNexusOpen && !isStorageOpen && !mapOpen) {
                 const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
                 if (!echoRay.attached && distEcho < 300) { 
                     promptEl.innerText = "[F] BİRLEŞ"; promptEl.className = 'visible'; if(keys.f) { if(document.activeElement !== document.getElementById('chat-input')) { echoManualMerge(); keys.f = false; } } 
@@ -518,7 +461,7 @@ function loop() {
         const state = { manualTarget };
         
         drawMiniMap(mmCtx, entities, state);
-        if(mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
+        if(typeof mapOpen !== 'undefined' && mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
 
     } 
     animationId = requestAnimationFrame(loop);

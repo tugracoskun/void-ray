@@ -44,7 +44,6 @@
             }
 
             // 3. Ayar Dinleyicilerini Başlat
-            // YENİ: Artık settings.js içindeki initSettings fonksiyonunu çağırıyoruz.
             if (typeof initSettings === 'function') {
                 initSettings();
             }
@@ -62,8 +61,9 @@
     <script src="js/windows/inventory.js"></script>
     <script src="js/windows/stats.js"></script>
     <script src="js/windows/chat.js"></script>
-    <!-- YENİ EKLENEN SETTINGS.JS -->
     <script src="js/windows/settings.js"></script>
+    <!-- YENİ EKLENEN STORAGE.JS -->
+    <script src="js/windows/storage.js"></script>
     
     <!-- VARLIKLAR -->
     <script src="js/entities/Nexus.js"></script>
