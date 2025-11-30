@@ -357,16 +357,47 @@ class EchoRay {
             ctx.save();
             ctx.translate(this.x, this.y);
             
-            // 1. HIZ VEKTÖRÜ (Sarı)
-            const speedScale = 20;
+            // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
+            // Hız eşiği kontrolü
+            const speed = Math.hypot(this.vx, this.vy);
+            if (speed > 0.1) {
+                const speedScale = 20;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+                ctx.strokeStyle = "yellow";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Sarı Ok Ucu
+                const tipX = this.vx * speedScale;
+                const tipY = this.vy * speedScale;
+                ctx.beginPath();
+                ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
+                ctx.fillStyle = "yellow";
+                ctx.fill();
+                
+                // Etiket (Hız)
+                ctx.fillStyle = "yellow";
+                ctx.font = "10px monospace";
+                ctx.fillText("V", tipX + 5, tipY + 5);
+            }
+
+            // 2. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
+            const headLen = 40;
+            const hx = Math.cos(this.angle) * headLen;
+            const hy = Math.sin(this.angle) * headLen;
+            
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
-            ctx.strokeStyle = "yellow";
-            ctx.lineWidth = 2;
+            ctx.lineTo(hx, hy);
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 4]); // Kesikli çizgi
             ctx.stroke();
+            ctx.setLineDash([]); // Normale dön
 
-            // 2. HEDEF ÇİZGİSİ (Beyaz/Yeşil)
+            // 3. HEDEF ÇİZGİSİ (Beyaz/Yeşil)
             if (this.debugTarget) {
                 // Hedef global koordinat sisteminde. Biz şu an (this.x, this.y) merkezindeyiz.
                 // O yüzden hedefin bize göre bağıl konumunu bulmalıyız.
@@ -386,6 +417,10 @@ class EchoRay {
                 ctx.arc(relTx, relTy, 5, 0, Math.PI*2);
                 ctx.fillStyle = "white";
                 ctx.fill();
+                
+                // Hedef Etiketi
+                ctx.fillStyle = "rgba(255,255,255,0.7)";
+                ctx.fillText("TARGET", relTx + 8, relTy);
             }
 
             ctx.restore();
