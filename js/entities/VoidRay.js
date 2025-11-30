@@ -47,19 +47,24 @@ class VoidRay {
         this.level++; 
         this.xp = 0; 
         this.maxXp = GameRules.calculateNextLevelXp(this.maxXp);
-        this.scale += 0.1; 
+        
+        // Boyut artışı kaldırıldı
+        // this.scale += 0.1; 
+        
         this.maxHealth += 20; // Seviye atlayınca can artışı
         this.health = this.maxHealth; // Canı fulle
+        
         // Global fonksiyonlar
-        audio.playEvolve(); 
+        if(typeof audio !== 'undefined' && audio) audio.playEvolve(); 
         showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
+        
         // Global değişkenler
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
     }
     
     takeDamage(amount) {
         // --- GOD MODE KONTROLÜ ---
-        if (window.gameSettings.godMode) return;
+        if (window.gameSettings && window.gameSettings.godMode) return;
 
         this.health = Math.max(0, this.health - amount);
         
@@ -77,7 +82,8 @@ class VoidRay {
 
     die() {
         // Ölüm Ekranını Göster
-        document.getElementById('death-screen').classList.add('active');
+        const deathScreen = document.getElementById('death-screen');
+        if(deathScreen) deathScreen.classList.add('active');
         // Global değişken
         isPaused = true; 
         
@@ -98,9 +104,14 @@ class VoidRay {
         this.y = GameRules.LOCATIONS.PLAYER_RESPAWN.y;
         
         // Arayüzü Temizle
-        document.getElementById('death-screen').classList.remove('active');
-        document.getElementById('radiation-overlay').classList.remove('active');
-        document.getElementById('radiation-warning').style.display = 'none';
+        const deathScreen = document.getElementById('death-screen');
+        if(deathScreen) deathScreen.classList.remove('active');
+        
+        const radOverlay = document.getElementById('radiation-overlay');
+        if(radOverlay) radOverlay.classList.remove('active');
+        
+        const radWarn = document.getElementById('radiation-warning');
+        if(radWarn) radWarn.style.display = 'none';
         
         // Oyunu Devam Ettir
         // Global değişkenler
@@ -110,9 +121,14 @@ class VoidRay {
     
     updateUI() {
         // Global değişkenler
-        document.getElementById('level-val').innerText = this.level;
-        document.getElementById('xp-fill').style.width = `${(this.xp/this.maxXp)*100}%`;
-        document.getElementById('stardust-amount').innerText = playerData.stardust;
+        const lvlVal = document.getElementById('level-val');
+        if(lvlVal) lvlVal.innerText = this.level;
+        
+        const xpFill = document.getElementById('xp-fill');
+        if(xpFill) xpFill.style.width = `${(this.xp/this.maxXp)*100}%`;
+        
+        const dustAmt = document.getElementById('stardust-amount');
+        if(dustAmt) dustAmt.innerText = playerData.stardust;
     }
     
     update(dt = 16) { 
@@ -122,14 +138,15 @@ class VoidRay {
         const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
         
         // Radar menzillerini yükseltmelere göre güncelle (Config'den taban değerleri alarak)
-        this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult * (1 + this.scale * 0.1);
-        this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS * magnetMult * (1 + this.scale * 0.1);
+        // Scale artık değişmediği için menziller sadece upgrade ile artacak
+        this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult;
+        this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS * magnetMult;
 
         const BOOST = keys[" "] ? 0.6 : 0; // Global keys nesnesi
         let ACCEL = 0.2 + BOOST;
         
-        const MAX_SPEED = (keys[" "] ? 18 : 10) * (1 + this.scale * 0.05) * spdMult; 
-        const TURN_SPEED = (0.05 / Math.sqrt(this.scale)) * turnMult; 
+        const MAX_SPEED = (keys[" "] ? 18 : 10) * spdMult; 
+        const TURN_SPEED = 0.05 * turnMult; 
         
         // --- RADYASYON VE SINIR KONTROLÜ ---
         // Global WORLD_SIZE
@@ -156,14 +173,20 @@ class VoidRay {
             }
 
             // Görsel Uyarılar (God Mode değilse)
-            if (!window.gameSettings.godMode) {
-                document.getElementById('radiation-overlay').classList.add('active');
-                document.getElementById('radiation-warning').style.display = 'block';
+            if (!window.gameSettings || !window.gameSettings.godMode) {
+                const radOverlay = document.getElementById('radiation-overlay');
+                if(radOverlay) radOverlay.classList.add('active');
+                
+                const radWarn = document.getElementById('radiation-warning');
+                if(radWarn) radWarn.style.display = 'block';
             }
         } else {
             this.outOfBoundsTimer = Math.max(0, this.outOfBoundsTimer - 5);
-            document.getElementById('radiation-overlay').classList.remove('active');
-            document.getElementById('radiation-warning').style.display = 'none';
+            const radOverlay = document.getElementById('radiation-overlay');
+            if(radOverlay) radOverlay.classList.remove('active');
+            
+            const radWarn = document.getElementById('radiation-warning');
+            if(radWarn) radWarn.style.display = 'none';
         }
 
         // Boost durumu kontrolü
@@ -174,14 +197,14 @@ class VoidRay {
         if (isBoosting) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST;
                 // God Mode kontrolü
-                if (!window.gameSettings.godMode) {
+                if (!window.gameSettings || !window.gameSettings.godMode) {
                     this.energy = Math.max(0, this.energy - cost); 
                 }
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE;
                 // God Mode kontrolü
-                if (!window.gameSettings.godMode) {
+                if (!window.gameSettings || !window.gameSettings.godMode) {
                     this.energy = Math.max(0, this.energy - cost);
                 }
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
@@ -201,16 +224,20 @@ class VoidRay {
 
         // UI Güncelleme (game.js'de tanımlı DOM elementleri)
         const energyBar = document.getElementById('energy-bar-fill');
-        energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
-        if(this.energy < 20) energyBar.style.background = '#ef4444';
-        else energyBar.style.background = '#38bdf8';
+        if(energyBar) {
+            energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
+            if(this.energy < 20) energyBar.style.background = '#ef4444';
+            else energyBar.style.background = '#38bdf8';
+        }
 
         const healthBar = document.getElementById('health-bar-fill');
-        const healthPct = (this.health / this.maxHealth) * 100;
-        healthBar.style.width = healthPct + '%';
-        if (healthPct < 30) healthBar.style.background = '#ef4444'; 
-        else if (healthPct < 60) healthBar.style.background = '#f59e0b'; 
-        else healthBar.style.background = '#10b981'; 
+        if(healthBar) {
+            const healthPct = (this.health / this.maxHealth) * 100;
+            healthBar.style.width = healthPct + '%';
+            if (healthPct < 30) healthBar.style.background = '#ef4444'; 
+            else if (healthPct < 60) healthBar.style.background = '#f59e0b'; 
+            else healthBar.style.background = '#10b981'; 
+        }
 
         let targetRoll = 0; let targetWingState = 0;
 
@@ -271,7 +298,8 @@ class VoidRay {
                      doThrust = false; 
                      autopilot = false; manualTarget = null; 
                      showNotification({name: "HEDEFE ULAŞILDI", type:{color:'#fff'}}, "");
-                     document.getElementById('btn-ai-toggle').classList.remove('active');
+                     const aiToggle = document.getElementById('btn-ai-toggle');
+                     if(aiToggle) aiToggle.classList.remove('active');
                      updateAIButton();
                 }
             } else {
@@ -338,7 +366,8 @@ class VoidRay {
         });
 
         const speed = Math.hypot(this.vx, this.vy);
-        document.getElementById('speed-val').innerText = Math.floor(speed * 10); 
+        const speedEl = document.getElementById('speed-val');
+        if(speedEl) speedEl.innerText = Math.floor(speed * 10); 
         
         // İstatistik Güncellemeleri
         if (playerData.stats) {
@@ -392,7 +421,8 @@ class VoidRay {
             let d = Math.sqrt(dx*dx + dy*dy); let a = Math.atan2(dy, dx);
             if(d > 5 * this.scale) { curr.x = prev.x - Math.cos(a) * 5 * this.scale; curr.y = prev.y - Math.sin(a) * 5 * this.scale; }
         }
-        document.getElementById('coords').innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
+        const coordsEl = document.getElementById('coords');
+        if(coordsEl) coordsEl.innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
     }
     
     draw(ctx) {
@@ -483,23 +513,72 @@ class VoidRay {
             ctx.save();
             ctx.translate(this.x, this.y); // Gemi merkezine git
             
-            // Hız Vektörü (Sarı)
-            const speedScale = 20; // Vektörü daha görünür yapmak için uzat
+            // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
+            // Hız eşiği kontrolü
+            const speed = Math.hypot(this.vx, this.vy);
+            if (speed > 0.1) {
+                const speedScale = 20; 
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+                ctx.strokeStyle = "yellow";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Sarı Ok Ucu
+                const tipX = this.vx * speedScale;
+                const tipY = this.vy * speedScale;
+                ctx.beginPath();
+                ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
+                ctx.fillStyle = "yellow";
+                ctx.fill();
+                
+                // Etiket (Hız)
+                ctx.fillStyle = "yellow";
+                ctx.font = "10px monospace";
+                ctx.fillText("V", tipX + 5, tipY + 5);
+            }
+
+            // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
+            // Eğer W tuşuna basılıyorsa veya otopilot hareket ediyorsa
+            // Mevcut açı (this.angle) yönünde bir ok çiz
+            // Not: keys global bir değişkendir
+            if (typeof keys !== 'undefined' && (keys.w || keys[" "] || autopilot)) {
+                const thrustLen = 40; // Sabit uzunluk çünkü itme kuvveti genelde sabittir
+                const tx = Math.cos(this.angle) * thrustLen;
+                const ty = Math.sin(this.angle) * thrustLen;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(tx, ty);
+                ctx.strokeStyle = "#4ade80"; // Yeşil
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Yeşil Ok Ucu
+                ctx.beginPath();
+                ctx.arc(tx, ty, 3, 0, Math.PI*2);
+                ctx.fillStyle = "#4ade80";
+                ctx.fill();
+                
+                // Etiket (Thrust)
+                ctx.fillStyle = "#4ade80";
+                ctx.fillText("T", tx + 5, ty + 5);
+            }
+
+            // 3. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
+            const headLen = 60;
+            const hx = Math.cos(this.angle) * headLen;
+            const hy = Math.sin(this.angle) * headLen;
+            
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
-            ctx.strokeStyle = "yellow";
-            ctx.lineWidth = 2;
+            ctx.lineTo(hx, hy);
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 4]); // Kesikli çizgi
             ctx.stroke();
-
-            // Ok ucu (Basit)
-            const angle = Math.atan2(this.vy, this.vx);
-            const tipX = this.vx * speedScale;
-            const tipY = this.vy * speedScale;
-            ctx.beginPath();
-            ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
-            ctx.fillStyle = "yellow";
-            ctx.fill();
+            ctx.setLineDash([]); // Normale dön
 
             ctx.restore();
         }
