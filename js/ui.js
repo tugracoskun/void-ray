@@ -4,11 +4,10 @@
  * * Ayrılan Modüller:
  * * - Oyuncu Envanteri (js/windows/inventory.js)
  * * - İstatistikler (js/windows/stats.js)
+ * * - Ayarlar (js/windows/settings.js)
  */
 
 // Arayüz Durumları (Global Erişim İçin)
-// inventoryOpen -> inventory.js
-// statsOpen -> stats.js
 let echoInvOpen = false;
 let nexusOpen = false;
 let mapOpen = false;
@@ -445,20 +444,6 @@ function switchNexusTab(tabName) {
         renderUpgrades(); 
     }
 }
-
-window.switchSettingsTab = function(tabName) {
-    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.settings-content').forEach(c => c.classList.remove('active'));
-    
-    const btnId = 'tab-btn-' + tabName;
-    const contentId = 'set-tab-' + tabName;
-    
-    const btn = document.getElementById(btnId);
-    const content = document.getElementById(contentId);
-    
-    if (btn) btn.classList.add('active');
-    if (content) content.classList.add('active');
-};
 
 function renderMarket() {
     const grid = document.getElementById('market-grid'); 
