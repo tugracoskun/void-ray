@@ -5,13 +5,14 @@
  * * - Oyuncu Envanteri (js/windows/inventory.js)
  * * - İstatistikler (js/windows/stats.js)
  * * - Ayarlar (js/windows/settings.js)
+ * * - Depo (js/windows/storage.js)
  */
 
 // Arayüz Durumları (Global Erişim İçin)
 let echoInvOpen = false;
 let nexusOpen = false;
 let mapOpen = false;
-let storageOpen = false;
+// storageOpen buradan kaldırıldı -> js/windows/storage.js
 
 // HUD Görünürlük Durumu
 let isHudVisible = true;
@@ -329,81 +330,8 @@ window.transferAllToPlayer = function() {
 };
 
 // --- DEPO MERKEZİ (STORAGE) ARAYÜZÜ ---
-
-function openStorage() {
-    storageOpen = true;
-    document.getElementById('storage-overlay').classList.add('open');
-    renderStorageUI();
-}
-
-function closeStorage() {
-    storageOpen = false;
-    document.getElementById('storage-overlay').classList.remove('open');
-    hideTooltip();
-}
-
-function renderStorageUI() {
-    if (!storageOpen) return;
-
-    const shipListContainer = document.getElementById('storage-ship-list');
-    const centerListContainer = document.getElementById('storage-center-list');
-    const shipCap = document.getElementById('storage-ship-cap');
-    const centerCount = document.getElementById('storage-center-count');
-
-    shipCap.innerText = `${collectedItems.length} / ${getPlayerCapacity()}`;
-    centerCount.innerText = `${centralStorage.length} EŞYA`;
-
-    renderGrid(shipListContainer, collectedItems, getPlayerCapacity(), (item) => {
-        depositItem(item.name);
-    });
-
-    renderGrid(centerListContainer, centralStorage, 0, (item) => {
-        withdrawItem(item.name);
-    }, true);
-}
-
-// UI İşlemleri (Storage)
-window.depositItem = function(name) {
-    const index = collectedItems.findIndex(i => i.name === name);
-    if (index !== -1) {
-        const item = collectedItems.splice(index, 1)[0];
-        centralStorage.push(item);
-        renderStorageUI();
-        updateInventoryCount();
-    }
-};
-
-window.depositAllToStorage = function() {
-    depositToStorage(collectedItems, "VATOZ"); 
-};
-
-window.withdrawItem = function(name) {
-    if (collectedItems.length >= getPlayerCapacity()) {
-        showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
-        return;
-    }
-    const index = centralStorage.findIndex(i => i.name === name);
-    if (index !== -1) {
-        const item = centralStorage.splice(index, 1)[0];
-        collectedItems.push(item);
-        renderStorageUI();
-        updateInventoryCount();
-    }
-};
-
-window.withdrawAllFromStorage = function() {
-    const cap = getPlayerCapacity();
-    let moved = 0;
-    while(centralStorage.length > 0 && collectedItems.length < cap) {
-        collectedItems.push(centralStorage.pop());
-        moved++;
-    }
-    if (moved > 0) showNotification({name: `${moved} EŞYA GEMİYE ALINDI`, type:{color:'#38bdf8'}}, "");
-    else if (centralStorage.length > 0) showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
-    
-    renderStorageUI();
-    updateInventoryCount();
-};
+// openStorage, closeStorage, renderStorageUI ve diğer depo fonksiyonları kaldırıldı.
+// Artık js/windows/storage.js içinde.
 
 // --- HARİTA ARAYÜZÜ ---
 
