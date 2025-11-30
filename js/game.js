@@ -23,7 +23,13 @@ window.gameSettings = {
     hudHoverEffect: false,
     cameraOffsetX: 0, 
     cameraOffsetY: 0,
-    adaptiveCamera: false 
+    adaptiveCamera: false,
+    developerMode: false,
+    showGravityFields: false,
+    showHitboxes: false,
+    showVectors: false,
+    showFps: false,
+    godMode: false
 };
 
 // Render işlemi için kullanılan dinamik ofset değerleri
@@ -65,6 +71,10 @@ let manualTarget = null;
 let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
+
+// FPS Hesaplama Değişkenleri
+let frameCount = 0;
+let lastFpsTime = 0;
 
 // Güvenli Bölge Kontrolü
 let isInSafeZone = false;
@@ -181,7 +191,6 @@ function init() {
     lastFrameTime = Date.now(); 
     
     // Başlangıçta güvenli bölge durumunu kontrol et
-    // Eğer oyun başında zaten içerideysek bildirim göstermemek için durumu true yapıyoruz
     const startSafeDist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
     isInSafeZone = startSafeDist < 1500;
 
@@ -231,6 +240,21 @@ function loop() {
         const now = Date.now();
         const dt = now - lastFrameTime;
         lastFrameTime = now;
+
+        // --- FPS SAYACI ---
+        frameCount++;
+        if (now - lastFpsTime >= 1000) {
+            if (window.gameSettings.showFps) {
+                const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
+                document.getElementById('debug-fps-val').innerText = fps;
+                
+                // Toplam Obje Sayısı (Gezegenler + Parçacıklar + Yıldızlar)
+                const objCount = planets.length + particles.length + stars.length;
+                document.getElementById('debug-obj-val').innerText = objCount;
+            }
+            frameCount = 0;
+            lastFpsTime = now;
+        }
 
         let zoomSpeed = 0.1;
         if (window.cinematicMode) {
@@ -404,11 +428,16 @@ function loop() {
                     if(p.type.id === 'toxic') { 
                         if(audio) audio.playToxic(); 
                         
-                        // NOT: Görsel efektler (Overlay ve Parçacıklar) kullanıcı isteğiyle kaldırıldı.
-                        // showToxicEffect();
-                        // Glitch parçacıkları kaldırıldı.
-
-                        if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI SİSTEMİ ÇÖKTÜ...", type:{color:'#ef4444'}}, ""); } 
+                        // GOD MODE KONTROLÜ
+                        if(echoRay && echoRay.attached) { 
+                            if (!window.gameSettings.godMode) {
+                                echoRay = null; 
+                                echoDeathLevel = player.level; 
+                                document.getElementById('echo-wrapper-el').style.display = 'none'; 
+                                if(typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory(); 
+                                showNotification({name: "YANKI SİSTEMİ ÇÖKTÜ...", type:{color:'#ef4444'}}, "");
+                            } 
+                        } 
                         else { 
                             const now = Date.now(); 
                             if (now - lastToxicNotification > 2000) { showNotification({name: "KRİTİK VERİ HATASI", type:{color:'#00ff41'}}, "Holografik Hasar!"); lastToxicNotification = now; } 

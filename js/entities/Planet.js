@@ -63,6 +63,51 @@ class Planet {
         if(this.collected) return;
         if(visibility === 0) return; 
 
+        // --- GELİŞTİRİCİ MODU: ÇEKİM ALANI VE HİTBOX GÖRSELLEŞTİRME ---
+        if (window.gameSettings && window.gameSettings.developerMode && this.type.id !== 'toxic') {
+            ctx.save();
+            
+            // 1. ÇEKİM ALANI (Magenta Kesikli Çember)
+            if (window.gameSettings.showGravityFields) {
+                const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.5);
+                const gravityRadius = this.radius * 4 * magnetMult;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, gravityRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255, 0, 255, 0.3)"; 
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                
+                ctx.fillStyle = "rgba(255, 0, 255, 0.5)";
+                ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+
+                // Çekim alanı değeri
+                ctx.fillStyle = "rgba(255, 0, 255, 0.8)";
+                ctx.font = "10px monospace";
+                ctx.textAlign = "center";
+                ctx.fillText(`G: ${Math.round(gravityRadius)}`, this.x, this.y + gravityRadius + 15);
+            }
+
+            // 2. HITBOX (Kırmızı Çember)
+            if (window.gameSettings.showHitboxes) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; 
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]); // Düz çizgi
+                ctx.stroke();
+
+                // Hitbox değeri
+                ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+                ctx.font = "10px monospace";
+                ctx.textAlign = "center";
+                ctx.fillText(`R: ${Math.round(this.radius)}`, this.x, this.y + this.radius + 15);
+            }
+
+            ctx.restore();
+        }
+
         // --- BULUT ALANI (TOXIC) ÖZEL ÇİZİMİ ---
         if(this.type.id === 'toxic') {
             this.drawToxicCloud(ctx, visibility);
@@ -104,6 +149,25 @@ class Planet {
         // Ana rotasyon güncellemesi (Yavaşça dönen bir bulut)
         this.rotation += this.rotationSpeed;
         ctx.rotate(this.rotation);
+
+        // Toxic bulutlar için de hitbox göstermek faydalı olabilir
+        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showHitboxes) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255, 0, 0, 0.5)"; 
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Hitbox değeri (Toxic için rotasyonu ters çevirerek yazıyoruz ki düz dursun)
+            ctx.rotate(-this.rotation); // Yazıyı düzeltmek için rotasyonu geri al
+            ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+            ctx.font = "10px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(`R: ${Math.round(this.radius)}`, 0, this.radius + 15);
+            
+            ctx.restore();
+        }
 
         if (visibility === 1) {
             // Radar görünümü: Sadece basit bir dumanlı daire

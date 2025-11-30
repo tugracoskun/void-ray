@@ -58,6 +58,9 @@ class VoidRay {
     }
     
     takeDamage(amount) {
+        // --- GOD MODE KONTROLÜ ---
+        if (window.gameSettings.godMode) return;
+
         this.health = Math.max(0, this.health - amount);
         
         // Görsel Hasar Efekti
@@ -152,9 +155,11 @@ class VoidRay {
                 this.vy += Math.sin(angleToCenter) * pushForce;
             }
 
-            // Görsel Uyarılar
-            document.getElementById('radiation-overlay').classList.add('active');
-            document.getElementById('radiation-warning').style.display = 'block';
+            // Görsel Uyarılar (God Mode değilse)
+            if (!window.gameSettings.godMode) {
+                document.getElementById('radiation-overlay').classList.add('active');
+                document.getElementById('radiation-warning').style.display = 'block';
+            }
         } else {
             this.outOfBoundsTimer = Math.max(0, this.outOfBoundsTimer - 5);
             document.getElementById('radiation-overlay').classList.remove('active');
@@ -168,11 +173,17 @@ class VoidRay {
         // Global keys ve lowEnergyWarned
         if (isBoosting) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST;
-                this.energy = Math.max(0, this.energy - cost); 
+                // God Mode kontrolü
+                if (!window.gameSettings.godMode) {
+                    this.energy = Math.max(0, this.energy - cost); 
+                }
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE;
-                this.energy = Math.max(0, this.energy - cost);
+                // God Mode kontrolü
+                if (!window.gameSettings.godMode) {
+                    this.energy = Math.max(0, this.energy - cost);
+                }
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
                 if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + GAME_CONFIG.PLAYER.ENERGY_COST.REGEN);
@@ -312,8 +323,13 @@ class VoidRay {
             if(!p.collected && p.type.id !== 'toxic') {
                 const dx = p.x - this.x; const dy = p.y - this.y;
                 const distSq = dx*dx + dy*dy;
-                const magnetRange = 200 * (1 + playerData.upgrades.playerMagnet * 0.5); // Global playerData
-                if(distSq < magnetRange**2 && distSq > p.radius**2) {
+                
+                // ORANTILI ÇEKİM FİZİĞİ
+                // Gezegenin yarıçapının 4 katı kadar bir alandan çeker
+                const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.5);
+                const gravityRadius = p.radius * 4 * magnetMult;
+
+                if(distSq < gravityRadius**2 && distSq > p.radius**2) {
                     const force = (p.radius * 5) / distSq; 
                     this.vx += (dx / Math.sqrt(distSq)) * force;
                     this.vy += (dy / Math.sqrt(distSq)) * force;
@@ -404,6 +420,37 @@ class VoidRay {
         
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
         
+        // --- GÖRSEL DEBUG: HİTBOX VE VEKTÖRLER ---
+        if (window.gameSettings && window.gameSettings.developerMode) {
+            // 1. HITBOX (Çarpışma Sınırı)
+            if (window.gameSettings.showHitboxes) {
+                // NOT: Gerçek çarpışma yarıçapı scale ile çarpılmalı mı? 
+                // VoidRay.js'de collision genellikle 'radius + 30*scale' gibi hesaplanıyor.
+                // Burada görselleştirme için yaklaşık bir değer kullanıyoruz.
+                const collisionRadius = 30; // Yaklaşık gövde yarıçapı
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(0, 0, collisionRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; // Kırmızı
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Hitbox değeri (Dönmemesi için rotasyonu ters çeviriyoruz)
+                // Mevcut rotasyon: this.angle + Math.PI/2
+                // Tersini uyguluyoruz: -(this.angle + Math.PI/2)
+                ctx.rotate(-(this.angle + Math.PI/2));
+                
+                ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+                ctx.font = "10px monospace";
+                ctx.textAlign = "center";
+                // Rotasyon sıfırlandığı için x,y koordinatları geminin merkezine göre ve düzdür
+                ctx.fillText(`R: ${collisionRadius}`, 0, collisionRadius + 15);
+
+                ctx.restore();
+            }
+        }
+
         if (!window.cinematicMode) {
             const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; // Pulse şiddeti de enerjiye bağlı
             ctx.shadowBlur = 30 + pulse;
@@ -430,5 +477,31 @@ class VoidRay {
         
         ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
         ctx.restore();
+
+        // --- HIZ VEKTÖRÜNÜ GLOBAL KOORDİNAT SİSTEMİNDE ÇİZME ---
+        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showVectors) {
+            ctx.save();
+            ctx.translate(this.x, this.y); // Gemi merkezine git
+            
+            // Hız Vektörü (Sarı)
+            const speedScale = 20; // Vektörü daha görünür yapmak için uzat
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+            ctx.strokeStyle = "yellow";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Ok ucu (Basit)
+            const angle = Math.atan2(this.vy, this.vx);
+            const tipX = this.vx * speedScale;
+            const tipY = this.vy * speedScale;
+            ctx.beginPath();
+            ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
+            ctx.fillStyle = "yellow";
+            ctx.fill();
+
+            ctx.restore();
+        }
     }
 }

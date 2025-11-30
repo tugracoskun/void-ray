@@ -35,6 +35,9 @@ class EchoRay {
         // Hedef Renk (Oyuncu Mavisi - #38bdf8)
         // İleride oyuncu rengi değişirse burası güncellenebilir veya parametrik yapılabilir.
         this.targetColor = { r: 56, g: 189, b: 248 }; 
+        
+        // Debug için hedef takibi
+        this.debugTarget = null;
     }
     
     update() {
@@ -110,11 +113,14 @@ class EchoRay {
         }
 
         let targetX, targetY;
+        this.debugTarget = null; // Her frame sıfırla
 
         // --- HEDEF BELİRLEME MANTIĞI ---
         // Global nexus, storageCenter, player, planets
         if (this.mode === 'recharge') {
             targetX = nexus.x; targetY = nexus.y;
+            this.debugTarget = {x: nexus.x, y: nexus.y};
+            
             const d = Math.hypot(this.x - nexus.x, this.y - nexus.y);
             if (d < 100) { 
                 this.vx *= 0.5; this.vy *= 0.5; 
@@ -127,6 +133,8 @@ class EchoRay {
             }
         } else if (this.mode === 'deposit_storage') {
             targetX = storageCenter.x; targetY = storageCenter.y;
+            this.debugTarget = {x: storageCenter.x, y: storageCenter.y};
+
             const d = Math.hypot(this.x - storageCenter.x, this.y - storageCenter.y);
             if (d < 150) {
                 // Global fonksiyon
@@ -138,6 +146,7 @@ class EchoRay {
         } else if (this.attached || this.mode === 'return') {
             const target = this.attached ? player.tail[player.tail.length - 1] : player;
             targetX = target.x; targetY = target.y;
+            this.debugTarget = {x: target.x, y: target.y};
         } else {
             // Roam (Toplama) Modu
             if (this.lootBag.length < echoCap) {
@@ -148,10 +157,14 @@ class EchoRay {
                         if(d < minDist) { minDist = d; nearest = p; }
                     }
                 }
-                if(nearest) { targetX = nearest.x; targetY = nearest.y; }
+                if(nearest) { 
+                    targetX = nearest.x; targetY = nearest.y; 
+                    this.debugTarget = {x: nearest.x, y: nearest.y};
+                }
             } else {
                 targetX = player.x + Math.cos(Date.now() * 0.001) * 300;
                 targetY = player.y + Math.sin(Date.now() * 0.001) * 300;
+                this.debugTarget = {x: targetX, y: targetY};
             }
         }
 
@@ -270,6 +283,29 @@ class EchoRay {
              ctx.shadowBlur = 20 * energyRatio; // Enerji azsa gölge de azalsın
              ctx.shadowColor = dynamicColor;
         }
+
+        // --- GÖRSEL DEBUG: HİTBOX ---
+        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showHitboxes) {
+            const collisionRadius = 25;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(0, 0, collisionRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; 
+            ctx.lineWidth = 3; // Scale 0.6 olduğu için kalın çizdik
+            ctx.stroke();
+
+            // Hitbox değeri (Dönmemesi için rotasyonu ters çeviriyoruz)
+            // Mevcut rotasyon: this.angle + Math.PI/2
+            // Tersini uyguluyoruz: -(this.angle + Math.PI/2)
+            ctx.rotate(-(this.angle + Math.PI/2));
+            
+            ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+            ctx.font = "14px monospace"; // Küçük scale için fontu büyüttük
+            ctx.textAlign = "center";
+            ctx.fillText(`R: ${collisionRadius}`, 0, collisionRadius + 20);
+
+            ctx.restore();
+        }
         
         // Kanat animasyonu değerleri
         let wingTipY = 20; 
@@ -315,5 +351,44 @@ class EchoRay {
         }
         
         ctx.restore();
+
+        // --- GÖRSEL DEBUG: VEKTÖRLER VE HEDEF ---
+        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showVectors) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // 1. HIZ VEKTÖRÜ (Sarı)
+            const speedScale = 20;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+            ctx.strokeStyle = "yellow";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 2. HEDEF ÇİZGİSİ (Beyaz/Yeşil)
+            if (this.debugTarget) {
+                // Hedef global koordinat sisteminde. Biz şu an (this.x, this.y) merkezindeyiz.
+                // O yüzden hedefin bize göre bağıl konumunu bulmalıyız.
+                const relTx = this.debugTarget.x - this.x;
+                const relTy = this.debugTarget.y - this.y;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(relTx, relTy);
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                
+                // Hedef noktası
+                ctx.beginPath();
+                ctx.arc(relTx, relTy, 5, 0, Math.PI*2);
+                ctx.fillStyle = "white";
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
     }
 }

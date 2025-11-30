@@ -16,7 +16,13 @@ if (!window.gameSettings) {
         hudHoverEffect: false,
         cameraOffsetX: 0, 
         cameraOffsetY: 0,
-        adaptiveCamera: false 
+        adaptiveCamera: false,
+        developerMode: false,
+        showGravityFields: false,
+        showHitboxes: false,
+        showVectors: false,
+        showFps: false,
+        godMode: false
     };
 }
 
@@ -39,6 +45,14 @@ function initSettings() {
     const storageToggle = document.getElementById('toggle-storage-arrow');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
+    
+    // Geliştirici Toggleları
+    const devModeToggle = document.getElementById('toggle-dev-mode');
+    const gravityToggle = document.getElementById('toggle-gravity-debug');
+    const hitboxToggle = document.getElementById('toggle-hitboxes');
+    const vectorToggle = document.getElementById('toggle-vectors');
+    const fpsToggle = document.getElementById('toggle-fps-counter');
+    const godModeToggle = document.getElementById('toggle-god-mode');
     
     // UI Kontrol Alanları
     const manualCamControls = document.getElementById('manual-camera-controls');
@@ -89,6 +103,73 @@ function initSettings() {
                     if(camXInput) camXInput.disabled = false;
                     if(camYInput) camYInput.disabled = false;
                 }
+            }
+        });
+    }
+    
+    // --- GELİŞTİRİCİ MODU LİSTENER ---
+    if (devModeToggle) {
+        devModeToggle.addEventListener('change', (e) => {
+            window.gameSettings.developerMode = e.target.checked;
+            const devTabBtn = document.getElementById('tab-btn-dev');
+            if (devTabBtn) {
+                if (window.gameSettings.developerMode) {
+                    devTabBtn.style.display = 'block';
+                    showNotification({name: "GELİŞTİRİCİ MODU AKTİF", type:{color:'#ef4444'}}, "");
+                } else {
+                    devTabBtn.style.display = 'none';
+                    // Eğer şu an dev sekmesindeysek, oyun sekmesine geri dön
+                    if (devTabBtn.classList.contains('active')) {
+                        switchSettingsTab('game');
+                    }
+                    // Debug özelliklerini kapat
+                    window.gameSettings.showGravityFields = false;
+                    window.gameSettings.showHitboxes = false;
+                    window.gameSettings.showVectors = false;
+                    window.gameSettings.showFps = false;
+                    window.gameSettings.godMode = false;
+                    
+                    if(gravityToggle) gravityToggle.checked = false;
+                    if(hitboxToggle) hitboxToggle.checked = false;
+                    if(vectorToggle) vectorToggle.checked = false;
+                    if(fpsToggle) fpsToggle.checked = false;
+                    if(godModeToggle) godModeToggle.checked = false;
+                    
+                    // FPS Paneli gizle
+                    document.getElementById('debug-fps-panel').style.display = 'none';
+                    
+                    showNotification({name: "GELİŞTİRİCİ MODU KAPALI", type:{color:'#fff'}}, "");
+                }
+            }
+        });
+    }
+
+    if (gravityToggle) {
+        gravityToggle.addEventListener('change', (e) => window.gameSettings.showGravityFields = e.target.checked);
+    }
+    
+    if (hitboxToggle) {
+        hitboxToggle.addEventListener('change', (e) => window.gameSettings.showHitboxes = e.target.checked);
+    }
+
+    if (vectorToggle) {
+        vectorToggle.addEventListener('change', (e) => window.gameSettings.showVectors = e.target.checked);
+    }
+
+    if (fpsToggle) {
+        fpsToggle.addEventListener('change', (e) => {
+            window.gameSettings.showFps = e.target.checked;
+            document.getElementById('debug-fps-panel').style.display = e.target.checked ? 'block' : 'none';
+        });
+    }
+
+    if (godModeToggle) {
+        godModeToggle.addEventListener('change', (e) => {
+            window.gameSettings.godMode = e.target.checked;
+            if(window.gameSettings.godMode) {
+                showNotification({name: "ÖLÜMSÜZLÜK AKTİF", type:{color:'#10b981'}}, "");
+            } else {
+                showNotification({name: "ÖLÜMSÜZLÜK KAPALI", type:{color:'#ef4444'}}, "");
             }
         });
     }
@@ -215,3 +296,24 @@ function switchSettingsTab(tabName) {
     if (btn) btn.classList.add('active');
     if (content) content.classList.add('active');
 }
+
+// --- GELİŞTİRİCİ FONKSİYONLARI ---
+window.devAddResources = function() {
+    if(typeof playerData !== 'undefined') {
+        playerData.stardust += 1000;
+        playerData.stats.totalStardust += 1000;
+        if(typeof audio !== 'undefined' && audio) audio.playCash();
+        // UI'ı güncelle (player.updateUI global erişilebilir varsayılır)
+        if(typeof player !== 'undefined' && player.updateUI) player.updateUI();
+        if(typeof updateInventoryCount === 'function') updateInventoryCount();
+        if(typeof renderMarket === 'function') renderMarket();
+        if(typeof renderUpgrades === 'function') renderUpgrades();
+        showNotification({name: "DEV: +1000 KRİSTAL EKLENDİ", type:{color:'#fbbf24'}}, "");
+    }
+};
+
+window.devLevelUp = function() {
+    if(typeof player !== 'undefined') {
+        player.gainXp(player.maxXp);
+    }
+};
