@@ -28,6 +28,7 @@ window.gameSettings = {
     showGravityFields: false,
     showHitboxes: false,
     showVectors: false,
+    showTargetVectors: false, // YENİ: Hedef çizgilerini ayıran ayar
     showFps: false,
     godMode: false
 };

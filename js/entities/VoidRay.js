@@ -40,6 +40,9 @@ class VoidRay {
         this.idleTimer = 0;
         this.isGhost = false;
         this.currentAlpha = 1.0; // Yumuşak geçiş için mevcut opaklık
+
+        // DEBUG İÇİN HEDEF
+        this.debugTarget = null;
     }
     
     gainXp(amount) { 
@@ -110,6 +113,7 @@ class VoidRay {
         this.isGhost = false;
         this.idleTimer = 0;
         this.currentAlpha = 1.0;
+        this.debugTarget = null;
         
         // Arayüzü Temizle
         const deathScreen = document.getElementById('death-screen');
@@ -296,6 +300,8 @@ class VoidRay {
         // Opaklık değerini hedefe doğru yumuşat (Yavaş geçiş için 0.02)
         this.currentAlpha += (targetAlpha - this.currentAlpha) * 0.02;
 
+        this.debugTarget = null; // Debug hedefini sıfırla
+
         // Hareket Mantığı
         // Global autopilot, aiMode, nexus, storageCenter, planets, collectedItems, manualTarget, updateAIButton, depositToStorage, showNotification, getPlayerCapacity
         if (window.cinematicMode) {
@@ -362,6 +368,9 @@ class VoidRay {
             }
 
             if(targetX !== undefined) {
+                // Debug hedefini ayarla
+                this.debugTarget = {x: targetX, y: targetY};
+
                 const targetAngle = Math.atan2(targetY - this.y, targetX - this.x);
                 let diff = targetAngle - this.angle;
                 while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
@@ -558,77 +567,103 @@ class VoidRay {
         ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
         ctx.restore();
 
-        // --- HIZ VEKTÖRÜNÜ GLOBAL KOORDİNAT SİSTEMİNDE ÇİZME ---
-        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showVectors) {
+        // --- GÖRSEL DEBUG: HİTBOX VE VEKTÖRLER ---
+        if (window.gameSettings && window.gameSettings.developerMode) {
             ctx.save();
             ctx.translate(this.x, this.y); // Gemi merkezine git
-            
-            // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
-            // Hız eşiği kontrolü
-            const speed = Math.hypot(this.vx, this.vy);
-            if (speed > 0.1) {
-                const speedScale = 20; 
+
+            // A) VEKTÖRLER (Hız ve Yönelim)
+            if (window.gameSettings.showVectors) {
+                // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
+                // Hız eşiği kontrolü
+                const speed = Math.hypot(this.vx, this.vy);
+                if (speed > 0.1) {
+                    const speedScale = 20; 
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+                    ctx.strokeStyle = "yellow";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Sarı Ok Ucu
+                    const tipX = this.vx * speedScale;
+                    const tipY = this.vy * speedScale;
+                    ctx.beginPath();
+                    ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
+                    ctx.fillStyle = "yellow";
+                    ctx.fill();
+                    
+                    // Etiket (Hız)
+                    ctx.fillStyle = "yellow";
+                    ctx.font = "10px monospace";
+                    ctx.fillText("V", tipX + 5, tipY + 5);
+                }
+
+                // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
+                // Eğer W tuşuna basılıyorsa veya otopilot hareket ediyorsa
+                // Mevcut açı (this.angle) yönünde bir ok çiz
+                if (typeof keys !== 'undefined' && (keys.w || keys[" "] || autopilot)) {
+                    const thrustLen = 40; // Sabit uzunluk çünkü itme kuvveti genelde sabittir
+                    const tx = Math.cos(this.angle) * thrustLen;
+                    const ty = Math.sin(this.angle) * thrustLen;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(tx, ty);
+                    ctx.strokeStyle = "#4ade80"; // Yeşil
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Yeşil Ok Ucu
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 3, 0, Math.PI*2);
+                    ctx.fillStyle = "#4ade80";
+                    ctx.fill();
+                    
+                    // Etiket (Thrust)
+                    ctx.fillStyle = "#4ade80";
+                    ctx.fillText("T", tx + 5, ty + 5);
+                }
+
+                // 3. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
+                const headLen = 60;
+                const hx = Math.cos(this.angle) * headLen;
+                const hy = Math.sin(this.angle) * headLen;
+                
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
-                ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
-                ctx.strokeStyle = "yellow";
-                ctx.lineWidth = 2;
+                ctx.lineTo(hx, hy);
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 4]); // Kesikli çizgi
                 ctx.stroke();
-
-                // Sarı Ok Ucu
-                const tipX = this.vx * speedScale;
-                const tipY = this.vy * speedScale;
-                ctx.beginPath();
-                ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
-                ctx.fillStyle = "yellow";
-                ctx.fill();
-                
-                // Etiket (Hız)
-                ctx.fillStyle = "yellow";
-                ctx.font = "10px monospace";
-                ctx.fillText("V", tipX + 5, tipY + 5);
+                ctx.setLineDash([]); // Normale dön
             }
 
-            // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
-            // Eğer W tuşuna basılıyorsa veya otopilot hareket ediyorsa
-            // Mevcut açı (this.angle) yönünde bir ok çiz
-            // Not: keys global bir değişkendir
-            if (typeof keys !== 'undefined' && (keys.w || keys[" "] || autopilot)) {
-                const thrustLen = 40; // Sabit uzunluk çünkü itme kuvveti genelde sabittir
-                const tx = Math.cos(this.angle) * thrustLen;
-                const ty = Math.sin(this.angle) * thrustLen;
-                
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(tx, ty);
-                ctx.strokeStyle = "#4ade80"; // Yeşil
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Yeşil Ok Ucu
-                ctx.beginPath();
-                ctx.arc(tx, ty, 3, 0, Math.PI*2);
-                ctx.fillStyle = "#4ade80";
-                ctx.fill();
-                
-                // Etiket (Thrust)
-                ctx.fillStyle = "#4ade80";
-                ctx.fillText("T", tx + 5, ty + 5);
+            // B) HEDEF VEKTÖRÜ (YENİ AYAR) - OTOPİLOT
+            if (window.gameSettings.showTargetVectors && autopilot && this.debugTarget) {
+                 const relTx = this.debugTarget.x - this.x;
+                 const relTy = this.debugTarget.y - this.y;
+                 
+                 ctx.beginPath();
+                 ctx.moveTo(0, 0);
+                 ctx.lineTo(relTx, relTy);
+                 ctx.strokeStyle = "rgba(56, 189, 248, 0.4)"; // Mavi
+                 ctx.lineWidth = 1;
+                 ctx.setLineDash([5, 5]);
+                 ctx.stroke();
+                 
+                 // Hedef noktası
+                 ctx.beginPath();
+                 ctx.arc(relTx, relTy, 5, 0, Math.PI*2);
+                 ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
+                 ctx.fill();
+                 
+                 // Hedef Etiketi
+                 ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
+                 ctx.fillText("AI TARGET", relTx + 8, relTy);
             }
-
-            // 3. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
-            const headLen = 60;
-            const hx = Math.cos(this.angle) * headLen;
-            const hy = Math.sin(this.angle) * headLen;
-            
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(hx, hy);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-            ctx.lineWidth = 1;
-            ctx.setLineDash([2, 4]); // Kesikli çizgi
-            ctx.stroke();
-            ctx.setLineDash([]); // Normale dön
 
             ctx.restore();
         }

@@ -353,52 +353,80 @@ class EchoRay {
         ctx.restore();
 
         // --- GÖRSEL DEBUG: VEKTÖRLER VE HEDEF ---
-        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showVectors) {
+        if (window.gameSettings && window.gameSettings.developerMode) {
             ctx.save();
             ctx.translate(this.x, this.y);
-            
-            // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
-            // Hız eşiği kontrolü
-            const speed = Math.hypot(this.vx, this.vy);
-            if (speed > 0.1) {
-                const speedScale = 20;
+
+            // A) VEKTÖRLER (Hız ve Yönelim)
+            if (window.gameSettings.showVectors) {
+                // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
+                // Hız eşiği kontrolü
+                const speed = Math.hypot(this.vx, this.vy);
+                if (speed > 0.1) {
+                    const speedScale = 20;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+                    ctx.strokeStyle = "yellow";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Sarı Ok Ucu
+                    const tipX = this.vx * speedScale;
+                    const tipY = this.vy * speedScale;
+                    ctx.beginPath();
+                    ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
+                    ctx.fillStyle = "yellow";
+                    ctx.fill();
+                    
+                    // Etiket (Hız)
+                    ctx.fillStyle = "yellow";
+                    ctx.font = "10px monospace";
+                    ctx.fillText("V", tipX + 5, tipY + 5);
+                }
+
+                // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
+                // Yankı hareket halindeyse (hızı 0.1'den büyükse) itki vektörünü göster
+                if (speed > 0.1) {
+                    const thrustLen = 30; // Sabit uzunluk
+                    const tx = Math.cos(this.angle) * thrustLen;
+                    const ty = Math.sin(this.angle) * thrustLen;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(tx, ty);
+                    ctx.strokeStyle = "#4ade80"; // Yeşil
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Yeşil Ok Ucu
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 3, 0, Math.PI*2);
+                    ctx.fillStyle = "#4ade80";
+                    ctx.fill();
+                    
+                    // Etiket (Thrust)
+                    ctx.fillStyle = "#4ade80";
+                    ctx.fillText("T", tx + 5, ty + 5);
+                }
+
+                // 3. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
+                const headLen = 40;
+                const hx = Math.cos(this.angle) * headLen;
+                const hy = Math.sin(this.angle) * headLen;
+                
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
-                ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
-                ctx.strokeStyle = "yellow";
-                ctx.lineWidth = 2;
+                ctx.lineTo(hx, hy);
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 4]); // Kesikli çizgi
                 ctx.stroke();
-                
-                // Sarı Ok Ucu
-                const tipX = this.vx * speedScale;
-                const tipY = this.vy * speedScale;
-                ctx.beginPath();
-                ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
-                ctx.fillStyle = "yellow";
-                ctx.fill();
-                
-                // Etiket (Hız)
-                ctx.fillStyle = "yellow";
-                ctx.font = "10px monospace";
-                ctx.fillText("V", tipX + 5, tipY + 5);
+                ctx.setLineDash([]); // Normale dön
             }
 
-            // 2. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
-            const headLen = 40;
-            const hx = Math.cos(this.angle) * headLen;
-            const hy = Math.sin(this.angle) * headLen;
-            
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(hx, hy);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-            ctx.lineWidth = 1;
-            ctx.setLineDash([2, 4]); // Kesikli çizgi
-            ctx.stroke();
-            ctx.setLineDash([]); // Normale dön
-
-            // 3. HEDEF ÇİZGİSİ (Beyaz/Yeşil)
-            if (this.debugTarget) {
+            // B) HEDEF VEKTÖRÜ (YENİ AYAR)
+            if (window.gameSettings.showTargetVectors && this.debugTarget) {
                 // Hedef global koordinat sisteminde. Biz şu an (this.x, this.y) merkezindeyiz.
                 // O yüzden hedefin bize göre bağıl konumunu bulmalıyız.
                 const relTx = this.debugTarget.x - this.x;
