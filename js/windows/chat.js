@@ -1,8 +1,8 @@
 /**
- * Void Ray - İletişim ve Bildirim Sistemi
+ * Void Ray - Pencere: İletişim ve Bildirimler
  * * Sohbet geçmişi, sistem bildirimleri ve kullanıcı mesajlarını yönetir.
- * * AYRICA: Sürüklenebilir pencere mantığını içerir (Sınır korumalı).
- * * DÜZELTME: Event listener'lar initChatSystem fonksiyonuna alındı.
+ * * Sürüklenebilir pencere mantığını içerir.
+ * * js/chat.js dosyasından taşınmıştır.
  */
 
 // İletişim Sistemi (Loglar ve Mesajlar)
@@ -15,6 +15,7 @@ let activeChatTab = 'genel';
 
 /**
  * Ekrana ve chat paneline bildirim gönderir.
+ * Game logic tarafından global olarak kullanılır.
  */
 function showNotification(planet, suffix) {
     let msg = "";
@@ -118,17 +119,14 @@ function sendUserMessage() {
     }, 200);
 }
 
-// --- BAŞLATMA FONKSİYONU (YENİ) ---
-// Bu fonksiyon index.html içindeki loader callback'inde çağrılacak.
+// --- BAŞLATMA FONKSİYONU ---
+// index.html içindeki loader callback'inde çağrılır.
 function initChatSystem() {
     console.log("Chat sistemi başlatılıyor...");
 
-    // Olay Dinleyicileri
     const sendBtn = document.getElementById('chat-send-btn');
     if(sendBtn) {
         sendBtn.addEventListener('click', sendUserMessage);
-    } else {
-        console.warn("Chat gönder butonu bulunamadı.");
     }
 
     const chatInput = document.getElementById('chat-input');
@@ -136,8 +134,6 @@ function initChatSystem() {
         chatInput.addEventListener('keydown', (e) => {
             if(e.key === 'Enter') sendUserMessage();
         });
-    } else {
-        console.warn("Chat input alanı bulunamadı.");
     }
 
     // Chat Panelini Sürüklenebilir Yap
