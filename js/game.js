@@ -56,7 +56,8 @@ let playerData = {
     }
 };
 
-let lastToxicNotification = 0; 
+let lastToxicNotification = 0;
+let lastToxicDamage = 0; 
 let currentZoom = 1.0, targetZoom = 1.0;
 let isPaused = false;
 let animationId = null;
@@ -401,13 +402,22 @@ function loop() {
             if(!p.collected) { 
                  if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) { 
                     if(p.type.id === 'toxic') { 
-                        if(audio) audio.playToxic(); showToxicEffect(); 
-                        for(let i=0; i<30; i++) particles.push(new Particle(p.x, p.y, '#84cc16')); 
-                        if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI ZEHİRLENDİ...", type:{color:'#ef4444'}}, ""); } 
+                        if(audio) audio.playToxic(); 
+                        
+                        // NOT: Görsel efektler (Overlay ve Parçacıklar) kullanıcı isteğiyle kaldırıldı.
+                        // showToxicEffect();
+                        // Glitch parçacıkları kaldırıldı.
+
+                        if(echoRay && echoRay.attached) { echoRay = null; echoDeathLevel = player.level; document.getElementById('echo-wrapper-el').style.display = 'none'; if(typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory(); showNotification({name: "YANKI SİSTEMİ ÇÖKTÜ...", type:{color:'#ef4444'}}, ""); } 
                         else { 
                             const now = Date.now(); 
-                            if (now - lastToxicNotification > 2000) { showNotification({name: "ZARARLI GAZ TESPİT EDİLDİ", type:{color:'#84cc16'}}, ""); lastToxicNotification = now; } 
-                            player.takeDamage(5);
+                            if (now - lastToxicNotification > 2000) { showNotification({name: "KRİTİK VERİ HATASI", type:{color:'#00ff41'}}, "Holografik Hasar!"); lastToxicNotification = now; } 
+                            
+                            // YENİ HASAR SİSTEMİ
+                            if (now - lastToxicDamage > 500) { 
+                                player.takeDamage(5); 
+                                lastToxicDamage = now;
+                            }
                         } 
                     } else if (p.type.id === 'lost') { 
                          if (addItemToInventory(p)) { 

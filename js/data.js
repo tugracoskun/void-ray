@@ -32,7 +32,7 @@ const GAME_CONFIG = {
     PLANETS: {
         RADIUS: {
             LEGENDARY: 120,
-            TOXIC: 60,
+            TOXIC: 500,
             LOST: 80,
             TARDIGRADE: 50,
             BASE: 40,            // Standart gezegen taban yarıçapı
@@ -46,7 +46,7 @@ const RARITY = {
     RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.2, xp: 40, value: 30 },
     EPIC:      { id: 'epic',      name: 'Öz',        color: '#c084fc', prob: 0.1, xp: 100, value: 100 },
     LEGENDARY: { id: 'legendary', name: 'Yadigâr',   color: '#fbbf24', prob: 0.04, xp: 500, value: 400 },
-    TOXIC:     { id: 'toxic',     name: 'Zehir',     color: '#84cc16', prob: 0.01, xp: 0, value: 0 },
+    TOXIC:     { id: 'toxic',     name: 'Veri Sisi', color: '#10b981', prob: 0.01, xp: 0, value: 0 }, // İsim ve renk güncellendi
     TARDIGRADE:{ id: 'tardigrade',name: 'Tardigrad Yuvası', color: '#C7C0AE', prob: 0.02, xp: 20, value: 0 }, 
     LOST:      { id: 'lost',      name: 'Kayıp Kargo', color: '#a855f7', prob: 0, xp: 0, value: 0 }
 };
@@ -56,7 +56,7 @@ const LOOT_DB = {
     rare: ["Buz Çekirdeği", "Safir", "İyonize Gaz"],
     epic: ["Nebula Özü", "Yıldız Parçası", "Plazma"],
     legendary: ["Zaman Kristali", "Kara Delik Kalıntısı"],
-    toxic: ["Zehirli Gaz", "Asit Bulutu"],
+    toxic: ["Statik Gürültü", "Bozuk Sektör"], 
     tardigrade: ["Tardigrad"],
     lost: ["KAYIP SİNYAL"]
 };
@@ -77,7 +77,7 @@ const TIPS = [
     "Enerjinizi yenilemek için Tardigradlar çok değerlidir.",
     "Yankı, Nexus istasyonunda enerjisini yenileyebilir.",
     "Mor sinyaller değerli kayıp kargoları işaret eder.",
-    "Zehirli bölgelerden (Yeşil) uzak durun, enerji tüketir.",
+    "Veri Sislerinden (Yeşil Bulutlar) uzak durun, gemiye zarar verir.",
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
     "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın."
 ];
