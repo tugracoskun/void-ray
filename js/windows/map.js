@@ -135,6 +135,18 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     const offsetX = (canvas.width - worldSize * scale) / 2 + bigMapState.panX;
     const offsetY = (canvas.height - worldSize * scale) / 2 + bigMapState.panY;
 
+    // --- ZOOM SEVİYESİ GÖSTERGESİ ---
+    ctx.save();
+    ctx.font = "bold 16px monospace";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 4;
+    // Sağ üst köşeye yazdır
+    ctx.fillText(`ZOOM: ${bigMapState.zoom.toFixed(1)}x`, canvas.width - 20, 20);
+    ctx.restore();
+
     // --- GRID SİSTEMİ ---
     const GRID_STEP_MAJOR = MAP_CONFIG.grid.major; 
     const GRID_STEP_MINOR = MAP_CONFIG.grid.minor; 
