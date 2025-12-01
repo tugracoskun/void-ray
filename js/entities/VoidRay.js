@@ -514,15 +514,21 @@ class VoidRay {
         const dynamicShadow = `hsla(199, ${saturation}%, ${lightness}%, 0.8)`;
         const dynamicLight = `hsla(199, ${saturation}%, 50%, 1)`; // Merkez ışık biraz daha koyu/doygun olabilir
 
-        ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
-        for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
-        
-        // Kuyruk rengi de enerjiye bağlı solmalı
-        let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
-        grad.addColorStop(0, dynamicStroke); 
-        grad.addColorStop(1, "transparent");
-        
-        ctx.strokeStyle = grad; ctx.lineWidth = 3 * this.scale; ctx.lineCap = 'round'; ctx.stroke();
+        // --- GÖRSEL KISIM: KUYRUK VE GÖVDE (Ayar kontrolü ile) ---
+        // Sadece gizleme ayarı KAPALI ise gemi ve kuyruğu çiz
+        const isHidden = window.gameSettings && window.gameSettings.hidePlayer;
+
+        if (!isHidden) {
+            ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
+            for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
+            
+            // Kuyruk rengi de enerjiye bağlı solmalı
+            let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
+            grad.addColorStop(0, dynamicStroke); 
+            grad.addColorStop(1, "transparent");
+            
+            ctx.strokeStyle = grad; ctx.lineWidth = 3 * this.scale; ctx.lineCap = 'round'; ctx.stroke();
+        }
         
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
         
@@ -557,35 +563,38 @@ class VoidRay {
             }
         }
 
-        if (!window.cinematicMode) {
-            const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; // Pulse şiddeti de enerjiye bağlı
-            // Gölge de opaklığa göre azalsın ama tamamen yok olmasın
-            const shadowIntensity = Math.max(0.3, this.currentAlpha); 
-            ctx.shadowBlur = (30 + pulse) * shadowIntensity; 
-            ctx.shadowColor = dynamicShadow; 
-        } else {
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = `hsla(199, ${saturation}%, ${lightness}%, 0.2)`;
+        if (!isHidden) {
+            if (!window.cinematicMode) {
+                const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; // Pulse şiddeti de enerjiye bağlı
+                // Gölge de opaklığa göre azalsın ama tamamen yok olmasın
+                const shadowIntensity = Math.max(0.3, this.currentAlpha); 
+                ctx.shadowBlur = (30 + pulse) * shadowIntensity; 
+                ctx.shadowColor = dynamicShadow; 
+            } else {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = `hsla(199, ${saturation}%, ${lightness}%, 0.2)`;
+            }
+
+            let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
+            
+            // Gövde dolgusu (Çok hafif enerjiye tepki verebilir ama genelde koyu kalmalı)
+            ctx.fillStyle = `hsla(220, ${saturation * 0.3}%, 10%, 0.95)`; 
+            
+            ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
+            
+            ctx.strokeStyle = dynamicLight; ctx.lineWidth = 2; ctx.stroke(); 
+            
+            ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; // Merkez nokta sabit kalabilir veya hafif renk değiştirebilir
+            
+            if (!window.cinematicMode) {
+                // Gölge opaklığa göre
+                ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); 
+                ctx.shadowColor = dynamicShadow; 
+            }
+            
+            ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
         }
 
-        let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
-        
-        // Gövde dolgusu (Çok hafif enerjiye tepki verebilir ama genelde koyu kalmalı)
-        ctx.fillStyle = `hsla(220, ${saturation * 0.3}%, 10%, 0.95)`; 
-        
-        ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
-        
-        ctx.strokeStyle = dynamicLight; ctx.lineWidth = 2; ctx.stroke(); 
-        
-        ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; // Merkez nokta sabit kalabilir veya hafif renk değiştirebilir
-        
-        if (!window.cinematicMode) {
-            // Gölge opaklığa göre
-            ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); 
-            ctx.shadowColor = dynamicShadow; 
-        }
-        
-        ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
         ctx.restore();
 
         // --- GÖRSEL DEBUG: HİTBOX VE VEKTÖRLER ---

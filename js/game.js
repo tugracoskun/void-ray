@@ -19,6 +19,7 @@ window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
     showStorageArrow: false,
+    showEchoArrow: true, // YENİ
     hudOpacity: 1.0,
     hudHoverEffect: false,
     cameraOffsetX: 0, 
@@ -28,9 +29,10 @@ window.gameSettings = {
     showGravityFields: false,
     showHitboxes: false,
     showVectors: false,
-    showTargetVectors: false, // YENİ: Hedef çizgilerini ayıran ayar
+    showTargetVectors: false,
     showFps: false,
-    godMode: false
+    godMode: false,
+    hidePlayer: false
 };
 
 // Render işlemi için kullanılan dinamik ofset değerleri
@@ -528,7 +530,8 @@ function loop() {
             } else { promptEl.className = ''; }
         }
 
-        if(echoRay && !echoRay.attached) {
+        // YENİ GÜNCELLEME: Yankı oku kontrolü ayarlara bağlandı
+        if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow) {
             drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }
 

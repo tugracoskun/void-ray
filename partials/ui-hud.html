@@ -84,6 +84,13 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+                <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'YANKI OKU: Yardımcı dronun (Echo) yönünü gösteren oku açar.')" onmouseleave="hideTooltip()">
+                    <span>YANKI (ECHO)</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-echo-arrow" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
 
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">SİSTEM</div>
@@ -186,11 +193,18 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <!-- YENİ TOGGLE: HEDEF VEKTÖRLERİ -->
                 <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'HEDEF VEKTÖRÜ: Otopilot ve Echo hedeflerine giden çizgiyi gösterir.')" onmouseleave="hideTooltip()">
                     <span>HEDEF VEKTÖRLERİ</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggle-target-vectors">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <!-- YENİ TOGGLE: VATOZU GİZLE -->
+                <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'GİZLİ MOD: Oyuncu gemisini ve kuyruğunu tamamen gizler.')" onmouseleave="hideTooltip()">
+                    <span>VATOZU GİZLE</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-hide-player">
                         <span class="slider"></span>
                     </label>
                 </div>
