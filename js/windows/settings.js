@@ -12,6 +12,7 @@ if (!window.gameSettings) {
         showNexusArrow: true,
         showRepairArrow: false,
         showStorageArrow: false,
+        showEchoArrow: true, // Yankı oku varsayılan olarak açık
         hudOpacity: 1.0,
         hudHoverEffect: false,
         cameraOffsetX: 0, 
@@ -23,7 +24,8 @@ if (!window.gameSettings) {
         showVectors: false,
         showTargetVectors: false,
         showFps: false,
-        godMode: false
+        godMode: false,
+        hidePlayer: false
     };
 }
 
@@ -44,6 +46,7 @@ function initSettings() {
     const nexusToggle = document.getElementById('toggle-nexus-arrow');
     const repairToggle = document.getElementById('toggle-repair-arrow');
     const storageToggle = document.getElementById('toggle-storage-arrow');
+    const echoToggle = document.getElementById('toggle-echo-arrow');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     
@@ -55,6 +58,7 @@ function initSettings() {
     const targetVectorToggle = document.getElementById('toggle-target-vectors');
     const fpsToggle = document.getElementById('toggle-fps-counter');
     const godModeToggle = document.getElementById('toggle-god-mode');
+    const hidePlayerToggle = document.getElementById('toggle-hide-player');
     
     // UI Kontrol Alanları
     const manualCamControls = document.getElementById('manual-camera-controls');
@@ -79,6 +83,7 @@ function initSettings() {
     if (nexusToggle) nexusToggle.addEventListener('change', (e) => window.gameSettings.showNexusArrow = e.target.checked);
     if (repairToggle) repairToggle.addEventListener('change', (e) => window.gameSettings.showRepairArrow = e.target.checked);
     if (storageToggle) storageToggle.addEventListener('change', (e) => window.gameSettings.showStorageArrow = e.target.checked);
+    if (echoToggle) echoToggle.addEventListener('change', (e) => window.gameSettings.showEchoArrow = e.target.checked);
 
     if (hudHoverToggle) {
         hudHoverToggle.addEventListener('change', (e) => {
@@ -131,6 +136,7 @@ function initSettings() {
                     window.gameSettings.showTargetVectors = false;
                     window.gameSettings.showFps = false;
                     window.gameSettings.godMode = false;
+                    window.gameSettings.hidePlayer = false;
                     
                     if(gravityToggle) gravityToggle.checked = false;
                     if(hitboxToggle) hitboxToggle.checked = false;
@@ -138,6 +144,7 @@ function initSettings() {
                     if(targetVectorToggle) targetVectorToggle.checked = false;
                     if(fpsToggle) fpsToggle.checked = false;
                     if(godModeToggle) godModeToggle.checked = false;
+                    if(hidePlayerToggle) hidePlayerToggle.checked = false;
                     
                     // FPS Paneli gizle
                     document.getElementById('debug-fps-panel').style.display = 'none';
@@ -182,6 +189,12 @@ function initSettings() {
         });
     }
 
+    if (hidePlayerToggle) {
+        hidePlayerToggle.addEventListener('change', (e) => {
+            window.gameSettings.hidePlayer = e.target.checked;
+        });
+    }
+
     // --- AKILLI SLIDER YÖNETİMİ ---
     const smartSliders = document.querySelectorAll('.smart-slider');
     
@@ -217,14 +230,8 @@ function initSettings() {
                 const disp = document.getElementById('val-m');
                 if(disp) disp.innerText = val + '%';
                 
-                // Audio Global Değişkenini Güncelle (audio.js)
                 if (typeof volMusic !== 'undefined') {
-                    // Global değişkene yaz (audio.js okuyacak)
-                    // Not: Bu değişkeni audio.js içinde 'let' yerine 'var' veya window objesine atamak gerekebilir
-                    // Ama JS modül yapımızda global scope paylaşılıyor.
-                    // En doğrusu audio instance üzerinden gitmek ama global değişken kullanılıyor.
                     if(audio && audio.bgMusic) audio.bgMusic.volume = val / 100;
-                    // audio.js içindeki global değişkene erişim için global scope varsayıyoruz
                     window.volMusic = val / 100; 
                 }
             }
@@ -305,13 +312,12 @@ function switchSettingsTab(tabName) {
     if (content) content.classList.add('active');
 }
 
-// --- GELİŞTİRİCİ FONKSİYONLARI ---
+// --- GELİŞTİRİCİ FONKSİYONLAR ---
 window.devAddResources = function() {
     if(typeof playerData !== 'undefined') {
         playerData.stardust += 1000;
         playerData.stats.totalStardust += 1000;
         if(typeof audio !== 'undefined' && audio) audio.playCash();
-        // UI'ı güncelle (player.updateUI global erişilebilir varsayılır)
         if(typeof player !== 'undefined' && player.updateUI) player.updateUI();
         if(typeof updateInventoryCount === 'function') updateInventoryCount();
         if(typeof renderMarket === 'function') renderMarket();
