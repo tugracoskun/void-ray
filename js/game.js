@@ -1,6 +1,7 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
  * * Depo mantığı js/windows/storage.js dosyasına taşınmıştır.
+ * * Gezegen spawn mantığı Güvenli Bölge korumasıyla güncellenmiştir.
  */
 
 // -------------------------------------------------------------------------
@@ -19,7 +20,7 @@ window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
     showStorageArrow: false,
-    showEchoArrow: true, // YENİ
+    showEchoArrow: true, 
     hudOpacity: 1.0,
     hudHoverEffect: false,
     cameraOffsetX: 0, 
@@ -104,8 +105,6 @@ function spawnEcho(x, y) {
     }
     showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
 }
-
-// depositToStorage fonksiyonu buradan kaldırıldı -> js/windows/storage.js
 
 function addItemToInventory(planet) { 
     const currentCount = collectedItems.length;
@@ -197,7 +196,18 @@ function init() {
     const startSafeDist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
     isInSafeZone = startSafeDist < 1500;
 
-    for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) planets.push(new Planet());
+    // --- BAŞLANGIÇ GEZEGEN OLUŞUMU (GÜVENLİ BÖLGE KORUMALI) ---
+    for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) {
+        let px, py, d;
+        do {
+            px = Math.random() * WORLD_SIZE;
+            py = Math.random() * WORLD_SIZE;
+            // Nexus (Güvenli Alan) kontrolü: Merkezden belirli bir yarıçap içinde spawn olmasın
+            d = Math.hypot(px - GameRules.LOCATIONS.NEXUS.x, py - GameRules.LOCATIONS.NEXUS.y);
+        } while(d < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS);
+
+        planets.push(new Planet(px, py));
+    }
     
     stars = []; 
     for(let i=0; i < GAME_CONFIG.WORLD_GEN.STAR_COUNT; i++) {
@@ -280,7 +290,9 @@ function loop() {
         repairStation.update();
         storageCenter.update();
 
-        // --- GÜVENLİ BÖLGE KONTROLÜ ---
+        // --- GÜVENLİ BÖLGE KONTROLÜ (GÖRSEL VE BİLDİRİM) ---
+        // Not: Spawn koruması 2000 birimdir, bu görsel alan 1500 birimdir.
+        // Bu sayede görsel alanın biraz dışında bile güvenli boşluk olur.
         const SAFE_ZONE_R = 1500;
         const distToNexusSafe = Math.hypot(player.x - nexus.x, player.y - nexus.y);
         
@@ -305,15 +317,25 @@ function loop() {
         }
 
         planets = planets.filter(p => !p.collected);
+        
+        // --- GEZEGEN YENİDEN OLUŞUMU (RESPAWN) ---
         if (planets.length < GAME_CONFIG.WORLD_GEN.PLANET_COUNT) {
             const needed = GAME_CONFIG.WORLD_GEN.PLANET_COUNT - planets.length;
             for(let i=0; i<needed; i++) {
-                let px, py, d; 
+                let px, py, dNexus, dPlayer; 
                 do { 
                     px = Math.random() * WORLD_SIZE; 
                     py = Math.random() * WORLD_SIZE; 
-                    d = Math.hypot(px - player.x, py - player.y); 
-                } while(d < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS);
+                    
+                    // 1. OYUNCU KONTROLÜ: Oyuncunun hemen dibinde doğmasın (aniden belirme)
+                    dPlayer = Math.hypot(px - player.x, py - player.y);
+
+                    // 2. GÜVENLİ BÖLGE KONTROLÜ: Nexus etrafındaki alana doğmasın
+                    dNexus = Math.hypot(px - GameRules.LOCATIONS.NEXUS.x, py - GameRules.LOCATIONS.NEXUS.y);
+                    
+                    // Güvenli alan yarıçapı (2000) ve Oyuncu koruma yarıçapı (1500)
+                } while(dNexus < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS || dPlayer < 1500);
+                
                 planets.push(new Planet(px, py));
             }
         }
@@ -331,8 +353,18 @@ function loop() {
             keys.Escape = false;
         }
 
-        ctx.fillStyle = "#020204"; ctx.fillRect(0,0,width,height);
-        ctx.fillStyle="white"; stars.forEach(s => { let sx = (s.x - player.x * 0.9) % width; let sy = (s.y - player.y * 0.9) % height; if(sx<0) sx+=width; if(sy<0) sy+=height; ctx.globalAlpha = 0.7; ctx.fillRect(sx, sy, s.s, s.s); }); ctx.globalAlpha = 1;
+        ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
+        
+        // Arka plan yıldızları
+        ctx.fillStyle="white"; 
+        stars.forEach(s => { 
+            let sx = (s.x - player.x * 0.9) % width; 
+            let sy = (s.y - player.y * 0.9) % height; 
+            if(sx<0) sx+=width; if(sy<0) sy+=height; 
+            ctx.globalAlpha = 0.5 + Math.random()*0.3; 
+            ctx.fillRect(sx, sy, s.s, s.s); 
+        }); 
+        ctx.globalAlpha = 1;
 
         ctx.save(); 
         
@@ -355,7 +387,7 @@ function loop() {
         ctx.scale(currentZoom, currentZoom); 
         ctx.translate(-player.x, -player.y);
         
-        // --- GÜVENLİ BÖLGE GÖRSELİ (Yazı Yok, Sadece Halka) ---
+        // --- GÜVENLİ BÖLGE GÖRSELİ ---
         ctx.save();
         ctx.translate(nexus.x, nexus.y);
         
