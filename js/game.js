@@ -2,10 +2,6 @@
 
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
- * * Bağlam Penceresi: js/windows/context.js modülüne taşındı.
- * * Depo mantığı: js/windows/storage.js modülüne taşındı.
- * * Parçacık Sistemi: js/ParticleSystem.js modülüne taşındı.
- * * Varlık Yönetimi: js/EntityManager.js modülüne taşındı (YENİ).
  */
 
 // -------------------------------------------------------------------------
@@ -18,10 +14,10 @@ var nexus = null;
 var repairStation = null;
 var storageCenter = null;
 var particleSystem = null; 
-var entityManager = null; // YENİ: Varlık Yöneticisi
+var entityManager = null; 
 var audio; 
 
-// OYUN AYARLARI (Varsayılanlar, settings.js tarafından güncellenir)
+// OYUN AYARLARI
 window.gameSettings = {
     showNexusArrow: true,
     showRepairArrow: false,
@@ -42,7 +38,6 @@ window.gameSettings = {
     hidePlayer: false
 };
 
-// Render işlemi için kullanılan dinamik ofset değerleri
 let currentRenderOffsetX = 0;
 let currentRenderOffsetY = 0;
 
@@ -80,17 +75,14 @@ let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
 
-// FPS Hesaplama Değişkenleri
 let frameCount = 0;
 let lastFpsTime = 0;
 
-// Güvenli Bölge Kontrolü
 let isInSafeZone = false;
 
 let canvas, ctx, mmCanvas, mmCtx, bmCanvas, bmCtx;
 let width, height;
 
-// Global uyumluluk için var olarak tanımlıyoruz, ancak yönetimi EntityManager yapacak
 var planets = [], stars = []; 
 let collectedItems = [];
 let centralStorage = [];
@@ -204,6 +196,14 @@ function init() {
     const startSafeDist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
     isInSafeZone = startSafeDist < 1500;
 
+    // --- SES BAŞLATMA (YUMUŞAK GİRİŞ) ---
+    // Eğer güvenli bölgedeysek 'base', değilse 'space'
+    if (audio) {
+        audio.init();
+        if (isInSafeZone) audio.playTheme('base');
+        else audio.playTheme('space');
+    }
+
     entityManager.init();
     
     player.updateUI(); 
@@ -250,7 +250,6 @@ function loop() {
         const dt = now - lastFrameTime;
         lastFrameTime = now;
 
-        // --- FPS SAYACI ---
         frameCount++;
         if (now - lastFpsTime >= 1000) {
             if (window.gameSettings.showFps) {
@@ -284,18 +283,25 @@ function loop() {
         repairStation.update();
         storageCenter.update();
 
+        // --- GÜVENLİ BÖLGE VE MÜZİK GEÇİŞ MANTIĞI ---
         const SAFE_ZONE_R = 1500;
         const distToNexusSafe = Math.hypot(player.x - nexus.x, player.y - nexus.y);
         
         if (distToNexusSafe < SAFE_ZONE_R) {
+            // Eğer daha önce güvenli bölgede değilsek, şimdi girdik
             if (!isInSafeZone) {
                 isInSafeZone = true;
                 showNotification({name: "GÜVENLİ BÖLGEYE VARILDI", type:{color:'#38bdf8'}}, "Nexus Koruma Alanı");
+                // Müzik: Soft geçiş ile Base
+                if(audio) audio.playTheme('base');
             }
         } else {
+            // Eğer daha önce güvenli bölgedeysek, şimdi çıktık
             if (isInSafeZone) {
                 isInSafeZone = false;
                 showNotification({name: "GÜVENLİ BÖLGEDEN AYRILDINIZ", type:{color:'#fbbf24'}}, "Dikkatli Olun");
+                // Müzik: Soft geçiş ile Space
+                if(audio) audio.playTheme('space');
             }
         }
 
@@ -325,8 +331,6 @@ function loop() {
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
-        // --- 1. YILDIZLARI ÇİZ (Kamera Transformundan ÖNCE) ---
-        // Yıldızlar ekran koordinatlarına (parallax) göre çizilir, dünya transformundan etkilenmemeli.
         if (entityManager) {
             entityManager.drawStars(ctx, width, height, player);
         }
@@ -348,12 +352,10 @@ function loop() {
         currentRenderOffsetX += (targetOffsetX - currentRenderOffsetX) * 0.05;
         currentRenderOffsetY += (targetOffsetY - currentRenderOffsetY) * 0.05;
 
-        // --- KAMERA TRANSFORMU UYGULA ---
         ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
         ctx.scale(currentZoom, currentZoom); 
         ctx.translate(-player.x, -player.y);
         
-        // --- 2. GEZEGENLERİ ÇİZ (Dünya Koordinatlarında) ---
         if (entityManager) {
             entityManager.drawPlanets(ctx, player, echoRay, width, height, currentZoom);
         }

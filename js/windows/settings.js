@@ -1,18 +1,17 @@
 /**
  * Void Ray - Pencere: Ayarlar
  * * Oyun ayarlarını, ses kontrollerini ve görünüm tercihlerini yönetir.
- * * game.js, ui.js ve audio.js içindeki dağınık ayar mantığı burada toplanmıştır.
  */
 
 let settingsOpen = false;
 
-// Global Ayar Nesnesi (game.js tarafından kullanılır)
+// Global Ayar Nesnesi (Varsayılanlar, game.js ile aynı olmalı)
 if (!window.gameSettings) {
     window.gameSettings = {
         showNexusArrow: true,
         showRepairArrow: false,
         showStorageArrow: false,
-        showEchoArrow: true, // Yankı oku varsayılan olarak açık
+        showEchoArrow: true, 
         hudOpacity: 1.0,
         hudHoverEffect: false,
         cameraOffsetX: 0, 
@@ -32,17 +31,13 @@ if (!window.gameSettings) {
 function initSettings() {
     console.log("Ayarlar paneli başlatılıyor...");
     
-    // Panel Açma/Kapama Butonu
     const btnSettings = document.getElementById('btn-settings');
     if (btnSettings) {
-        // Eski event listener'ları temizlemek için cloneNode (opsiyonel, ama güvenli)
         const newBtn = btnSettings.cloneNode(true);
         btnSettings.parentNode.replaceChild(newBtn, btnSettings);
-        
         newBtn.addEventListener('click', toggleSettings);
     }
 
-    // Toggle Switch Elementleri
     const nexusToggle = document.getElementById('toggle-nexus-arrow');
     const repairToggle = document.getElementById('toggle-repair-arrow');
     const storageToggle = document.getElementById('toggle-storage-arrow');
@@ -50,7 +45,6 @@ function initSettings() {
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     
-    // Geliştirici Toggleları
     const devModeToggle = document.getElementById('toggle-dev-mode');
     const gravityToggle = document.getElementById('toggle-gravity-debug');
     const hitboxToggle = document.getElementById('toggle-hitboxes');
@@ -60,12 +54,10 @@ function initSettings() {
     const godModeToggle = document.getElementById('toggle-god-mode');
     const hidePlayerToggle = document.getElementById('toggle-hide-player');
     
-    // UI Kontrol Alanları
     const manualCamControls = document.getElementById('manual-camera-controls');
     const camXInput = document.getElementById('cam-offset-x');
     const camYInput = document.getElementById('cam-offset-y');
 
-    // Etkilenecek HUD Elementleri
     const hudSelectors = ['.hud-icon-group', '#xp-container', '#chat-panel', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt'];
     const hudElements = [];
     
@@ -79,7 +71,6 @@ function initSettings() {
         }
     });
 
-    // --- TOGGLE EVENT LİSTENERS ---
     if (nexusToggle) nexusToggle.addEventListener('change', (e) => window.gameSettings.showNexusArrow = e.target.checked);
     if (repairToggle) repairToggle.addEventListener('change', (e) => window.gameSettings.showRepairArrow = e.target.checked);
     if (storageToggle) storageToggle.addEventListener('change', (e) => window.gameSettings.showStorageArrow = e.target.checked);
@@ -114,7 +105,6 @@ function initSettings() {
         });
     }
     
-    // --- GELİŞTİRİCİ MODU LİSTENER ---
     if (devModeToggle) {
         devModeToggle.addEventListener('change', (e) => {
             window.gameSettings.developerMode = e.target.checked;
@@ -125,11 +115,9 @@ function initSettings() {
                     showNotification({name: "GELİŞTİRİCİ MODU AKTİF", type:{color:'#ef4444'}}, "");
                 } else {
                     devTabBtn.style.display = 'none';
-                    // Eğer şu an dev sekmesindeysek, oyun sekmesine geri dön
                     if (devTabBtn.classList.contains('active')) {
                         switchSettingsTab('game');
                     }
-                    // Debug özelliklerini kapat
                     window.gameSettings.showGravityFields = false;
                     window.gameSettings.showHitboxes = false;
                     window.gameSettings.showVectors = false;
@@ -146,7 +134,6 @@ function initSettings() {
                     if(godModeToggle) godModeToggle.checked = false;
                     if(hidePlayerToggle) hidePlayerToggle.checked = false;
                     
-                    // FPS Paneli gizle
                     document.getElementById('debug-fps-panel').style.display = 'none';
                     
                     showNotification({name: "GELİŞTİRİCİ MODU KAPALI", type:{color:'#fff'}}, "");
@@ -199,12 +186,10 @@ function initSettings() {
     const smartSliders = document.querySelectorAll('.smart-slider');
     
     smartSliders.forEach(slider => {
-        // 1. Değişiklik Dinleyicisi
         slider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             const id = e.target.id;
 
-            // ID'ye göre işlem yap
             if (id === 'vol-hud-opacity') {
                 const opacity = val / 100;
                 window.gameSettings.hudOpacity = opacity;
@@ -230,9 +215,9 @@ function initSettings() {
                 const disp = document.getElementById('val-m');
                 if(disp) disp.innerText = val + '%';
                 
-                if (typeof volMusic !== 'undefined') {
-                    if(audio && audio.bgMusic) audio.bgMusic.volume = val / 100;
-                    window.volMusic = val / 100; 
+                // Müzik sesi değişimini Audio Manager üzerinden yap
+                if (typeof audio !== 'undefined' && audio.updateMusicVolume) {
+                    audio.updateMusicVolume(val / 100);
                 }
             }
             else if (id === 'vol-sfx') {
@@ -242,16 +227,14 @@ function initSettings() {
             }
         });
 
-        // 2. Çift Tıklama ile Sıfırlama
         slider.addEventListener('dblclick', () => {
             const defaultVal = slider.getAttribute('data-default');
             if (defaultVal !== null) {
                 slider.value = defaultVal;
-                slider.dispatchEvent(new Event('input')); // Değişikliği uygula
+                slider.dispatchEvent(new Event('input')); 
             }
         });
 
-        // 3. Mouse Tekerleği ile Kontrol
         slider.addEventListener('wheel', (e) => {
             e.preventDefault();
             const delta = Math.sign(e.deltaY) * -1;
@@ -295,9 +278,6 @@ function closeSettings() {
     if(panel) panel.classList.remove('open');
 }
 
-/**
- * Ayarlar içindeki sekmeler arası geçiş (Oyun, Görünüm, Ses)
- */
 function switchSettingsTab(tabName) {
     document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.settings-content').forEach(c => c.classList.remove('active'));
