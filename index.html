@@ -47,6 +47,11 @@
             if (typeof initSettings === 'function') {
                 initSettings();
             }
+
+            // 4. Mobil Kontrolünü Yap (YENİ)
+            if (typeof checkMobile === 'function') {
+                checkMobile();
+            }
         };
     </script>
     <script src="js/loader.js"></script>

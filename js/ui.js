@@ -199,3 +199,29 @@ function updateAIButton() {
         btn.style.borderColor = 'transparent'; 
     }
 }
+
+// --- MOBİL CİHAZ KONTROLÜ (YENİ) ---
+window.checkMobile = function() {
+    const warning = document.getElementById('mobile-warning');
+    if (!warning) return;
+
+    // Basit mobil kontrolü: UserAgent veya ekran genişliği
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 800;
+    
+    if (isMobile) {
+        warning.style.display = 'flex';
+        console.log("Mobil cihaz algılandı.");
+    } else {
+        warning.style.display = 'none';
+    }
+}
+
+window.closeMobileWarning = function() {
+    const warning = document.getElementById('mobile-warning');
+    if (warning) {
+        warning.style.display = 'none';
+        
+        // Kullanıcı devam et dediğinde tam ekran modunu önerebiliriz veya
+        // kontroller hakkında ipucu verebiliriz (Gelecek geliştirme)
+    }
+}

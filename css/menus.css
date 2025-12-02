@@ -145,3 +145,46 @@
 .death-title { font-size: 4rem; letter-spacing: 10px; font-weight: 800; text-shadow: 0 0 30px #ef4444; margin-bottom: 10px; }
 .death-sub { font-size: 1.5rem; color: #fca5a5; letter-spacing: 5px; margin-bottom: 40px; opacity: 0.8; }
 .death-info { font-family: monospace; color: #94a3b8; animation: pulse 2s infinite; }
+
+/* --- MOBİL UYARI EKRANI (YENİ) --- */
+.mobile-warning-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 300; /* En üstte */
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(20px);
+}
+
+.mobile-warning-box {
+    width: 80%; max-width: 400px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(239, 68, 68, 0.3); /* Kırmızımsı çerçeve */
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    animation: fadeInTip 0.5s ease;
+}
+
+.warning-icon {
+    font-size: 3rem; color: #ef4444; margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+
+.mobile-warning-box h2 {
+    color: #fff; font-size: 1.5rem; letter-spacing: 2px;
+    margin-bottom: 15px; font-weight: 600;
+}
+
+.mobile-warning-box p {
+    color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.menu-btn.small-btn {
+    padding: 12px 30px;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.05);
+}
