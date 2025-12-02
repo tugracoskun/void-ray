@@ -115,6 +115,13 @@ function initControls() {
             const mainMenu = document.getElementById('main-menu');
             if(mainMenu) mainMenu.classList.add('menu-hidden'); 
             
+            // DÜZELTME: Menü butonlarının bulunduğu kapsayıcıyı da gizle ve tıklanamaz yap
+            const controlsWrapper = document.getElementById('menu-controls-wrapper');
+            if (controlsWrapper) {
+                controlsWrapper.classList.remove('menu-controls-visible');
+                controlsWrapper.classList.add('menu-controls-hidden');
+            }
+
             // init game.js içindedir
             if(typeof init === 'function') init(); 
             if(audio) audio.init(); 

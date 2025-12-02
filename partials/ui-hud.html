@@ -13,6 +13,11 @@
             ≣
         </div>
         
+        <!-- BAĞLAMLAR BUTONU -->
+        <div id="btn-context-icon" class="hud-btn" title="Bağlamlar" onclick="toggleContext()" onmouseenter="showInfoTooltip(event, 'BAĞLAMLAR: Oyun mekaniklerinin mantıksal dökümü.')" onmouseleave="hideTooltip()">
+            ?
+        </div>
+        
         <div id="echo-wrapper-el" class="echo-wrapper">
             <div id="btn-echo-icon" class="hud-btn" onmouseenter="showInfoTooltip(event, 'YANKI KONTROL: Yardımcı dron modunu değiştirir.')" onmouseleave="hideTooltip()">
                 ◎ <span id="echo-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#67e8f9; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
@@ -146,7 +151,7 @@
             <div class="mt-4 pt-3 border-t border-white/10 text-[9px] text-gray-500 font-mono text-center tracking-widest">
                 VARSAYILAN DEĞER İÇİN ÇİFT TIKLAYIN
             </div>
-            <div class="mt-1 text-[10px] text-gray-500 font-mono border-t border-white/5 pt-2">
+            <div class="mt-1 text-[10px] text-gray-500 font-mono border-t border-white/5 pt-2 text-center">
                 <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASINIZ.
             </div>
         </div>
@@ -168,7 +173,7 @@
             </div>
         </div>
 
-        <!-- SEKME 4: GELİŞTİRİCİ (GİZLİ) -->
+        <!-- SEKME 4: GELİŞTİRİCİ -->
         <div id="set-tab-dev" class="settings-content">
             <div class="mb-2 text-xs text-red-400 font-bold tracking-widest opacity-80 mt-2">GÖRSEL HATA AYIKLAMA</div>
             <div class="mb-4">

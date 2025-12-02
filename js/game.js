@@ -1,7 +1,7 @@
 /**
  * Void Ray - Oyun Motoru ve Durum Yönetimi
+ * * Bağlam Penceresi: Hız analizi detaylandırıldı.
  * * Depo mantığı js/windows/storage.js dosyasına taşınmıştır.
- * * Gezegen spawn mantığı Güvenli Bölge korumasıyla güncellenmiştir.
  */
 
 // -------------------------------------------------------------------------
@@ -82,6 +82,17 @@ let lastFpsTime = 0;
 
 // Güvenli Bölge Kontrolü
 let isInSafeZone = false;
+
+// BAĞLAM PENCERESİ DEĞİŞKENLERİ
+let contextOpen = false;
+let ctxEl = { 
+    overlay: null, 
+    speedFormula: null, speedVal: null, 
+    cargoFormula: null, cargoVal: null, 
+    sensorFormula: null, sensorVal: null, 
+    envStatus: null, envDetail: null, 
+    energyRate: null, energyState: null 
+};
 
 let canvas, ctx, mmCanvas, mmCtx, bmCanvas, bmCtx;
 let width, height;
@@ -172,6 +183,140 @@ function cycleAIMode() {
 }
 
 // -------------------------------------------------------------------------
+// BAĞLAM PENCERESİ (CONTEXT WINDOW) MANTIĞI - Game Loop İçine Entegre
+// -------------------------------------------------------------------------
+
+function initContextSystem() {
+    ctxEl.overlay = document.getElementById('context-overlay');
+    if (!ctxEl.overlay) return;
+    ctxEl.speedFormula = document.getElementById('ctx-speed-formula');
+    ctxEl.speedVal = document.getElementById('ctx-speed-val');
+    ctxEl.cargoFormula = document.getElementById('ctx-cargo-formula');
+    ctxEl.cargoVal = document.getElementById('ctx-cargo-val');
+    ctxEl.sensorFormula = document.getElementById('ctx-sensor-formula');
+    ctxEl.sensorVal = document.getElementById('ctx-sensor-val');
+    ctxEl.envStatus = document.getElementById('ctx-env-status');
+    ctxEl.envDetail = document.getElementById('ctx-env-detail');
+    ctxEl.energyRate = document.getElementById('ctx-energy-rate');
+    ctxEl.energyState = document.getElementById('ctx-energy-state');
+}
+
+window.toggleContext = function() { 
+    if (!ctxEl.overlay) initContextSystem();
+    contextOpen = !contextOpen;
+    if(contextOpen) { 
+        ctxEl.overlay.classList.add('open'); 
+        renderContext(); 
+    } else { 
+        ctxEl.overlay.classList.remove('open'); 
+    }
+};
+
+window.closeContext = function() {
+    contextOpen = false;
+    if(ctxEl.overlay) ctxEl.overlay.classList.remove('open');
+};
+
+function renderContext() {
+    if(!contextOpen || !player || !ctxEl.overlay) return;
+    
+    // 1. HIZ ANALİZİ - DETAYLI
+    const isBoosting = keys[" "] && player.energy > 0;
+    const baseSpeed = 10;
+    const boostVal = isBoosting ? 8 : 0;
+    const upgradeMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
+    
+    // Gerçek fiziksel hız
+    const rawMaxSpeed = (baseSpeed + boostVal) * upgradeMult;
+    
+    // HUD için x10 kalibrasyon (Kullanıcının gördüğü değer)
+    const hudMaxSpeed = Math.floor(rawMaxSpeed * 10);
+
+    let boostStyle = isBoosting ? "color:#34d399; font-weight:bold;" : "color:#64748b;";
+    let boostText = isBoosting ? `AKTİF (+${boostVal})` : `PASİF (+0)`;
+
+    if(ctxEl.speedFormula) {
+        ctxEl.speedFormula.innerHTML = `
+            <div style="display:flex; justify-content:space-between; color:#94a3b8;">
+                <span>Taban Hız:</span> <span>${baseSpeed}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; ${boostStyle}">
+                <span>İtici Güç (Boost):</span> <span>${boostText}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#38bdf8;">
+                <span>Motor Geliştirmesi:</span> <span>x${upgradeMult.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#a855f7; border-top:1px solid rgba(255,255,255,0.1); margin-top:2px; padding-top:2px;">
+                <span>Gösterge Kalibrasyonu:</span> <span>x10</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#fff; font-weight:bold; margin-top:4px;">
+                <span>SONUÇ (HUD):</span> <span>${hudMaxSpeed} KM/S</span>
+            </div>
+        `;
+    }
+    if(ctxEl.speedVal) ctxEl.speedVal.innerText = `${hudMaxSpeed} KM/S`;
+
+    // 2. KARGO
+    const baseCap = 150;
+    const addedCap = playerData.upgrades.playerCapacity * 25;
+    const totalCap = baseCap + addedCap;
+    const currentLoad = collectedItems.length;
+    let loadColor = currentLoad >= totalCap ? "text-red-500" : "text-white";
+    
+    if(ctxEl.cargoFormula) ctxEl.cargoFormula.innerHTML = `Tab [${baseCap}] + Gen [${addedCap}]`;
+    if(ctxEl.cargoVal) ctxEl.cargoVal.innerHTML = `<span class="${loadColor}">${currentLoad}</span> / ${totalCap}`;
+
+    // 3. SENSÖR
+    const baseRange = 4000;
+    const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
+    const finalRange = baseRange * magnetMult;
+    
+    if(ctxEl.sensorFormula) ctxEl.sensorFormula.innerHTML = `Tab [${baseRange}] x Many [${magnetMult.toFixed(1)}]`;
+    if(ctxEl.sensorVal) ctxEl.sensorVal.innerText = `${Math.floor(finalRange)} km`;
+
+    // 4. ORTAM
+    const distToNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+    const isOutOfBounds = player.x < 0 || player.x > WORLD_SIZE || player.y < 0 || player.y > WORLD_SIZE;
+    
+    if(ctxEl.envStatus) {
+        if (isOutOfBounds) {
+            ctxEl.envStatus.innerText = "RADYASYON";
+            ctxEl.envStatus.className = "ctx-val text-red-500 blink text-sm";
+            const dmg = (0.2 + (player.outOfBoundsTimer * 0.005)).toFixed(2);
+            ctxEl.envDetail.innerText = `Hasar: -${dmg}/tick`;
+        } else if (distToNexus < 1500) {
+            ctxEl.envStatus.innerText = "GÜVENLİ";
+            ctxEl.envStatus.className = "ctx-val text-sky-400 text-sm";
+            ctxEl.envDetail.innerText = "Nexus Koruma Alanı";
+        } else {
+            ctxEl.envStatus.innerText = "UZAY";
+            ctxEl.envStatus.className = "ctx-val text-gray-300 text-sm";
+            ctxEl.envDetail.innerText = "Normal Seviye";
+        }
+    }
+
+    // 5. ENERJİ
+    let flowRate = 0; let stateText = "Beklemede"; let flowClass = "text-gray-400";
+    const REGEN_PER_SEC = (0.01 * 60).toFixed(2);
+    const MOVE_COST_PER_SEC = (0.002 * 60).toFixed(2);
+    const BOOST_COST_PER_SEC = (0.05 * 60).toFixed(2);
+
+    if (isBoosting) {
+        flowRate = -BOOST_COST_PER_SEC; stateText = "AŞIRI YÜK"; flowClass = "text-red-400";
+    } else if (Math.hypot(player.vx, player.vy) > 0.1) {
+        let net = (parseFloat(REGEN_PER_SEC) - parseFloat(MOVE_COST_PER_SEC)).toFixed(2);
+        flowRate = "+" + net; stateText = "AKTİF"; flowClass = "text-yellow-400";
+    } else {
+        flowRate = "+" + REGEN_PER_SEC; stateText = "ŞARJ"; flowClass = "text-emerald-400";
+    }
+    if(ctxEl.energyRate) {
+        ctxEl.energyRate.innerText = `${flowRate} /s`;
+        ctxEl.energyRate.className = `ctx-val ${flowClass}`;
+    }
+    if(ctxEl.energyState) ctxEl.energyState.innerText = stateText;
+}
+
+// -------------------------------------------------------------------------
 // OYUN DÖNGÜSÜ VE BAŞLATMA
 // -------------------------------------------------------------------------
 
@@ -192,17 +337,14 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    // Başlangıçta güvenli bölge durumunu kontrol et
     const startSafeDist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
     isInSafeZone = startSafeDist < 1500;
 
-    // --- BAŞLANGIÇ GEZEGEN OLUŞUMU (GÜVENLİ BÖLGE KORUMALI) ---
     for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) {
         let px, py, d;
         do {
             px = Math.random() * WORLD_SIZE;
             py = Math.random() * WORLD_SIZE;
-            // Nexus (Güvenli Alan) kontrolü: Merkezden belirli bir yarıçap içinde spawn olmasın
             d = Math.hypot(px - GameRules.LOCATIONS.NEXUS.x, py - GameRules.LOCATIONS.NEXUS.y);
         } while(d < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS);
 
@@ -239,6 +381,9 @@ function init() {
     setTimeout(() => addChatMessage("Optik sensörler kalibre ediliyor...", "info", "genel"), 1000);
     setTimeout(() => addChatMessage("Hoş geldin, Pilot. Motorlar aktif.", "loot", "genel"), 3500);
 
+    // Context sistemini hazırla
+    initContextSystem();
+
     resize();
     window.addEventListener('resize', resize);
 }
@@ -260,8 +405,6 @@ function loop() {
             if (window.gameSettings.showFps) {
                 const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
                 document.getElementById('debug-fps-val').innerText = fps;
-                
-                // Toplam Obje Sayısı (Gezegenler + Parçacıklar + Yıldızlar)
                 const objCount = planets.length + particles.length + stars.length;
                 document.getElementById('debug-obj-val').innerText = objCount;
             }
@@ -290,9 +433,6 @@ function loop() {
         repairStation.update();
         storageCenter.update();
 
-        // --- GÜVENLİ BÖLGE KONTROLÜ (GÖRSEL VE BİLDİRİM) ---
-        // Not: Spawn koruması 2000 birimdir, bu görsel alan 1500 birimdir.
-        // Bu sayede görsel alanın biraz dışında bile güvenli boşluk olur.
         const SAFE_ZONE_R = 1500;
         const distToNexusSafe = Math.hypot(player.x - nexus.x, player.y - nexus.y);
         
@@ -312,13 +452,12 @@ function loop() {
             playerData.stats.timeAI += dt;
         }
 
-        if(typeof statsOpen !== 'undefined' && statsOpen) {
-            renderStats();
-        }
+        if(typeof statsOpen !== 'undefined' && statsOpen) renderStats();
+        // Context penceresi açıksa her karede güncelle
+        if(contextOpen) renderContext();
 
         planets = planets.filter(p => !p.collected);
         
-        // --- GEZEGEN YENİDEN OLUŞUMU (RESPAWN) ---
         if (planets.length < GAME_CONFIG.WORLD_GEN.PLANET_COUNT) {
             const needed = GAME_CONFIG.WORLD_GEN.PLANET_COUNT - planets.length;
             for(let i=0; i<needed; i++) {
@@ -326,21 +465,13 @@ function loop() {
                 do { 
                     px = Math.random() * WORLD_SIZE; 
                     py = Math.random() * WORLD_SIZE; 
-                    
-                    // 1. OYUNCU KONTROLÜ: Oyuncunun hemen dibinde doğmasın (aniden belirme)
                     dPlayer = Math.hypot(px - player.x, py - player.y);
-
-                    // 2. GÜVENLİ BÖLGE KONTROLÜ: Nexus etrafındaki alana doğmasın
                     dNexus = Math.hypot(px - GameRules.LOCATIONS.NEXUS.x, py - GameRules.LOCATIONS.NEXUS.y);
-                    
-                    // Güvenli alan yarıçapı (2000) ve Oyuncu koruma yarıçapı (1500)
                 } while(dNexus < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS || dPlayer < 1500);
-                
                 planets.push(new Planet(px, py));
             }
         }
 
-        // ESC Kontrolü
         if (keys.Escape) { 
             if (typeof inventoryOpen !== 'undefined' && inventoryOpen) closeInventory();
             else if (typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory();
@@ -349,13 +480,13 @@ function loop() {
             else if (typeof mapOpen !== 'undefined' && mapOpen) closeMap();
             else if (typeof statsOpen !== 'undefined' && statsOpen) closeStats();
             else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
+            else if (contextOpen) closeContext(); 
             else togglePause();
             keys.Escape = false;
         }
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
-        // Arka plan yıldızları
         ctx.fillStyle="white"; 
         stars.forEach(s => { 
             let sx = (s.x - player.x * 0.9) % width; 
@@ -387,27 +518,21 @@ function loop() {
         ctx.scale(currentZoom, currentZoom); 
         ctx.translate(-player.x, -player.y);
         
-        // --- GÜVENLİ BÖLGE GÖRSELİ ---
         ctx.save();
         ctx.translate(nexus.x, nexus.y);
-        
-        // Dönen dış çember
         ctx.rotate(Date.now() * 0.0001);
         ctx.beginPath();
         ctx.arc(0, 0, SAFE_ZONE_R, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; // Çok hafif mavi
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; 
         ctx.lineWidth = 20;
-        ctx.setLineDash([100, 100]); // Kesikli çizgi
+        ctx.setLineDash([100, 100]); 
         ctx.stroke();
-        
-        // İç statik çember
         ctx.beginPath();
         ctx.arc(0, 0, SAFE_ZONE_R - 50, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(56, 189, 248, 0.05)";
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
         ctx.stroke();
-
         ctx.restore();
 
         nexus.draw(ctx);
@@ -462,8 +587,6 @@ function loop() {
                  if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) { 
                     if(p.type.id === 'toxic') { 
                         if(audio) audio.playToxic(); 
-                        
-                        // GOD MODE KONTROLÜ
                         if(echoRay && echoRay.attached) { 
                             if (!window.gameSettings.godMode) {
                                 echoRay = null; 
@@ -476,8 +599,6 @@ function loop() {
                         else { 
                             const now = Date.now(); 
                             if (now - lastToxicNotification > 2000) { showNotification({name: "KRİTİK VERİ HATASI", type:{color:'#00ff41'}}, "Holografik Hasar!"); lastToxicNotification = now; } 
-                            
-                            // YENİ HASAR SİSTEMİ
                             if (now - lastToxicDamage > 500) { 
                                 player.takeDamage(5); 
                                 lastToxicDamage = now;
@@ -543,7 +664,6 @@ function loop() {
             const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
             const distStorage = Math.hypot(player.x - storageCenter.x, player.y - storageCenter.y);
             
-            // nexusOpen ve storageOpen kontrolleri global scope'ta veya ilgili modülde
             let isNexusOpen = (typeof nexusOpen !== 'undefined' && nexusOpen);
             let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
 
@@ -562,7 +682,6 @@ function loop() {
             } else { promptEl.className = ''; }
         }
 
-        // YENİ GÜNCELLEME: Yankı oku kontrolü ayarlara bağlandı
         if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow) {
             drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }

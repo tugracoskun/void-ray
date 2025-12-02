@@ -9,7 +9,9 @@
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     z-index: 100; transition: opacity 0.5s ease;
 }
+
 .menu-hidden { opacity: 0; pointer-events: none; }
+.menu-hidden * { pointer-events: none !important; }
 
 .title-main {
     font-size: 6rem; font-weight: 100; letter-spacing: 0.3em;

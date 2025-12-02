@@ -15,13 +15,13 @@
     <link rel="stylesheet" href="css/hud.css">
     <link rel="stylesheet" href="css/panels.css">
     <link rel="stylesheet" href="css/world.css">
-    <link rel="stylesheet" href="css/boot.css"> <!-- ENTEGRE BOOT CSS -->
+    <link rel="stylesheet" href="css/boot.css"> 
 </head>
 <body>
     
     <!-- PARÇALARIN YÜKLENECEĞİ ALANLAR -->
     <div id="ui-core"></div>
-    <div id="ui-menus"></div> <!-- Boot kontrolü artık bunun içinde -->
+    <div id="ui-menus"></div> 
     <div id="ui-hud"></div>
     <div id="ui-panels"></div>
 
@@ -31,21 +31,17 @@
     <!-- JS YÜKLEYİCİ VE BAŞLATICILAR -->
     <script>
         window.onUILoaded = function() {
-            // Ana Menü yüklendiğinde artık GİZLEMİYORUZ (menu-hidden yok).
-            // Çünkü menü içinde Boot Container görünecek, butonlar gizli gelecek.
-            
-            // 1. Arka Plan Hazırlıkları
+            // Arka Plan Hazırlıkları
             if (typeof initControls === 'function') initControls();
             if (typeof initChatSystem === 'function') initChatSystem();
             if (typeof initSettings === 'function') initSettings();
             if (typeof checkMobile === 'function') checkMobile();
 
-            // 2. BOOT SÜRECİNİ BAŞLAT
+            // BOOT SÜRECİNİ BAŞLAT
             if (typeof SystemBoot !== 'undefined') {
                 const boot = new SystemBoot();
                 boot.start();
             } else {
-                // Yedek: Eğer boot.js yoksa, butonları manuel aç
                 const controls = document.getElementById('menu-controls-wrapper');
                 if(controls) {
                     controls.classList.remove('menu-controls-hidden');
