@@ -21,6 +21,7 @@ js:
   - controls.js
   - maps.js
   - boot.js
+  - EntityManager.js
   - ParticleSystem.js
   
   windows:
