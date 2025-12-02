@@ -31,18 +31,18 @@
 
 /* --- BOOT CONTAINER --- */
 .boot-container-integrated {
-    width: 300px;
+    width: 240px; /* Daraltıldı (Eski: 300px) */
     display: flex;
     flex-direction: column;
     gap: 12px;
     transition: opacity 0.5s ease-out;
-    position: relative; /* Absolute yerine relative ile akışta kalsın */
+    position: relative; 
 }
 
 .boot-container-integrated.fade-out {
     opacity: 0;
     pointer-events: none;
-    position: absolute; /* Kaybolurken yer kaplamasın */
+    position: absolute; 
 }
 
 .boot-status-text {
@@ -50,7 +50,18 @@
 }
 
 .check-list-integrated {
-    display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; color: #64748b; height: 100px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; background: rgba(0,0,0,0.4); padding: 10px; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px;
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+    font-size: 0.7rem; 
+    color: #64748b; 
+    height: 300px; /* Uzatıldı (Eski: 100px) */
+    overflow-y: auto; 
+    font-family: 'Courier New', Courier, monospace; 
+    background: rgba(0,0,0,0.4); 
+    padding: 15px; 
+    border: 1px solid rgba(255,255,255,0.05); 
+    border-radius: 4px;
 }
 .check-list-integrated::-webkit-scrollbar { width: 0px; }
 
