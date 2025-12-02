@@ -4,6 +4,7 @@
  * Void Ray - Oyun Motoru ve Durum Yönetimi
  * * Bağlam Penceresi: js/windows/context.js modülüne taşındı.
  * * Depo mantığı: js/windows/storage.js modülüne taşındı.
+ * * Parçacık Sistemi: js/ParticleSystem.js modülüne taşındı.
  */
 
 // -------------------------------------------------------------------------
@@ -15,6 +16,7 @@ var echoRay = null;
 var nexus = null;
 var repairStation = null;
 var storageCenter = null;
+var particleSystem = null; // YENİ: Merkezi Parçacık Sistemi
 var audio; 
 
 // OYUN AYARLARI (Varsayılanlar, settings.js tarafından güncellenir)
@@ -87,7 +89,7 @@ let isInSafeZone = false;
 
 let canvas, ctx, mmCanvas, mmCtx, bmCanvas, bmCtx;
 let width, height;
-let planets = [], stars = [], collectedItems = [], particles = [];
+let planets = [], stars = [], collectedItems = [];
 let centralStorage = [];
 
 let autopilot = false;
@@ -189,6 +191,7 @@ function init() {
     nexus = new Nexus(); 
     repairStation = new RepairStation(); 
     storageCenter = new StorageCenter(); 
+    particleSystem = new ParticleSystem(); // YENİ: Sistemi başlat
     audio = new ZenAudio();
     planets = []; 
     gameStartTime = Date.now(); 
@@ -264,7 +267,8 @@ function loop() {
             if (window.gameSettings.showFps) {
                 const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
                 document.getElementById('debug-fps-val').innerText = fps;
-                const objCount = planets.length + particles.length + stars.length;
+                // YENİ: Parçacık sayısını sistemden al
+                const objCount = planets.length + particleSystem.count + stars.length;
                 document.getElementById('debug-obj-val').innerText = objCount;
             }
             frameCount = 0;
@@ -399,7 +403,9 @@ function loop() {
         repairStation.draw(ctx); 
         storageCenter.draw(ctx); 
         
-        for(let i=particles.length-1; i>=0; i--) { particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
+        // YENİ: Parçacık sistemini güncelle ve çiz
+        particleSystem.update();
+        particleSystem.draw(ctx);
         
         ctx.lineWidth = 1;
         ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; 
