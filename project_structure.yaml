@@ -1,3 +1,5 @@
+# Path: project_structure.yaml
+
 # Void Ray Dosya Sistemi
 # Boot modülü bu dosyayı okuyarak bütünlük kontrolü yapar.
 
@@ -29,6 +31,7 @@ js:
     - echo.js
     - map.js
     - chat.js
+    - context.js
 
   entities:
     - VoidRay.js
