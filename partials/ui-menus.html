@@ -1,26 +1,65 @@
 <!-- ANA MENÜ -->
 <div id="main-menu">
-    <div class="title-main">VOID RAY</div>
-    <svg class="void-symbol" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2">
-        <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" fill="rgba(56, 189, 248, 0.1)"/>
-        <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
-    </svg>
-    
-    <button id="btn-start" class="menu-btn">YAŞAM DÖNGÜSÜNÜ BAŞLAT</button>
-
-    <div class="tips-container">
-        <span id="tip-text" class="tip-text">Yankı'yla birleşmek için [F] tuşuna basın.</span>
+    <!-- BAŞLIK -->
+    <div class="menu-top-section">
+        <div class="title-main" style="margin-top: 8vh;">VOID RAY</div>
     </div>
+    
+    <!-- ETKİLEŞİM ALANI -->
+    <div class="interaction-zone">
+        
+        <!-- 1. SİSTEM KONTROL (Boot - Vatoz Yok) -->
+        <div id="integrated-boot-container" class="boot-container-integrated">
+            <div class="boot-status-text">SİSTEMLER BAŞLATILIYOR...</div>
+            <div class="check-list-integrated"></div>
+            <div class="progress-wrapper-integrated">
+                <div class="progress-fill-integrated"></div>
+            </div>
+        </div>
 
-    <div class="controls-grid">
-        <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Hareket</span></div>
-        <div class="key-row"><span class="key-cap">E</span> <span>Etkileşim</span></div>
-        <div class="key-row"><span class="key-cap">F</span> <span>Yankı Birleş</span></div>
-        <div class="key-row"><span class="key-cap">Q</span> <span>AI Modu</span></div>
-        <div class="key-row"><span class="key-cap">I</span> <span>Envanter</span></div>
-        <div class="key-row"><span class="key-cap">M</span> <span>Harita</span></div>
-        <div class="key-row"><span class="key-cap">H</span> <span>HUD Gizle</span></div>
-        <div class="key-row"><span class="key-cap">ESC</span> <span>Menü</span></div>
+        <!-- 2. OYUN KONTROLLERİ (Launch - Vatoz Var) -->
+        <div id="menu-controls-wrapper" class="menu-controls-hidden">
+            
+            <!-- VATOZ SİMGESİ (Ortalanmış ve Dengeli) -->
+            <svg class="void-symbol-center" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2">
+                <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" fill="rgba(56, 189, 248, 0.05)"/>
+                <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
+            </svg>
+
+            <!-- ANA BUTON -->
+            <button id="btn-start" class="menu-btn-primary">
+                YAŞAM DÖNGÜSÜNÜ BAŞLAT
+            </button>
+
+            <!-- KLASİK GRID TUŞ TAKIMI (Genişletilmiş) -->
+            <div class="controls-grid-classic">
+                <!-- Sol Sütun -->
+                <div class="key-col">
+                    <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Hareket</span></div>
+                    <div class="key-row"><span class="key-cap" style="width: 50px;">SPACE</span> <span>Hızlan</span></div>
+                </div>
+                
+                <!-- Orta Sütun -->
+                <div class="key-col">
+                    <div class="key-row"><span class="key-cap">E</span> <span>Etkileşim</span></div>
+                    <div class="key-row"><span class="key-cap">F</span> <span>Yankı</span></div>
+                    <div class="key-row"><span class="key-cap">Q</span> <span>Oto-Pilot</span></div>
+                </div>
+
+                <!-- Sağ Sütun -->
+                <div class="key-col">
+                    <div class="key-row"><span class="key-cap">I</span> <span>Envanter</span></div>
+                    <div class="key-row"><span class="key-cap">M</span> <span>Harita</span></div>
+                    <div class="key-row"><span class="key-cap">H</span> <span>Arayüz</span></div>
+                </div>
+                
+                <!-- Alt Sütun -->
+                <div class="key-col" style="grid-column: span 3; justify-content: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 5px;">
+                    <div class="key-row"><span class="key-cap">ESC</span> <span>Durdur / Menü</span></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- GELİŞTİRİCİ ALT BİLGİSİ -->
@@ -42,24 +81,20 @@
     </div>
 </div>
 
-<!-- MOBİL UYARI EKRANI (YENİ) -->
+<!-- DİĞER MODALLER (Aynı) -->
 <div id="mobile-warning" class="mobile-warning-overlay" style="display: none;">
     <div class="mobile-warning-box">
         <div class="warning-icon">⚠</div>
         <h2>MOBİL CİHAZ ALGILANDI</h2>
-        <p>Bu oyun mobil cihazlar için optimize edilmemiştir, yine de devam etmek istiyorsanız bu uyarıyı görmezden gelebilirsiniz.</p>
+        <p>Bu oyun mobil cihazlar için optimize edilmemiştir.</p>
         <button class="menu-btn small-btn" onclick="closeMobileWarning()">DEVAM ET</button>
     </div>
 </div>
-
-<!-- ÖLÜM EKRANI -->
 <div id="death-screen">
     <div class="death-title">SİNYAL KAYBEDİLDİ</div>
     <div class="death-sub">GEMİ GÖVDE BÜTÜNLÜĞÜNÜ YİTİRDİ</div>
     <div class="death-info">Tamir İstasyonunda yeniden yapılandırılıyor...</div>
 </div>
-
-<!-- PAUSE MENU -->
 <div id="pause-overlay">
     <div class="pause-title">DURAKLATILDI</div>
     <button class="pause-btn" onclick="resumeGame()">DEVAM ET</button>

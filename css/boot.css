@@ -1,0 +1,134 @@
+/* * BOOT.CSS
+ * Düzenlenmiş menü ve sistem kontrol stilleri.
+ */
+
+.interaction-zone {
+    position: relative;
+    width: 100%;
+    /* Yüksekliği artırıp esneklik sağladık */
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* İçeriği üstten başlatıp margin ile itiyoruz */
+    padding-top: 4vh; /* Başlıktan uzaklaşma */
+}
+
+/* --- MERKEZİ VATOZ SİMGESİ --- */
+.void-symbol-center {
+    width: 90px;
+    height: 90px; 
+    /* Alt boşluğu artırarak butondan uzaklaştırdık */
+    margin-bottom: 60px; 
+    animation: floatCenter 5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
+}
+
+@keyframes floatCenter {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* --- BOOT CONTAINER --- */
+.boot-container-integrated {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: opacity 0.5s ease-out;
+    position: relative; /* Absolute yerine relative ile akışta kalsın */
+}
+
+.boot-container-integrated.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute; /* Kaybolurken yer kaplamasın */
+}
+
+.boot-status-text {
+    text-align: center; font-size: 0.75rem; letter-spacing: 3px; color: #94a3b8; font-family: monospace;
+}
+
+.check-list-integrated {
+    display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; color: #64748b; height: 100px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; background: rgba(0,0,0,0.4); padding: 10px; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px;
+}
+.check-list-integrated::-webkit-scrollbar { width: 0px; }
+
+.check-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); animation: slideIn 0.1s forwards; }
+.status-icon.pending { color: #f59e0b; } .status-icon.ok { color: #10b981; } .status-icon.error { color: #ef4444; }
+
+.progress-wrapper-integrated { height: 2px; background: rgba(255,255,255,0.05); width: 100%; margin-top: 5px; }
+.progress-fill-integrated { height: 100%; background: #38bdf8; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+
+/* --- MENÜ KONTROLLERİ --- */
+.menu-controls-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); position: absolute; }
+.menu-controls-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: opacity 0.8s ease, transform 0.8s ease; display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+/* --- KLASİK GRID TUŞ TAKIMI --- */
+.controls-grid-classic {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 40px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 25px 40px;
+    margin-top: 40px; /* Buton ile Grid arasındaki boşluk */
+    backdrop-filter: blur(5px);
+}
+
+.key-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.key-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.key-cap {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.7rem;
+    min-width: 24px;
+    text-align: center;
+    font-family: 'Outfit', sans-serif;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+}
+
+/* BUTONLAR */
+.menu-btn-primary {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 18px 60px;
+    border-radius: 4px;
+    font-size: 1rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+.menu-btn-primary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #38bdf8;
+    color: #fff;
+    box-shadow: 0 0 40px rgba(56, 189, 248, 0.15);
+    transform: translateY(-2px);
+    letter-spacing: 8px;
+}
+
+@keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rüya Bahçesi: Void Ray - Modüler Sürüm</title>
+    <title>Rüya Bahçesi: Void Ray</title>
     
     <!-- STİL KÜTÜPHANELERİ -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,12 +15,13 @@
     <link rel="stylesheet" href="css/hud.css">
     <link rel="stylesheet" href="css/panels.css">
     <link rel="stylesheet" href="css/world.css">
+    <link rel="stylesheet" href="css/boot.css"> <!-- ENTEGRE BOOT CSS -->
 </head>
 <body>
     
-    <!-- PARÇALARIN YÜKLENECEĞİ ALANLAR (PLACEHOLDERS) -->
+    <!-- PARÇALARIN YÜKLENECEĞİ ALANLAR -->
     <div id="ui-core"></div>
-    <div id="ui-menus"></div>
+    <div id="ui-menus"></div> <!-- Boot kontrolü artık bunun içinde -->
     <div id="ui-hud"></div>
     <div id="ui-panels"></div>
 
@@ -29,31 +30,35 @@
 
     <!-- JS YÜKLEYİCİ VE BAŞLATICILAR -->
     <script>
-        // Oyunun kontrollerini, chat'i ve olaylarını UI yüklendikten sonra başlatacağız
         window.onUILoaded = function() {
-            console.log("Arayüz hazır, sistemler başlatılıyor...");
+            // Ana Menü yüklendiğinde artık GİZLEMİYORUZ (menu-hidden yok).
+            // Çünkü menü içinde Boot Container görünecek, butonlar gizli gelecek.
             
-            // 1. Kontrolleri Başlat
-            if (typeof initControls === 'function') {
-                initControls();
-            }
+            // 1. Arka Plan Hazırlıkları
+            if (typeof initControls === 'function') initControls();
+            if (typeof initChatSystem === 'function') initChatSystem();
+            if (typeof initSettings === 'function') initSettings();
+            if (typeof checkMobile === 'function') checkMobile();
 
-            // 2. Chat Sistemini Başlat
-            if (typeof initChatSystem === 'function') {
-                initChatSystem();
-            }
-
-            // 3. Ayar Dinleyicilerini Başlat
-            if (typeof initSettings === 'function') {
-                initSettings();
-            }
-
-            // 4. Mobil Kontrolünü Yap (YENİ)
-            if (typeof checkMobile === 'function') {
-                checkMobile();
+            // 2. BOOT SÜRECİNİ BAŞLAT
+            if (typeof SystemBoot !== 'undefined') {
+                const boot = new SystemBoot();
+                boot.start();
+            } else {
+                // Yedek: Eğer boot.js yoksa, butonları manuel aç
+                const controls = document.getElementById('menu-controls-wrapper');
+                if(controls) {
+                    controls.classList.remove('menu-controls-hidden');
+                    controls.classList.add('menu-controls-visible');
+                }
+                const bootContainer = document.getElementById('integrated-boot-container');
+                if(bootContainer) bootContainer.style.display = 'none';
             }
         };
     </script>
+    
+    <!-- SCRIPTS -->
+    <script src="js/boot.js"></script>
     <script src="js/loader.js"></script>
 
     <!-- VERİ VE MANTIK -->
@@ -69,8 +74,6 @@
     <script src="js/windows/settings.js"></script>
     <script src="js/windows/storage.js"></script>
     <script src="js/windows/nexus.js"></script>
-    
-    <!-- YENİ EKLENEN PENCERELER -->
     <script src="js/windows/echo.js"></script>
     <script src="js/windows/map.js"></script>
     

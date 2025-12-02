@@ -1,0 +1,46 @@
+# Void Ray Dosya Sistemi
+# Boot modülü bu dosyayı okuyarak bütünlük kontrolü yapar.
+
+css:
+  - core.css
+  - menus.css
+  - hud.css
+  - panels.css
+  - world.css
+  - boot.css
+
+js:
+  - data.js
+  - game-rules.js
+  - loader.js
+  - game.js
+  - ui.js
+  - audio.js
+  - controls.js
+  - maps.js
+  - boot.js
+  
+  windows:
+    - inventory.js
+    - stats.js
+    - settings.js
+    - storage.js
+    - nexus.js
+    - echo.js
+    - map.js
+    - chat.js
+
+  entities:
+    - VoidRay.js
+    - EchoRay.js
+    - Nexus.js
+    - StorageCenter.js
+    - RepairStation.js
+    - Planet.js
+    - Particle.js
+
+partials:
+  - ui-core.html
+  - ui-menus.html
+  - ui-hud.html
+  - ui-panels.html
