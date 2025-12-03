@@ -635,8 +635,10 @@ function loop() {
         const entities = { player, echoRay, nexus, repairStation, storageCenter, planets: (entityManager ? entityManager.planets : []) };
         const state = { manualTarget };
         
-        // Minimap'in merkezi de cameraFocus'a göre güncellenmeli ki uyumsuzluk olmasın
-        drawMiniMap(mmCtx, entities, state, navOrigin);
+        // DÜZELTME: drawMiniMap artık 5. parametre olarak referans varlığı (Entity) alıyor.
+        // navOrigin: {x, y} -> Kameranın görsel odağı (Yumuşak geçişli)
+        // window.cameraTarget: Entity -> Radar menzili, açı ve renk bilgisi için asıl varlık
+        drawMiniMap(mmCtx, entities, state, navOrigin, window.cameraTarget);
         
         if(typeof mapOpen !== 'undefined' && mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
 
