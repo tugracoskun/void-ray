@@ -17,6 +17,9 @@ var particleSystem = null;
 var entityManager = null; 
 var audio; 
 
+// KAMERA HEDEFİ
+window.cameraTarget = null;
+
 // OYUN AYARLARI
 window.gameSettings = {
     showNexusArrow: true,
@@ -152,6 +155,15 @@ function echoManualMerge() {
 
         showNotification({name: "SİSTEMLER BİRLEŞTİ", type:{color:'#67e8f9'}}, "Yankı deposuna erişilebilir.");
         updateEchoDropdownUI();
+        
+        // Eğer kamera Yankı'daysa, birleşince gemiye geri al
+        if (window.cameraTarget === echoRay) {
+            window.cameraTarget = player;
+            showNotification({name: "KAMERA SIFIRLANDI", type:{color:'#38bdf8'}}, "Gemiye dönüldü.");
+            // Göstergeyi kapat
+            const indicator = document.getElementById('echo-vision-indicator');
+            if(indicator) indicator.classList.remove('active');
+        }
     } else { 
         showNotification({name: "YANKI BİRLEŞMEK İÇİN GELİYOR...", type:{color:'#fbbf24'}}, ""); 
         setEchoMode('return'); 
@@ -184,6 +196,8 @@ function init() {
     bmCtx = bmCanvas.getContext('2d'); 
 
     player = new VoidRay(); 
+    window.cameraTarget = player; // Başlangıçta kamera oyuncuyu takip eder
+
     nexus = new Nexus(); 
     repairStation = new RepairStation(); 
     storageCenter = new StorageCenter(); 
@@ -284,6 +298,18 @@ function loop() {
         repairStation.update();
         storageCenter.update();
 
+        // --- KAMERA HEDEFİ GÜVENLİK KONTROLÜ ---
+        if (!window.cameraTarget) window.cameraTarget = player;
+        
+        // Eğer hedef Yankı ise ve Yankı yoksa/yok olduysa kamerayı gemiye al
+        if (window.cameraTarget === echoRay && !echoRay) {
+            window.cameraTarget = player;
+            showNotification({name: "SİNYAL KAYBI", type:{color:'#ef4444'}}, "Kamera Vatoz'a döndü.");
+            // Göstergeyi kapat
+            const indicator = document.getElementById('echo-vision-indicator');
+            if(indicator) indicator.classList.remove('active');
+        }
+
         // --- GÜVENLİ BÖLGE VE MÜZİK GEÇİŞ MANTIĞI ---
         const SAFE_ZONE_R = 1500;
         const distToNexusSafe = Math.hypot(player.x - nexus.x, player.y - nexus.y);
@@ -333,6 +359,10 @@ function loop() {
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
         if (entityManager) {
+            // Yıldızları oyuncuya göre parallax yapsak da çizimi kamera hedefine göre ayarlamak lazım
+            // Ancak yıldız çizim fonksiyonu şu an 'player' parametresi alıyor.
+            // Parallax'ın kameraya göre değil de her zaman gemiye göre olması daha doğal olabilir.
+            // Şimdilik 'player' olarak bırakıyorum.
             entityManager.drawStars(ctx, width, height, player);
         }
         
@@ -344,8 +374,12 @@ function loop() {
         if (window.gameSettings.adaptiveCamera) {
             const lookAheadFactor = 30; 
             const maxAdaptiveOffset = 400; 
-            targetOffsetX = -player.vx * lookAheadFactor;
-            targetOffsetY = -player.vy * lookAheadFactor;
+            
+            // Adaptif kamera artık seçili hedefin hızına göre çalışır
+            // Eğer hedef Echo ise onun hızını kullanır
+            targetOffsetX = -window.cameraTarget.vx * lookAheadFactor;
+            targetOffsetY = -window.cameraTarget.vy * lookAheadFactor;
+            
             targetOffsetX = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetX));
             targetOffsetY = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetY));
         }
@@ -355,7 +389,10 @@ function loop() {
 
         ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
         ctx.scale(currentZoom, currentZoom); 
-        ctx.translate(-player.x, -player.y);
+        
+        // KAMERA MERKEZLEME
+        // Artık player.x/y yerine window.cameraTarget.x/y kullanıyoruz
+        ctx.translate(-window.cameraTarget.x, -window.cameraTarget.y);
         
         if (entityManager) {
             entityManager.drawPlanets(ctx, player, echoRay, width, height, currentZoom);
@@ -446,20 +483,31 @@ function loop() {
             } else { promptEl.className = ''; }
         }
 
-        if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow) {
-            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
+        // Ok işaretleri her zaman oynadığınız karakterden bağımsız olarak gemiyi merkez alarak çizilir (Navigasyon kolaylığı için)
+        // Ancak kamera Echo'daysa, oklar Echo'dan hedefe doğru çizilse daha mantıklı olabilir.
+        // Şimdilik çizim fonksiyonu (drawTargetIndicator) "origin" parametresi alıyor.
+        // Bunu "cameraTarget" olarak güncellersek oklar her zaman ekranın ortasından çıkar.
+        const navOrigin = window.cameraTarget;
+
+        if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow && window.cameraTarget !== echoRay) {
+            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
+        }
+
+        // Eğer kamera Echo'daysa, gemiye dönüş okunu göster
+        if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
+             drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, player, MAP_CONFIG.colors.player);
         }
 
         if (window.gameSettings.showNexusArrow) {
-            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
+            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
         }
         
         if (window.gameSettings.showRepairArrow) {
-            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, repairStation, MAP_CONFIG.colors.repair);
+            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, repairStation, MAP_CONFIG.colors.repair);
         }
         
         if (window.gameSettings.showStorageArrow) {
-            drawTargetIndicator(ctx, player, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
+            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
         }
 
         const entities = { player, echoRay, nexus, repairStation, storageCenter, planets: (entityManager ? entityManager.planets : []) };
