@@ -259,6 +259,57 @@ function startLoop() {
     loop();
 }
 
+/**
+ * Ekrana parazit (karıncalanma) efekti çizer.
+ * @param {CanvasRenderingContext2D} ctx 
+ * @param {number} w - Ekran genişliği
+ * @param {number} h - Ekran yüksekliği
+ * @param {number} intensity - Yoğunluk (0.0 ile 1.0 arası)
+ */
+function drawStaticNoise(ctx, w, h, intensity) {
+    ctx.save();
+    
+    // 1. Genel parazit (Rastgele şeritler)
+    const count = 20 * intensity; // Yoğunluğa göre şerit sayısı
+    
+    for (let i = 0; i < count; i++) {
+        const y = Math.random() * h;
+        const height = Math.random() * 20 + 2;
+        // Beyaz/Gri şeritler
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3 * intensity})`;
+        ctx.fillRect(0, y, w, height);
+    }
+
+    // 2. Rastgele bloklar (Dijital bozulma/Glitch)
+    const blockCount = 50 * intensity;
+    for (let i = 0; i < blockCount; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const size = Math.random() * 50 + 10;
+        // Açık gri bloklar
+        ctx.fillStyle = `rgba(200, 200, 200, ${Math.random() * 0.4 * intensity})`;
+        ctx.fillRect(x, y, size, size/4);
+    }
+    
+    // 3. Renk kanalı kayması efekti (Kritik seviyede kırmızımsı)
+    if (intensity > 0.5) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.1 * intensity})`;
+        ctx.fillRect(Math.random() * 10 - 5, 0, w, h);
+    }
+
+    // 4. Uyarı Yazısı (Nadir yanıp sönme)
+    if (intensity > 0.4 && Math.random() < 0.1) {
+        ctx.fillStyle = `rgba(239, 68, 68, ${intensity})`;
+        ctx.font = "bold 20px monospace";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = "red";
+        ctx.fillText("⚠ SİNYAL ZAYIF ⚠", w/2, h/2 - 50);
+    }
+
+    ctx.restore();
+}
+
 function loop() {
     if(!isPaused && ctx) {
         const now = Date.now();
@@ -458,6 +509,28 @@ function loop() {
         if(echoRay) echoRay.draw(ctx);
         player.draw(ctx); ctx.restore();
         
+        // --- KAMERA PARAZİT VE BAĞLANTI KOPMA MANTIĞI (YENİ) ---
+        // Kamera Echo'daysa ve Echo bağlı değilse (bağlıyken sorun yok)
+        if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
+            const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+            const maxRange = player.radarRadius; // Radar menzili
+            const interferenceStart = maxRange * 0.6; // %60 mesafede parazit başlar
+
+            if (dist > maxRange) {
+                // BAĞLANTI KOPTU - Otomatik Geçiş
+                window.cameraTarget = player;
+                showNotification({name: "SİNYAL KAYBI: MENZİL DIŞI", type:{color:'#ef4444'}}, "Kamera Vatoz'a döndü.");
+                if(audio) audio.playError();
+                const indicator = document.getElementById('echo-vision-indicator');
+                if(indicator) indicator.classList.remove('active');
+            } else if (dist > interferenceStart) {
+                // PARAZİT EFEKTİ
+                // 0.0 ile 1.0 arası yoğunluk
+                const intensity = (dist - interferenceStart) / (maxRange - interferenceStart);
+                drawStaticNoise(ctx, width, height, intensity);
+            }
+        }
+
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
             const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
