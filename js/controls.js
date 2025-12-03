@@ -3,7 +3,7 @@
  */
 
 // Tuş Durumları (Global erişim için)
-const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, Escape:false };
+const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, c:false, Escape:false };
 
 function initControls() {
     console.log("Kontroller başlatılıyor...");
@@ -23,6 +23,36 @@ function initControls() {
         else if(e.code === "Space") keys[" "] = true; 
         else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
         
+        // --- KAMERA DEĞİŞTİRME (C TUŞU) ---
+        if(e.key.toLowerCase() === 'c') {
+            if (typeof echoRay !== 'undefined' && echoRay && !echoRay.attached) {
+                const indicator = document.getElementById('echo-vision-indicator');
+                
+                if (window.cameraTarget === player) {
+                    window.cameraTarget = echoRay;
+                    showNotification({name: "GÖRÜŞ: YANKI (ECHO)", type:{color:'#67e8f9'}}, "Kamera Aktarıldı");
+                    if(indicator) indicator.classList.add('active');
+                } else {
+                    window.cameraTarget = player;
+                    showNotification({name: "GÖRÜŞ: VATOZ (GEMİ)", type:{color:'#38bdf8'}}, "Kamera Aktarıldı");
+                    if(indicator) indicator.classList.remove('active');
+                }
+            } else if (echoRay && echoRay.attached) {
+                showNotification({name: "YANKI BAĞLI", type:{color:'#ef4444'}}, "Kamera geçişi için Yankı ayrılmalı.");
+                if(window.cameraTarget !== player) {
+                    window.cameraTarget = player;
+                    const indicator = document.getElementById('echo-vision-indicator');
+                    if(indicator) indicator.classList.remove('active');
+                }
+            } else {
+                showNotification({name: "YANKI YOK", type:{color:'#ef4444'}}, "Kamera geçişi yapılamıyor.");
+                window.cameraTarget = player;
+                const indicator = document.getElementById('echo-vision-indicator');
+                if(indicator) indicator.classList.remove('active');
+            }
+            keys.c = false;
+        }
+
         if(e.key.toLowerCase() === 'h') {
              if (typeof toggleHUD === 'function') {
                  toggleHUD();
@@ -93,8 +123,9 @@ function initControls() {
             const mx = e.clientX - rect.left;
             const my = e.clientY - rect.top;
             
-            const screenX = (echoRay.x - player.x) * currentZoom + width/2;
-            const screenY = (echoRay.y - player.y) * currentZoom + height/2;
+            // Kamera hedefine göre ekran koordinatlarını doğru hesapla
+            const screenX = (echoRay.x - window.cameraTarget.x) * currentZoom + width/2;
+            const screenY = (echoRay.y - window.cameraTarget.y) * currentZoom + height/2;
             
             const dist = Math.hypot(mx - screenX, my - screenY);
             if (dist < 40 * currentZoom) {
@@ -117,8 +148,6 @@ function initControls() {
             }
 
             if(typeof init === 'function') init(); 
-            // audio.init() artık game.js içinden çağrılıyor, burada manuel başlatmaya gerek yok.
-            // Ancak kullanıcı etkileşimi gerektiği için burada tetiklemek garanti olabilir.
             if(audio) audio.init(); 
             startLoop(); 
         });
