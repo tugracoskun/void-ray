@@ -26,6 +26,18 @@ function initControls() {
         // --- KAMERA DEĞİŞTİRME (C TUŞU) ---
         if(e.key.toLowerCase() === 'c') {
             if (typeof echoRay !== 'undefined' && echoRay && !echoRay.attached) {
+                
+                // YENİ: MESAFE KONTROLÜ
+                // Eğer Yankı radardan kaybolduysa kamera bağlantısı kurma
+                const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                const maxRange = player.radarRadius;
+
+                if (dist > maxRange) {
+                    showNotification({name: "BAĞLANTI HATASI", type:{color:'#ef4444'}}, "Yankı radar menzili dışında.");
+                    if(audio) audio.playError();
+                    return; // Fonksiyondan çık
+                }
+
                 const indicator = document.getElementById('echo-vision-indicator');
                 
                 if (window.cameraTarget === player) {
