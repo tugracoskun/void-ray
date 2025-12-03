@@ -585,6 +585,7 @@ function loop() {
             }
         }
 
+        // --- GÜNCELLENMİŞ ÇOKLU SEÇENEK (MULTI-PROMPT) MANTIĞI ---
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
             const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
@@ -592,20 +593,63 @@ function loop() {
             
             let isNexusOpen = (typeof nexusOpen !== 'undefined' && nexusOpen);
             let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
+            let isMapOpen = (typeof mapOpen !== 'undefined' && mapOpen);
 
+            // Flagleri belirle
             let showNexusPrompt = (distNexus < nexus.radius + 200) && !isNexusOpen;
             let showStoragePrompt = (distStorage < storageCenter.radius + 200) && !isStorageOpen;
+            let showEchoMergePrompt = false;
 
-            if (showNexusPrompt) { promptEl.innerText = "[E] NEXUS'A GİRİŞ YAP"; promptEl.className = 'visible'; if (keys.e) { if(document.activeElement !== document.getElementById('chat-input')) { enterNexus(); keys.e = false; } } } 
-            else if (showStoragePrompt) { promptEl.innerText = "[E] DEPO YÖNETİMİ"; promptEl.className = 'visible'; if (keys.e) { if(document.activeElement !== document.getElementById('chat-input')) { openStorage(); keys.e = false; } } }
-            else if (echoRay && !isNexusOpen && !isStorageOpen && !mapOpen) {
-                const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
-                if (!echoRay.attached && distEcho < 300) { 
-                    promptEl.innerText = "[F] BİRLEŞ"; promptEl.className = 'visible'; if(keys.f) { if(document.activeElement !== document.getElementById('chat-input')) { echoManualMerge(); keys.f = false; } } 
-                } else if (echoRay.attached) { 
-                    promptEl.className = ''; if(keys.f) { if(document.activeElement !== document.getElementById('chat-input')) { echoRay.attached = false; echoRay.mode = 'roam'; updateEchoDropdownUI(); keys.f = false; showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); } } 
-                } else { promptEl.className = ''; }
-            } else { promptEl.className = ''; }
+            // Yankı kontrolü (Harita kapalıyken)
+            if (echoRay && !isMapOpen) {
+                 const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                 if (!echoRay.attached && distEcho < 300) {
+                     showEchoMergePrompt = true;
+                 }
+            }
+
+            let activePrompts = [];
+
+            // 1. Etkileşim: E Tuşu (Nexus veya Depo)
+            if (showNexusPrompt) {
+                activePrompts.push("[E] NEXUS'A GİRİŞ YAP");
+                if (keys.e && document.activeElement !== document.getElementById('chat-input')) {
+                     enterNexus(); keys.e = false;
+                }
+            } else if (showStoragePrompt) {
+                activePrompts.push("[E] DEPO YÖNETİMİ");
+                if (keys.e && document.activeElement !== document.getElementById('chat-input')) {
+                     openStorage(); keys.e = false;
+                }
+            }
+
+            // 2. Etkileşim: F Tuşu (Merge)
+            if (showEchoMergePrompt) {
+                activePrompts.push("[F] BİRLEŞ");
+                if (keys.f && document.activeElement !== document.getElementById('chat-input')) {
+                     echoManualMerge(); keys.f = false;
+                }
+            }
+            
+            // 3. Etkileşim: F Tuşu (Ayrılma - Prompt yok ama işlev var)
+            if (echoRay && echoRay.attached) {
+                if (keys.f && document.activeElement !== document.getElementById('chat-input')) {
+                     echoRay.attached = false; 
+                     echoRay.mode = 'roam'; 
+                     updateEchoDropdownUI(); 
+                     keys.f = false; 
+                     showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, "");
+                }
+            }
+
+            // UI Güncelleme (Çoklu satır desteği)
+            if (activePrompts.length > 0) {
+                promptEl.innerHTML = activePrompts.join('<br>');
+                promptEl.className = 'visible';
+            } else {
+                promptEl.className = '';
+                promptEl.innerHTML = '';
+            }
         }
 
         // Ok işaretlerinin merkezi artık görsel olarak takip ettiğimiz nokta (cameraFocus)
