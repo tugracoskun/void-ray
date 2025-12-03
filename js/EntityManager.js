@@ -161,13 +161,13 @@ class EntityManager {
      * @param {CanvasRenderingContext2D} ctx 
      * @param {number} width - Ekran genişliği
      * @param {number} height - Ekran yüksekliği
-     * @param {object} player - Oyuncu nesnesi (Parallax için)
+     * @param {object} target - Parallax referans noktası (Kamera hedefi)
      */
-    drawStars(ctx, width, height, player) {
+    drawStars(ctx, width, height, target) {
         ctx.fillStyle="white"; 
         this.stars.forEach(s => { 
-            let sx = (s.x - player.x * 0.9) % width; 
-            let sy = (s.y - player.y * 0.9) % height; 
+            let sx = (s.x - target.x * 0.9) % width; 
+            let sy = (s.y - target.y * 0.9) % height; 
             if(sx<0) sx+=width; if(sy<0) sy+=height; 
             ctx.globalAlpha = 0.5 + Math.random()*0.3; 
             ctx.fillRect(sx, sy, s.s, s.s); 

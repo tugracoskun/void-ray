@@ -359,11 +359,9 @@ function loop() {
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
         if (entityManager) {
-            // Yıldızları oyuncuya göre parallax yapsak da çizimi kamera hedefine göre ayarlamak lazım
-            // Ancak yıldız çizim fonksiyonu şu an 'player' parametresi alıyor.
-            // Parallax'ın kameraya göre değil de her zaman gemiye göre olması daha doğal olabilir.
-            // Şimdilik 'player' olarak bırakıyorum.
-            entityManager.drawStars(ctx, width, height, player);
+            // Yıldızların parallax hareketi artık aktif kamera hedefine göre hesaplanıyor
+            // Böylece Yankı modundayken de arka plan hareket ederek hız hissi verir
+            entityManager.drawStars(ctx, width, height, window.cameraTarget);
         }
         
         ctx.save(); 
