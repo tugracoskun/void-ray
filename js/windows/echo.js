@@ -33,7 +33,7 @@ function openEchoInventory() {
     
     if (!echoRay.attached) {
         showNotification({name: "BAĞLANTI YOK", type:{color:'#ef4444'}}, "Yankı envanterine erişmek için birleşin.");
-        if(audio) audio.playToxic();
+        if(audio) audio.playError(); // HATA SESİ
         return;
     }
     
@@ -77,6 +77,7 @@ window.transferToEcho = function(item) {
     if (!echoRay) return;
     if (echoRay.lootBag.length >= getEchoCapacity()) {
          showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
+         if(audio) audio.playError(); // HATA SESİ
          return;
     }
     const idx = collectedItems.indexOf(item);
@@ -91,6 +92,7 @@ window.transferToEcho = function(item) {
 window.transferToPlayer = function(item) {
     if (collectedItems.length >= getPlayerCapacity()) {
          showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
+         if(audio) audio.playError(); // HATA SESİ
          return;
     }
     const idx = echoRay.lootBag.indexOf(item);
@@ -126,8 +128,14 @@ window.transferAllToEcho = function() {
         showNotification({name: `${movedCount} EŞYA AKTARILDI`, type:{color:'#67e8f9'}}, "");
         if (audio) audio.playCash();
     } else {
-         if(collectedItems.length > 0) showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
-         else showNotification({name: "GEMİ BOŞ!", type:{color:'#ef4444'}}, "");
+         if(collectedItems.length > 0) {
+             showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
+             if(audio) audio.playError(); // HATA SESİ
+         }
+         else {
+             showNotification({name: "GEMİ BOŞ!", type:{color:'#ef4444'}}, "");
+             if(audio) audio.playError(); // HATA SESİ
+         }
     }
 
     renderEchoInventory();
@@ -143,6 +151,7 @@ window.transferAllToPlayer = function() {
         const nextItem = echoRay.lootBag[0];
         if (nextItem.type.id !== 'tardigrade' && collectedItems.length >= pCap) {
              showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
+             if(audio) audio.playError(); // HATA SESİ
              break;
         }
 

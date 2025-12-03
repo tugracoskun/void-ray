@@ -112,6 +112,7 @@ function addItemToInventory(planet) {
     if (currentCount >= capacity) {
         if (!autopilot) {
             showNotification({name: "ENVANTER DOLU! NEXUS VEYA DEPOYA GİDİN.", type:{color:'#ef4444'}}, "");
+            if(audio) audio.playError(); // HATA SESİ
         }
         return false; 
     }

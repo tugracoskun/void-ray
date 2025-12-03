@@ -133,17 +133,19 @@ window.buyUpgrade = function(key) {
     if (key.startsWith('echo')) {
         if (!echoRay) {
              showNotification({name: "YANKI MEVCUT DEĞİL!", type:{color:'#ef4444'}}, "");
+             if(audio) audio.playError(); // HATA SESİ
              return;
         }
         if (!echoRay.attached) {
             showNotification({name: "YANKI BAĞLI DEĞİL!", type:{color:'#ef4444'}}, "Yükseltme için birleşin.");
-            if(audio) audio.playToxic(); 
+            if(audio) audio.playError(); // HATA SESİ (Eskiden playToxic idi)
             return;
         }
     }
 
     const data = UPGRADES[key]; const currentLvl = playerData.upgrades[key]; if(currentLvl >= data.max) return;
     const cost = GameRules.calculateUpgradeCost(data.baseCost, currentLvl);
+    
     if(playerData.stardust >= cost) { 
         playerData.stardust -= cost; 
         playerData.upgrades[key]++; 
@@ -153,6 +155,10 @@ window.buyUpgrade = function(key) {
         renderUpgrades(); 
         updateEchoDropdownUI(); 
         updateInventoryCount(); 
+    } else {
+        // Para yetersiz
+        showNotification({name: "YETERSİZ KRİSTAL!", type:{color:'#ef4444'}}, "");
+        if(audio) audio.playError(); // HATA SESİ
     }
 };
 

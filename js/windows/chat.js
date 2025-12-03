@@ -34,7 +34,7 @@ function showNotification(planet, suffix) {
     } else if (name.includes("ENERJİ")) {
          msg = `${name} ${suffix}`;
          type = "info";
-    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU")) {
+    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU") || name.includes("YETERSİZ") || name.includes("BAĞLANTI YOK") || name.includes("BOŞ")) {
         msg = `UYARI: ${name} ${suffix}`;
         type = "alert";
     } else if (name.includes("KAYIP KARGO")) {
@@ -115,6 +115,7 @@ function sendUserMessage() {
     addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
     
     setTimeout(() => {
+        if(audio) audio.playError(); // HATA SESİ
         addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
     }, 200);
 }

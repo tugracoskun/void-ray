@@ -9,6 +9,7 @@ class ZenAudio {
         // Müzik elementlerini al
         this.musicBase = document.getElementById('music-base');
         this.musicSpace = document.getElementById('music-space');
+        this.sfxError = document.getElementById('sfx-error'); // Hata sesi
         
         this.currentTrack = null; // Şu an aktif olan parça
         this.activeTheme = '';    // 'base' veya 'space'
@@ -17,6 +18,9 @@ class ZenAudio {
         // Başlangıçta sesleri tamamen kıs (Fade-in için)
         if(this.musicBase) this.musicBase.volume = 0;
         if(this.musicSpace) this.musicSpace.volume = 0;
+        
+        // Hata sesi için başlangıç ayarı (düşük ses)
+        if(this.sfxError) this.sfxError.volume = Math.max(0, Math.min(1, volSFX * 0.2));
 
         this.scale = [196.00, 220.00, 261.63, 293.66, 329.63, 392.00];
         this.lastChimeTime = 0; 
@@ -109,7 +113,19 @@ class ZenAudio {
         }
     }
     
-    // --- EFEKT SESLERİ (Değişmedi) ---
+    // --- EFEKT SESLERİ ---
+    
+    // YENİ: Hata Sesi (Çok Kısık - volSFX'in %20'si)
+    playError() {
+        if (this.sfxError) {
+            // Rahatsız etmemesi için genel efekt sesinin sadece %20'si kadar ses ver
+            const quietVolume = Math.max(0, Math.min(1, volSFX * 0.2));
+            this.sfxError.volume = quietVolume;
+            this.sfxError.currentTime = 0; // Başa sar
+            this.sfxError.play().catch(e => console.warn("Error sfx blocked", e));
+        }
+    }
+
     playChime(rarity) {
         const now = this.ctx.currentTime;
         if (now - this.lastChimeTime < 0.08) return;

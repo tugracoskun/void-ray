@@ -92,6 +92,7 @@ window.depositAllToStorage = function() {
 window.withdrawItem = function(name) {
     if (collectedItems.length >= getPlayerCapacity()) {
         showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+        if(audio) audio.playError(); // HATA SESİ
         return;
     }
     const index = centralStorage.findIndex(i => i.name === name);
@@ -114,7 +115,10 @@ window.withdrawAllFromStorage = function() {
     }
     
     if (moved > 0) showNotification({name: `${moved} EŞYA GEMİYE ALINDI`, type:{color:'#38bdf8'}}, "");
-    else if (centralStorage.length > 0) showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+    else if (centralStorage.length > 0) {
+        showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
+        if(audio) audio.playError(); // HATA SESİ
+    }
     
     renderStorageUI();
     updateInventoryCount();
