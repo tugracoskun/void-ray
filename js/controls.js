@@ -135,9 +135,11 @@ function initControls() {
             const mx = e.clientX - rect.left;
             const my = e.clientY - rect.top;
             
-            // Kamera hedefine göre ekran koordinatlarını doğru hesapla
-            const screenX = (echoRay.x - window.cameraTarget.x) * currentZoom + width/2;
-            const screenY = (echoRay.y - window.cameraTarget.y) * currentZoom + height/2;
+            // DÜZELTME: Tıklamalar artık görsel odak (cameraFocus) üzerinden hesaplanıyor.
+            // Bu sayede kamera kayarken bile tıklama doğru çalışır.
+            const focusPoint = window.cameraFocus || window.cameraTarget;
+            const screenX = (echoRay.x - focusPoint.x) * currentZoom + width/2;
+            const screenY = (echoRay.y - focusPoint.y) * currentZoom + height/2;
             
             const dist = Math.hypot(mx - screenX, my - screenY);
             if (dist < 40 * currentZoom) {

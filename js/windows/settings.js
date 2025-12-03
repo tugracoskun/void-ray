@@ -17,6 +17,7 @@ if (!window.gameSettings) {
         cameraOffsetX: 0, 
         cameraOffsetY: 0,
         adaptiveCamera: false,
+        smoothCameraTransitions: true, // YENİ
         developerMode: false,
         showGravityFields: false,
         showHitboxes: false,
@@ -44,6 +45,9 @@ function initSettings() {
     const echoToggle = document.getElementById('toggle-echo-arrow');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
+    
+    // YENİ: Smooth Camera Toggle
+    const smoothCamToggle = document.getElementById('toggle-smooth-cam');
     
     const devModeToggle = document.getElementById('toggle-dev-mode');
     const gravityToggle = document.getElementById('toggle-gravity-debug');
@@ -103,6 +107,11 @@ function initSettings() {
                 }
             }
         });
+    }
+
+    // YENİ: Smooth Cam Listener
+    if (smoothCamToggle) {
+        smoothCamToggle.addEventListener('change', (e) => window.gameSettings.smoothCameraTransitions = e.target.checked);
     }
     
     if (devModeToggle) {

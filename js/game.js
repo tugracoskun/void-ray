@@ -17,8 +17,13 @@ var particleSystem = null;
 var entityManager = null; 
 var audio; 
 
-// KAMERA HEDEFİ
-window.cameraTarget = null;
+// KAMERA HEDEFLERİ
+window.cameraTarget = null; // Mantıksal hedef (Gemi veya Yankı)
+window.cameraFocus = { x: 0, y: 0 }; // Görsel odak noktası (Yumuşak geçiş için)
+
+// KAMERA GEÇİŞ DURUMU (YENİ)
+let lastCameraTarget = null;
+let isCameraTransitioning = false;
 
 // OYUN AYARLARI
 window.gameSettings = {
@@ -31,6 +36,7 @@ window.gameSettings = {
     cameraOffsetX: 0, 
     cameraOffsetY: 0,
     adaptiveCamera: false,
+    smoothCameraTransitions: true, // YENİ: Varsayılan olarak açık
     developerMode: false,
     showGravityFields: false,
     showHitboxes: false,
@@ -196,7 +202,9 @@ function init() {
     bmCtx = bmCanvas.getContext('2d'); 
 
     player = new VoidRay(); 
-    window.cameraTarget = player; // Başlangıçta kamera oyuncuyu takip eder
+    window.cameraTarget = player; 
+    window.cameraFocus = { x: player.x, y: player.y }; // Başlangıçta odak gemide
+    lastCameraTarget = player; // Takip başlangıcı
 
     nexus = new Nexus(); 
     repairStation = new RepairStation(); 
@@ -350,7 +358,10 @@ function loop() {
         storageCenter.update();
 
         // --- KAMERA HEDEFİ GÜVENLİK KONTROLÜ ---
-        if (!window.cameraTarget) window.cameraTarget = player;
+        if (!window.cameraTarget) {
+            window.cameraTarget = player;
+            lastCameraTarget = player;
+        }
         
         // Eğer hedef Yankı ise ve Yankı yoksa/yok olduysa kamerayı gemiye al
         if (window.cameraTarget === echoRay && !echoRay) {
@@ -409,10 +420,10 @@ function loop() {
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
+        // --- YILDIZLAR VE ARKA PLAN ---
+        // Parallax efekti için 'cameraFocus' kullanıyoruz ki kayarken arka plan da kaysın
         if (entityManager) {
-            // Yıldızların parallax hareketi artık aktif kamera hedefine göre hesaplanıyor
-            // Böylece Yankı modundayken de arka plan hareket ederek hız hissi verir
-            entityManager.drawStars(ctx, width, height, window.cameraTarget);
+            entityManager.drawStars(ctx, width, height, window.cameraFocus || window.cameraTarget);
         }
         
         ctx.save(); 
@@ -425,7 +436,6 @@ function loop() {
             const maxAdaptiveOffset = 400; 
             
             // Adaptif kamera artık seçili hedefin hızına göre çalışır
-            // Eğer hedef Echo ise onun hızını kullanır
             targetOffsetX = -window.cameraTarget.vx * lookAheadFactor;
             targetOffsetY = -window.cameraTarget.vy * lookAheadFactor;
             
@@ -439,9 +449,53 @@ function loop() {
         ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
         ctx.scale(currentZoom, currentZoom); 
         
-        // KAMERA MERKEZLEME
-        // Artık player.x/y yerine window.cameraTarget.x/y kullanıyoruz
-        ctx.translate(-window.cameraTarget.x, -window.cameraTarget.y);
+        // --- KAMERA MERKEZLEME (HİBRİT SİSTEM) ---
+        
+        // 1. Hedef Değişikliğini Algıla
+        if (window.cameraTarget !== lastCameraTarget) {
+            isCameraTransitioning = true;
+            lastCameraTarget = window.cameraTarget;
+        }
+
+        if (!window.cameraFocus) window.cameraFocus = { x: window.cameraTarget.x, y: window.cameraTarget.y };
+
+        // AYAR KONTROLÜ
+        if (!window.gameSettings.smoothCameraTransitions) {
+            // Eğer özellik kapalıysa, focus direkt target olur (Eski usül sert geçiş)
+            window.cameraFocus.x = window.cameraTarget.x;
+            window.cameraFocus.y = window.cameraTarget.y;
+            isCameraTransitioning = false;
+        } else {
+            // Özellik açıksa Hibrit Sistem çalışır
+            const distCam = Math.hypot(window.cameraTarget.x - window.cameraFocus.x, window.cameraTarget.y - window.cameraFocus.y);
+            
+            if (distCam > 5000) {
+                // WARP: Çok uzaksa anında ışınlan (Snap)
+                window.cameraFocus.x = window.cameraTarget.x;
+                window.cameraFocus.y = window.cameraTarget.y;
+                isCameraTransitioning = false; // Geçişi bitir
+            } else if (isCameraTransitioning) {
+                // GEÇİŞ MODU: Yumuşak Kayma (Sinematik Pan)
+                // Hedefe varana kadar yavaş takip eder
+                const lerpSpeed = 0.08; 
+                window.cameraFocus.x += (window.cameraTarget.x - window.cameraFocus.x) * lerpSpeed;
+                window.cameraFocus.y += (window.cameraTarget.y - window.cameraFocus.y) * lerpSpeed;
+                
+                // Hedefe yeterince yaklaştı mı?
+                if (distCam < 50) {
+                    isCameraTransitioning = false; // Normal moda geç
+                }
+            } else {
+                // NORMAL MOD: Sıkı Takip (Kilitli Kamera)
+                // Kayma hissini yok etmek için çok hızlı (0.9)
+                const lerpSpeed = 0.9; 
+                window.cameraFocus.x += (window.cameraTarget.x - window.cameraFocus.x) * lerpSpeed;
+                window.cameraFocus.y += (window.cameraTarget.y - window.cameraFocus.y) * lerpSpeed;
+            }
+        }
+
+        // Render işlemini cameraFocus'a göre yap
+        ctx.translate(-window.cameraFocus.x, -window.cameraFocus.y);
         
         if (entityManager) {
             entityManager.drawPlanets(ctx, player, echoRay, width, height, currentZoom);
@@ -554,11 +608,8 @@ function loop() {
             } else { promptEl.className = ''; }
         }
 
-        // Ok işaretleri her zaman oynadığınız karakterden bağımsız olarak gemiyi merkez alarak çizilir (Navigasyon kolaylığı için)
-        // Ancak kamera Echo'daysa, oklar Echo'dan hedefe doğru çizilse daha mantıklı olabilir.
-        // Şimdilik çizim fonksiyonu (drawTargetIndicator) "origin" parametresi alıyor.
-        // Bunu "cameraTarget" olarak güncellersek oklar her zaman ekranın ortasından çıkar.
-        const navOrigin = window.cameraTarget;
+        // Ok işaretlerinin merkezi artık görsel olarak takip ettiğimiz nokta (cameraFocus)
+        const navOrigin = window.cameraFocus || window.cameraTarget;
 
         if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow && window.cameraTarget !== echoRay) {
             drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
@@ -584,8 +635,8 @@ function loop() {
         const entities = { player, echoRay, nexus, repairStation, storageCenter, planets: (entityManager ? entityManager.planets : []) };
         const state = { manualTarget };
         
-        // drawMiniMap'e 4. parametre olarak aktif kamera hedefini (origin) gönderiyoruz
-        drawMiniMap(mmCtx, entities, state, window.cameraTarget);
+        // Minimap'in merkezi de cameraFocus'a göre güncellenmeli ki uyumsuzluk olmasın
+        drawMiniMap(mmCtx, entities, state, navOrigin);
         
         if(typeof mapOpen !== 'undefined' && mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
 

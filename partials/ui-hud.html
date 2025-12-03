@@ -143,6 +143,14 @@
                 </label>
             </div>
 
+            <div class="toggle-row mb-3" onmouseenter="showInfoTooltip(event, 'YUMUŞAK GEÇİŞ: Karakterler arası kamera geçişini sinematik yapar.')" onmouseleave="hideTooltip()">
+                <span>YUMUŞAK GEÇİŞ</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-smooth-cam" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
             <div id="manual-camera-controls" style="transition: opacity 0.3s;">
                 <div class="mb-2" onmouseenter="showInfoTooltip(event, 'YATAY KONUM: Kamerayı yatay eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
                     <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
