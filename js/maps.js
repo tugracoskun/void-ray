@@ -86,8 +86,15 @@ function drawTargetIndicator(ctx, origin, view, target, color) {
 /**
  * Minimap (Küçük Harita) çizimi
  * Tamamen MAP_CONFIG üzerinden stil alır.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {object} entities - Oyun varlıkları
+ * @param {object} state - Oyun durumu
+ * @param {object} origin - Haritanın merkezindeki varlık (Player veya Echo)
  */
-function drawMiniMap(ctx, entities, state) {
+function drawMiniMap(ctx, entities, state, origin) {
+    // Varsayılan olarak oyuncuyu merkez al
+    origin = origin || entities.player;
+
     const size = MAP_CONFIG.minimap.size;
     const radius = MAP_CONFIG.minimap.radius;
     
@@ -99,21 +106,34 @@ function drawMiniMap(ctx, entities, state) {
     ctx.fillStyle = MAP_CONFIG.minimap.bg;
     ctx.fill();
 
-    const scale = radius / entities.player.radarRadius; 
+    // Ölçekleme, merkezdeki varlığın radar menziline göre yapılır
+    const scale = radius / origin.radarRadius; 
     const cx = radius, cy = radius;
     
-    // Tarama Alanı Çemberi
-    const scanPixelRadius = entities.player.scanRadius * scale;
+    // Tarama Alanı Çemberi (Merkezdeki varlığa ait)
+    const scanPixelRadius = origin.scanRadius * scale;
     ctx.lineWidth = 1;
     ctx.strokeStyle = MAP_CONFIG.minimap.scanColor; 
     ctx.setLineDash([3, 3]); 
     ctx.beginPath(); ctx.arc(cx, cy, scanPixelRadius, 0, Math.PI*2); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Yankı
-    if(entities.echoRay) {
-        const ex = (entities.echoRay.x - entities.player.x) * scale + cx;
-        const ey = (entities.echoRay.y - entities.player.y) * scale + cy;
+    // --- DİĞER VARLIKLARI ÇİZ ---
+
+    // Eğer merkez Oyuncu DEĞİLSE, Oyuncuyu nokta olarak çiz
+    if (entities.player && entities.player !== origin) {
+        const px = (entities.player.x - origin.x) * scale + cx;
+        const py = (entities.player.y - origin.y) * scale + cy;
+        if (Math.hypot(px - cx, py - cy) < radius) {
+            ctx.fillStyle = MAP_CONFIG.colors.player; 
+            ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill(); 
+        }
+    }
+
+    // Yankı (Eğer merkez Yankı DEĞİLSE ve Yankı varsa)
+    if(entities.echoRay && entities.echoRay !== origin) {
+        const ex = (entities.echoRay.x - origin.x) * scale + cx;
+        const ey = (entities.echoRay.y - origin.y) * scale + cy;
         if (Math.hypot(ex - cx, ey - cy) < radius) {
             ctx.fillStyle = MAP_CONFIG.colors.echo; 
             ctx.beginPath(); ctx.arc(ex, ey, 3, 0, Math.PI*2); ctx.fill(); 
@@ -122,9 +142,9 @@ function drawMiniMap(ctx, entities, state) {
 
     // Üsler
     const drawBase = (entity, color) => {
-        const bx = (entity.x-entities.player.x)*scale + cx; 
-        const by = (entity.y-entities.player.y)*scale + cy;
-        if(Math.hypot(bx-cx, by-cy) < radius) {
+        const bx = (entity.x - origin.x) * scale + cx; 
+        const by = (entity.y - origin.y) * scale + cy;
+        if(Math.hypot(bx - cx, by - cy) < radius) {
             ctx.fillStyle = color; ctx.beginPath(); ctx.arc(bx, by, 3.5, 0, Math.PI*2); ctx.fill();
         }
     }
@@ -136,10 +156,10 @@ function drawMiniMap(ctx, entities, state) {
     // Gezegenler
     entities.planets.forEach(p => {
         if(!p.collected) {
-            let px = (p.x-entities.player.x)*scale + cx; 
-            let py = (p.y-entities.player.y)*scale + cy;
+            let px = (p.x - origin.x) * scale + cx; 
+            let py = (p.y - origin.y) * scale + cy;
             
-            if(Math.hypot(px-cx, py-cy) < radius) {
+            if(Math.hypot(px - cx, py - cy) < radius) {
                 // getPlanetVisibility global olarak tanımlanır.
                 const visibility = getPlanetVisibility(p, entities.player, entities.echoRay);
                 if (visibility === 1) ctx.fillStyle = "rgba(255,255,255,0.3)"; 
@@ -152,23 +172,28 @@ function drawMiniMap(ctx, entities, state) {
     
     // Hedef Çizgisi
     if(state.manualTarget) {
-        const tx = (state.manualTarget.x-entities.player.x)*scale + cx; 
-        const ty = (state.manualTarget.y-entities.player.y)*scale + cy;
-        const distToTarget = Math.hypot(tx-cx, ty-cy);
-        const angle = Math.atan2(ty-cy, tx-cx);
+        const tx = (state.manualTarget.x - origin.x) * scale + cx; 
+        const ty = (state.manualTarget.y - origin.y) * scale + cy;
+        const distToTarget = Math.hypot(tx - cx, ty - cy);
+        const angle = Math.atan2(ty - cy, tx - cx);
         
         ctx.strokeStyle = MAP_CONFIG.colors.target; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); 
         ctx.beginPath(); ctx.moveTo(cx, cy); 
         const drawDist = Math.min(distToTarget, radius);
-        ctx.lineTo(cx + Math.cos(angle)*drawDist, cy + Math.sin(angle)*drawDist);
+        ctx.lineTo(cx + Math.cos(angle) * drawDist, cy + Math.sin(angle) * drawDist);
         ctx.stroke(); ctx.setLineDash([]);
     }
 
-    // Oyuncu Oku
+    // --- MERKEZ İKONU (ORIGIN) ---
+    // Haritanın ortasındaki üçgen (Aktif kontrol edilen varlık)
     ctx.translate(cx, cy); 
-    ctx.rotate(entities.player.angle+Math.PI/2);
-    ctx.fillStyle = MAP_CONFIG.colors.player; 
-    ctx.beginPath(); ctx.moveTo(0,-5); ctx.lineTo(-4,5); ctx.lineTo(4,5); ctx.fill(); 
+    ctx.rotate(origin.angle + Math.PI/2);
+    
+    // Rengi, kontrol edilen varlığa göre belirle
+    const centerColor = (origin === entities.echoRay) ? MAP_CONFIG.colors.echo : MAP_CONFIG.colors.player;
+    ctx.fillStyle = centerColor; 
+    
+    ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(-4, 5); ctx.lineTo(4, 5); ctx.fill(); 
     
     ctx.restore(); 
 }

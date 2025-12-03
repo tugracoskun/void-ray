@@ -511,7 +511,9 @@ function loop() {
         const entities = { player, echoRay, nexus, repairStation, storageCenter, planets: (entityManager ? entityManager.planets : []) };
         const state = { manualTarget };
         
-        drawMiniMap(mmCtx, entities, state);
+        // drawMiniMap'e 4. parametre olarak aktif kamera hedefini (origin) gönderiyoruz
+        drawMiniMap(mmCtx, entities, state, window.cameraTarget);
+        
         if(typeof mapOpen !== 'undefined' && mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
 
     } 
