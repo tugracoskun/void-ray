@@ -18,7 +18,29 @@
 
 let nexusOpen = false;
 
+/**
+ * Oyuncunun Nexus ile etkileşime girebilecek mesafede olup olmadığını kontrol eder.
+ * @returns {boolean} Menzil içindeyse true
+ */
+function isNearNexus() {
+    if (typeof player === 'undefined' || typeof nexus === 'undefined') return false;
+    
+    // Nexus yarıçapı (varsayılan 300) + Etkileşim tamponu (200)
+    const interactionRange = (nexus.radius || 300) + 200;
+    const dist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+    
+    return dist <= interactionRange;
+}
+
 function enterNexus() { 
+    // --- GÜVENLİK KONTROLÜ ---
+    // Profil penceresinden veya dışarıdan çağrıldığında mesafe kontrolü yap
+    if (!isNearNexus()) {
+        showNotification({name: "ERİŞİM REDDEDİLDİ", type:{color:'#ef4444'}}, "Nexus menzili dışındasınız.");
+        if(typeof audio !== 'undefined' && audio) audio.playError();
+        return;
+    }
+
     nexusOpen = true; 
     const overlay = document.getElementById('nexus-overlay');
     if (overlay) overlay.classList.add('open');
@@ -130,6 +152,13 @@ function renderUpgrades() {
 // --- GLOBAL UI AKSİYONLARI ---
 
 window.buyUpgrade = function(key) {
+    // --- GÜVENLİK KONTROLÜ ---
+    if (!isNearNexus()) {
+        showNotification({name: "BAĞLANTI KOPTU", type:{color:'#ef4444'}}, "İşlem sırasında uzaklaştınız.");
+        exitNexus(); // Pencereyi zorla kapat
+        return;
+    }
+
     if (key.startsWith('echo')) {
         if (!echoRay) {
              showNotification({name: "YANKI MEVCUT DEĞİL!", type:{color:'#ef4444'}}, "");
@@ -163,6 +192,13 @@ window.buyUpgrade = function(key) {
 };
 
 window.sellItem = function(name, unitPrice, count) {
+    // --- GÜVENLİK KONTROLÜ ---
+    if (!isNearNexus()) {
+        showNotification({name: "BAĞLANTI KOPTU", type:{color:'#ef4444'}}, "İşlem sırasında uzaklaştınız.");
+        exitNexus();
+        return;
+    }
+
     const newItems = collectedItems.filter(i => i.name !== name);
     collectedItems.length = 0;
     newItems.forEach(i => collectedItems.push(i));
@@ -177,6 +213,13 @@ window.sellItem = function(name, unitPrice, count) {
 };
 
 window.sellAll = function() {
+    // --- GÜVENLİK KONTROLÜ ---
+    if (!isNearNexus()) {
+        showNotification({name: "BAĞLANTI KOPTU", type:{color:'#ef4444'}}, "İşlem sırasında uzaklaştınız.");
+        exitNexus();
+        return;
+    }
+
     let total = 0; let toKeep = [];
     collectedItems.forEach(item => { if(item.type.value > 0) total += item.type.value; else toKeep.push(item); });
     if(total > 0) { 
