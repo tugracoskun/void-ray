@@ -26,12 +26,22 @@
                 <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
             </svg>
 
-            <!-- ANA BUTON -->
-            <button id="btn-start" class="menu-btn-primary">
-                YAŞAM DÖNGÜSÜNÜ BAŞLAT
-            </button>
+            <!-- BUTON GRUBU -->
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; margin-bottom: 30px;">
+                
+                <!-- DEVAM ET BUTONU (Başlangıçta gizli) -->
+                <!-- border-emerald-500 text-emerald-100 -->
+                <button id="btn-continue" class="menu-btn-primary" style="display: none; border-color: #10b981; color: #d1fae5;">
+                    KAYITLI OYUNDAN DEVAM ET
+                </button>
 
-            <!-- KLASİK GRID TUŞ TAKIMI (Genişletilmiş) -->
+                <!-- YENİ OYUN BUTONU -->
+                <button id="btn-start" class="menu-btn-primary">
+                    YAŞAM DÖNGÜSÜNÜ BAŞLAT
+                </button>
+            </div>
+
+            <!-- KLASİK GRID TUŞ TAKIMI -->
             <div class="controls-grid-classic">
                 <!-- Sol Sütun -->
                 <div class="key-col">
@@ -82,7 +92,7 @@
     </div>
 </div>
 
-<!-- DİĞER MODALLER (Aynı) -->
+<!-- DİĞER MODALLER -->
 <div id="mobile-warning" class="mobile-warning-overlay" style="display: none;">
     <div class="mobile-warning-box">
         <div class="warning-icon">⚠</div>

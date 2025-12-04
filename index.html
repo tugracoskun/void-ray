@@ -32,17 +32,24 @@
     <!-- JS YÜKLEYİCİ VE BAŞLATICILAR -->
     <script>
         window.onUILoaded = function() {
-            // Arka Plan Hazırlıkları
+            console.log("UI Loaded. Initializing systems...");
+
+            // 1. Arka Plan Hazırlıkları
             if (typeof initControls === 'function') initControls();
             if (typeof initChatSystem === 'function') initChatSystem();
             if (typeof initSettings === 'function') initSettings();
             if (typeof checkMobile === 'function') checkMobile();
 
-            // BOOT SÜRECİNİ BAŞLAT
+            // 2. Ana Menü Mantığını (Save Kontrolü) Başlat
+            // BU SATIR EKLENDİ
+            if (typeof initMainMenu === 'function') initMainMenu();
+
+            // 3. Boot Sürecini Başlat
             if (typeof SystemBoot !== 'undefined') {
                 const boot = new SystemBoot();
                 boot.start();
             } else {
+                // Boot dosyası yüklenmediyse direkt menüyü aç (Fallback)
                 const controls = document.getElementById('menu-controls-wrapper');
                 if(controls) {
                     controls.classList.remove('menu-controls-hidden');
@@ -62,6 +69,9 @@
     <script src="js/data.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/game-rules.js"></script>
+    
+    <!-- YÖNETİCİLER (UI'dan önce yüklenmeli) -->
+    <script src="js/managers/save_manager.js"></script>
     
     <!-- UI ve PENCERELER -->
     <script src="js/ui.js"></script>

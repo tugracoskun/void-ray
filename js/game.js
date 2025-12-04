@@ -229,8 +229,18 @@ function init() {
 
     entityManager.init();
     
-    player.updateUI(); 
-    updateInventoryCount(); 
+    // --- KAYIT YÖNETİCİSİNİ BAŞLAT ---
+    if (typeof SaveManager !== 'undefined') {
+        SaveManager.init();
+        // Load sonrası UI'ı bir kez daha güncellemekte fayda var
+        updateInventoryCount();
+        player.updateUI();
+    } else {
+        console.warn("SaveManager bulunamadı!");
+        player.updateUI(); 
+        updateInventoryCount(); 
+    }
+
     isPaused = false;
     startTipsCycle();
     

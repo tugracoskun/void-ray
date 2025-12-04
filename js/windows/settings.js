@@ -17,7 +17,7 @@ if (!window.gameSettings) {
         cameraOffsetX: 0, 
         cameraOffsetY: 0,
         adaptiveCamera: false,
-        smoothCameraTransitions: true, // YENİ
+        smoothCameraTransitions: true,
         developerMode: false,
         showGravityFields: false,
         showHitboxes: false,
@@ -45,8 +45,6 @@ function initSettings() {
     const echoToggle = document.getElementById('toggle-echo-arrow');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
-    
-    // YENİ: Smooth Camera Toggle
     const smoothCamToggle = document.getElementById('toggle-smooth-cam');
     
     const devModeToggle = document.getElementById('toggle-dev-mode');
@@ -109,7 +107,6 @@ function initSettings() {
         });
     }
 
-    // YENİ: Smooth Cam Listener
     if (smoothCamToggle) {
         smoothCamToggle.addEventListener('change', (e) => window.gameSettings.smoothCameraTransitions = e.target.checked);
     }
@@ -151,21 +148,10 @@ function initSettings() {
         });
     }
 
-    if (gravityToggle) {
-        gravityToggle.addEventListener('change', (e) => window.gameSettings.showGravityFields = e.target.checked);
-    }
-    
-    if (hitboxToggle) {
-        hitboxToggle.addEventListener('change', (e) => window.gameSettings.showHitboxes = e.target.checked);
-    }
-
-    if (vectorToggle) {
-        vectorToggle.addEventListener('change', (e) => window.gameSettings.showVectors = e.target.checked);
-    }
-
-    if (targetVectorToggle) {
-        targetVectorToggle.addEventListener('change', (e) => window.gameSettings.showTargetVectors = e.target.checked);
-    }
+    if (gravityToggle) gravityToggle.addEventListener('change', (e) => window.gameSettings.showGravityFields = e.target.checked);
+    if (hitboxToggle) hitboxToggle.addEventListener('change', (e) => window.gameSettings.showHitboxes = e.target.checked);
+    if (vectorToggle) vectorToggle.addEventListener('change', (e) => window.gameSettings.showVectors = e.target.checked);
+    if (targetVectorToggle) targetVectorToggle.addEventListener('change', (e) => window.gameSettings.showTargetVectors = e.target.checked);
 
     if (fpsToggle) {
         fpsToggle.addEventListener('change', (e) => {
@@ -223,8 +209,6 @@ function initSettings() {
             else if (id === 'vol-music') {
                 const disp = document.getElementById('val-m');
                 if(disp) disp.innerText = val + '%';
-                
-                // Müzik sesi değişimini Audio Manager üzerinden yap
                 if (typeof audio !== 'undefined' && audio.updateMusicVolume) {
                     audio.updateMusicVolume(val / 100);
                 }
@@ -300,6 +284,33 @@ function switchSettingsTab(tabName) {
     if (btn) btn.classList.add('active');
     if (content) content.classList.add('active');
 }
+
+// --- KAYIT YÖNETİMİ BUTON AKSİYONLARI ---
+
+window.actionExportSave = function() {
+    if (typeof SaveManager === 'undefined') return;
+    SaveManager.exportSave();
+};
+
+window.actionImportSave = function() {
+    if (typeof SaveManager === 'undefined') return;
+    const code = prompt("Kayıt kodunu buraya yapıştırın:");
+    if (code) {
+        const result = SaveManager.importSave(code);
+        // Hata durumunda bildirim göster (Başarılı ise importSave kendi gösteriyor)
+        if (result && result.startsWith("HATA")) {
+            showNotification({name: "İÇE AKTARMA HATASI", type:{color:'#ef4444'}}, "Geçersiz kod.");
+        }
+    }
+};
+
+window.actionResetSave = function() {
+    if (typeof SaveManager === 'undefined') return;
+    if (confirm("DİKKAT: Tüm ilerlemeniz kalıcı olarak silinecek. Onaylıyor musunuz?")) {
+        SaveManager.resetSave();
+        location.reload();
+    }
+};
 
 // --- GELİŞTİRİCİ FONKSİYONLAR ---
 window.devAddResources = function() {

@@ -24,6 +24,9 @@ js:
   - EntityManager.js
   - ParticleSystem.js
   
+  managers:
+    - save_manager.js
+
   windows:
     - inventory.js
     - stats.js
