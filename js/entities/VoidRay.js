@@ -350,15 +350,27 @@ class VoidRay {
                      updateAIButton();
                 }
             } else {
-                // Gather Mode
+                // Gather Mode (Toplama Modu)
                 aiMode = 'gather';
                 let nearest = null, minDist = Infinity;
                 
                 if (collectedItems.length < cap) {
                     for(let p of planets) {
                         if(!p.collected && p.type.id !== 'toxic') {
-                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
-                            if(d < minDist) { minDist = d; nearest = p; }
+                            const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
+                            
+                            // YENİ: Çarpışma Önleme (Yankı daha yakınsa o gitsin, ben vazgeçeyim)
+                            let echoIsCloser = false;
+                            if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < getEchoCapacity()) {
+                                const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
+                                // Eğer Yankı daha yakınsa, bu gezegeni hedeflemeyi bırak
+                                if (distToEcho < distToMe) echoIsCloser = true;
+                            }
+
+                            if(!echoIsCloser && distToMe < minDist) { 
+                                minDist = distToMe; 
+                                nearest = p; 
+                            }
                         }
                     }
                 }

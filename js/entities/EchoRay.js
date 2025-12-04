@@ -153,13 +153,33 @@ class EchoRay {
                 let nearest = null, minDist = Infinity;
                 for(let p of planets) {
                     if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
-                        const d = (p.x-this.x)**2 + (p.y-this.y)**2;
-                        if(d < minDist) { minDist = d; nearest = p; }
+                        const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
+                        
+                        // YENİ: Çarpışma Önleme (Vatoz otopilotta ve daha yakınsa o gitsin, ben vazgeçeyim)
+                        let playerIsCloser = false;
+                        // player ve autopilot globaldir, güvenli erişim
+                        if (typeof player !== 'undefined' && typeof autopilot !== 'undefined' && autopilot && typeof aiMode !== 'undefined' && aiMode === 'gather' && collectedItems.length < getPlayerCapacity()) {
+                            const distToPlayer = (p.x - player.x)**2 + (p.y - player.y)**2;
+                            // Eşitlik durumunda önceliği oyuncuya verelim (<=)
+                            if (distToPlayer <= distToMe) playerIsCloser = true;
+                        }
+
+                        // Eğer oyuncu daha yakın değilse, bu benim için potansiyel hedeftir
+                        if(!playerIsCloser && distToMe < minDist) { 
+                            minDist = distToMe; 
+                            nearest = p; 
+                        }
                     }
                 }
+                
                 if(nearest) { 
                     targetX = nearest.x; targetY = nearest.y; 
                     this.debugTarget = {x: nearest.x, y: nearest.y};
+                } else {
+                    // Hedef yoksa oyuncunun etrafında gezin (Yumuşak vazgeçiş davranışı)
+                    targetX = player.x + Math.cos(Date.now() * 0.001) * 300;
+                    targetY = player.y + Math.sin(Date.now() * 0.001) * 300;
+                    this.debugTarget = {x: targetX, y: targetY};
                 }
             } else {
                 targetX = player.x + Math.cos(Date.now() * 0.001) * 300;
