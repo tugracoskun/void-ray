@@ -413,6 +413,14 @@ function loop() {
             playerData.stats.timeAI += dt;
         }
 
+        // --- PENCERE GÜNCELLEMELERİ ---
+        // Profil penceresi açıksa her karede (veya belli aralıklarla) güncelle
+        if(typeof profileOpen !== 'undefined' && profileOpen) {
+            // Performans için her frame yerine her 5 frame'de bir güncellenebilir ama
+            // metin güncellemeleri çok ağır değil, akıcılık için her frame çağırıyoruz.
+            renderProfile();
+        }
+
         if(typeof statsOpen !== 'undefined' && statsOpen) renderStats();
         if(typeof contextOpen !== 'undefined' && contextOpen) renderContext();
 
@@ -429,14 +437,18 @@ function loop() {
             else if (typeof statsOpen !== 'undefined' && statsOpen) closeStats();
             else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
             else if (typeof contextOpen !== 'undefined' && contextOpen) closeContext(); 
+            
+            // YENİ: Profil penceresi kapatma
+            else if (typeof profileOpen !== 'undefined' && profileOpen) closeProfile();
+
             else togglePause();
             keys.Escape = false;
         }
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
-        // --- YILDIZLAR VE ARKA PLAN ---
-        // Parallax efekti için 'cameraFocus' kullanıyoruz ki kayarken arka plan da kaysın
+        // ... (Çizim kodlarının geri kalanı aynı)
+        
         if (entityManager) {
             entityManager.drawStars(ctx, width, height, window.cameraFocus || window.cameraTarget);
         }
@@ -450,7 +462,6 @@ function loop() {
             const lookAheadFactor = 30; 
             const maxAdaptiveOffset = 400; 
             
-            // Adaptif kamera artık seçili hedefin hızına göre çalışır
             targetOffsetX = -window.cameraTarget.vx * lookAheadFactor;
             targetOffsetY = -window.cameraTarget.vy * lookAheadFactor;
             
@@ -464,9 +475,6 @@ function loop() {
         ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
         ctx.scale(currentZoom, currentZoom); 
         
-        // --- KAMERA MERKEZLEME (HİBRİT SİSTEM) ---
-        
-        // 1. Hedef Değişikliğini Algıla
         if (window.cameraTarget !== lastCameraTarget) {
             isCameraTransitioning = true;
             lastCameraTarget = window.cameraTarget;
@@ -474,42 +482,32 @@ function loop() {
 
         if (!window.cameraFocus) window.cameraFocus = { x: window.cameraTarget.x, y: window.cameraTarget.y };
 
-        // AYAR KONTROLÜ
         if (!window.gameSettings.smoothCameraTransitions) {
-            // Eğer özellik kapalıysa, focus direkt target olur (Eski usül sert geçiş)
             window.cameraFocus.x = window.cameraTarget.x;
             window.cameraFocus.y = window.cameraTarget.y;
             isCameraTransitioning = false;
         } else {
-            // Özellik açıksa Hibrit Sistem çalışır
             const distCam = Math.hypot(window.cameraTarget.x - window.cameraFocus.x, window.cameraTarget.y - window.cameraFocus.y);
             
             if (distCam > 5000) {
-                // WARP: Çok uzaksa anında ışınlan (Snap)
                 window.cameraFocus.x = window.cameraTarget.x;
                 window.cameraFocus.y = window.cameraTarget.y;
-                isCameraTransitioning = false; // Geçişi bitir
+                isCameraTransitioning = false; 
             } else if (isCameraTransitioning) {
-                // GEÇİŞ MODU: Yumuşak Kayma (Sinematik Pan)
-                // Hedefe varana kadar yavaş takip eder
                 const lerpSpeed = 0.08; 
                 window.cameraFocus.x += (window.cameraTarget.x - window.cameraFocus.x) * lerpSpeed;
                 window.cameraFocus.y += (window.cameraTarget.y - window.cameraFocus.y) * lerpSpeed;
                 
-                // Hedefe yeterince yaklaştı mı?
                 if (distCam < 50) {
-                    isCameraTransitioning = false; // Normal moda geç
+                    isCameraTransitioning = false; 
                 }
             } else {
-                // NORMAL MOD: Sıkı Takip (Kilitli Kamera)
-                // Kayma hissini yok etmek için çok hızlı (0.9)
                 const lerpSpeed = 0.9; 
                 window.cameraFocus.x += (window.cameraTarget.x - window.cameraFocus.x) * lerpSpeed;
                 window.cameraFocus.y += (window.cameraTarget.y - window.cameraFocus.y) * lerpSpeed;
             }
         }
 
-        // Render işlemini cameraFocus'a göre yap
         ctx.translate(-window.cameraFocus.x, -window.cameraFocus.y);
         
         if (entityManager) {
@@ -578,29 +576,23 @@ function loop() {
         if(echoRay) echoRay.draw(ctx);
         player.draw(ctx); ctx.restore();
         
-        // --- KAMERA PARAZİT VE BAĞLANTI KOPMA MANTIĞI (YENİ) ---
-        // Kamera Echo'daysa ve Echo bağlı değilse (bağlıyken sorun yok)
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
             const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
-            const maxRange = player.radarRadius; // Radar menzili
-            const interferenceStart = maxRange * 0.6; // %60 mesafede parazit başlar
+            const maxRange = player.radarRadius; 
+            const interferenceStart = maxRange * 0.6; 
 
             if (dist > maxRange) {
-                // BAĞLANTI KOPTU - Otomatik Geçiş
                 window.cameraTarget = player;
                 showNotification({name: "SİNYAL KAYBI: MENZİL DIŞI", type:{color:'#ef4444'}}, "Kamera Vatoz'a döndü.");
                 if(audio) audio.playError();
                 const indicator = document.getElementById('echo-vision-indicator');
                 if(indicator) indicator.classList.remove('active');
             } else if (dist > interferenceStart) {
-                // PARAZİT EFEKTİ
-                // 0.0 ile 1.0 arası yoğunluk
                 const intensity = (dist - interferenceStart) / (maxRange - interferenceStart);
                 drawStaticNoise(ctx, width, height, intensity);
             }
         }
 
-        // --- GÜNCELLENMİŞ ÇOKLU SEÇENEK (MULTI-PROMPT) MANTIĞI ---
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
             const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
@@ -610,12 +602,10 @@ function loop() {
             let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
             let isMapOpen = (typeof mapOpen !== 'undefined' && mapOpen);
 
-            // Flagleri belirle
             let showNexusPrompt = (distNexus < nexus.radius + 200) && !isNexusOpen;
             let showStoragePrompt = (distStorage < storageCenter.radius + 200) && !isStorageOpen;
             let showEchoMergePrompt = false;
 
-            // Yankı kontrolü (Harita kapalıyken)
             if (echoRay && !isMapOpen) {
                  const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
                  if (!echoRay.attached && distEcho < 300) {
@@ -625,7 +615,6 @@ function loop() {
 
             let activePrompts = [];
 
-            // 1. Etkileşim: E Tuşu (Nexus veya Depo)
             if (showNexusPrompt) {
                 activePrompts.push("[E] NEXUS'A GİRİŞ YAP");
                 if (keys.e && document.activeElement !== document.getElementById('chat-input')) {
@@ -638,7 +627,6 @@ function loop() {
                 }
             }
 
-            // 2. Etkileşim: F Tuşu (Merge)
             if (showEchoMergePrompt) {
                 activePrompts.push("[F] BİRLEŞ");
                 if (keys.f && document.activeElement !== document.getElementById('chat-input')) {
@@ -646,7 +634,6 @@ function loop() {
                 }
             }
             
-            // 3. Etkileşim: F Tuşu (Ayrılma - Prompt yok ama işlev var)
             if (echoRay && echoRay.attached) {
                 if (keys.f && document.activeElement !== document.getElementById('chat-input')) {
                      echoRay.attached = false; 
@@ -657,7 +644,6 @@ function loop() {
                 }
             }
 
-            // UI Güncelleme (Çoklu satır desteği)
             if (activePrompts.length > 0) {
                 promptEl.innerHTML = activePrompts.join('<br>');
                 promptEl.className = 'visible';
@@ -667,14 +653,12 @@ function loop() {
             }
         }
 
-        // Ok işaretlerinin merkezi artık görsel olarak takip ettiğimiz nokta (cameraFocus)
         const navOrigin = window.cameraFocus || window.cameraTarget;
 
         if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow && window.cameraTarget !== echoRay) {
             drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }
 
-        // Eğer kamera Echo'daysa, gemiye dönüş okunu göster
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
              drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, player, MAP_CONFIG.colors.player);
         }
@@ -694,9 +678,6 @@ function loop() {
         const entities = { player, echoRay, nexus, repairStation, storageCenter, planets: (entityManager ? entityManager.planets : []) };
         const state = { manualTarget };
         
-        // DÜZELTME: drawMiniMap artık 5. parametre olarak referans varlığı (Entity) alıyor.
-        // navOrigin: {x, y} -> Kameranın görsel odağı (Yumuşak geçişli)
-        // window.cameraTarget: Entity -> Radar menzili, açı ve renk bilgisi için asıl varlık
         drawMiniMap(mmCtx, entities, state, navOrigin, window.cameraTarget);
         
         if(typeof mapOpen !== 'undefined' && mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);

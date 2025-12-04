@@ -72,7 +72,7 @@
 .echo-menu-item:hover { background: rgba(255,255,255,0.1); color: white; }
 .echo-menu-item.active-mode { color: var(--echo-color); background: rgba(103, 232, 249, 0.1); border-color: rgba(103, 232, 249, 0.2); }
 
-/* --- ECHO VISION INDICATOR (YENİ) --- */
+/* --- ECHO VISION INDICATOR --- */
 #echo-vision-indicator {
     position: absolute; bottom: 0; left: 0; width: 100%; height: 100px;
     background: linear-gradient(to top, rgba(103, 232, 249, 0.2) 0%, transparent 100%);
@@ -189,7 +189,7 @@
 #settings-panel { position: absolute; top: 90px; right: 30px; width: 280px; background: var(--glass-bg); border-radius: var(--soft-radius); padding: 20px; pointer-events: none; opacity: 0; transition: all 0.3s; transform: translateY(-10px); border: 1px solid var(--glass-border); z-index: 89; }
 #settings-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
-/* --- SETTINGS TABS (YENİ) --- */
+/* --- SETTINGS TABS --- */
 .settings-tabs {
     display: flex;
     gap: 5px;
@@ -227,13 +227,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px;
 .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .slider { background-color: var(--ray-color); }
 input:checked + .slider:before { transform: translateX(16px); }
-
-
-/* XP Bar */
-#xp-container { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; }
-.xp-bar-bg { width: 100%; height: 2px; background: rgba(255,255,255,0.1); overflow: hidden; margin-top: 5px; }
-.xp-bar-fill { height: 100%; background: white; width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-.level-text { font-size: 0.7rem; letter-spacing: 3px; color: #64748b; }
 
 /* Prompt */
 #merge-prompt { position: absolute; bottom: 260px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.4); padding: 10px 30px; border-radius: var(--soft-radius); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 0.9rem; letter-spacing: 2px; backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.2s; pointer-events: none; text-align: center; }

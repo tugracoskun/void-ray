@@ -1,5 +1,5 @@
 /* * PANELS.CSS
- * Envanter, Nexus, Depo, İstatistik ve Bağlam Analizi.
+ * Envanter, Nexus, Depo, İstatistik, Bağlam ve PROFİL Analizi.
  */
 
 /* --- GRID SİSTEMİ --- */
@@ -58,6 +58,111 @@
     box-shadow: 0 0 80px rgba(0,0,0,0.8);
     overflow: hidden; backdrop-filter: blur(30px);
 }
+
+/* --- PROFİL PENCERESİ (RPG STYLE) --- */
+.profile-window.rpg-style {
+    width: 400px; /* Daha dar, referans gibi */
+    height: 550px;
+    background: rgba(10, 12, 16, 0.95); /* Biraz daha opak arka plan */
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 8px; /* Köşeler biraz daha keskin */
+    display: flex; flex-direction: column;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    backdrop-filter: blur(15px);
+    overflow: hidden;
+    position: relative;
+}
+
+/* ÜST BAŞLIK */
+.profile-rpg-header {
+    height: 80px;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; padding: 0 15px; gap: 15px;
+}
+.p-rpg-avatar {
+    width: 50px; height: 50px; border: 1px solid #38bdf8;
+    background: rgba(0,0,0,0.3);
+    display: flex; justify-content: center; align-items: center;
+}
+.p-rpg-img { font-size: 1.5rem; color: #38bdf8; }
+.p-rpg-info { display: flex; flex-direction: column; }
+.p-rpg-title { font-size: 0.6rem; color: #94a3b8; letter-spacing: 1px; }
+.p-rpg-name { font-size: 1.1rem; color: white; font-weight: bold; letter-spacing: 1px; }
+.p-rpg-rank { font-size: 0.7rem; color: #f59e0b; margin-top: 2px; }
+
+/* İÇERİK */
+.profile-content.no-padding { padding: 0; }
+
+/* LEVEL ŞERİDİ */
+.p-rpg-level-strip {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 0;
+}
+.p-rpg-lvl-box {
+    flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.05);
+}
+.p-rpg-lvl-box:last-child { border-right: none; }
+.p-rpg-lvl-box .lbl { display: block; font-size: 0.6rem; color: #ef4444; font-weight: bold; margin-bottom: 2px; }
+.p-rpg-lvl-box .val { font-size: 0.9rem; color: white; font-family: monospace; }
+
+/* ANA IZGARA (STATÜLER) */
+.p-rpg-main-grid {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.p-rpg-col {
+    flex: 1; padding: 10px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+.p-rpg-col:last-child { border-right: none; }
+
+.p-rpg-section-title {
+    font-size: 0.7rem; color: #fbbf24; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px;
+}
+
+.p-rpg-stat-row, .p-rpg-val-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px; font-size: 0.75rem;
+}
+.stat-name { color: white; font-weight: bold; }
+.stat-val-group { display: flex; align-items: center; gap: 5px; }
+.stat-plus {
+    width: 12px; height: 12px; background: #d97706; color: black; font-weight: bold;
+    display: flex; justify-content: center; align-items: center; border-radius: 2px; cursor: pointer;
+    font-size: 10px; line-height: 1;
+}
+.stat-plus:hover { background: #fbbf24; }
+.stat-num { font-family: monospace; color: #e2e8f0; width: 25px; text-align: right; }
+
+.val-icon { font-size: 0.8rem; width: 15px; text-align: center; margin-right: 5px; }
+.val-name { color: #cbd5e1; flex: 1; }
+.val-num { color: white; font-family: monospace; font-weight: bold; }
+
+/* ATTRIBUTES (Alt Liste) */
+.p-rpg-attributes { padding: 10px; flex: 1; overflow-y: auto; background: rgba(0,0,0,0.1); }
+.p-attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
+.p-attr-item { display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 2px; }
+.p-attr-item span:first-child { color: #94a3b8; }
+.p-attr-item span:last-child { color: #e2e8f0; font-family: monospace; }
+
+/* ALT SEKMELER */
+.profile-tabs-bottom {
+    display: flex;
+    background: rgba(0,0,0,0.5);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    height: 40px;
+}
+.profile-tab-btn {
+    flex: 1; display: flex; justify-content: center; align-items: center;
+    font-size: 0.75rem; font-weight: bold; color: #64748b; cursor: pointer;
+    transition: 0.2s; border-right: 1px solid rgba(255,255,255,0.05);
+}
+.profile-tab-btn:last-child { border-right: none; }
+.profile-tab-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+.profile-tab-btn.active { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
 
 /* --- ISTATISTIK PENCERESI --- */
 .stats-window {
@@ -207,10 +312,10 @@
 .btn-withdraw { background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.3); }
 .btn-withdraw:hover { background: #a855f7; color: #000; }
 
-/* --- BAŞARIM LİSTESİ STİLLERİ (KOMPAKT) --- */
+/* --- BAŞARIM LİSTESİ STİLLERİ --- */
 .achievement-item {
     display: flex; gap: 10px; align-items: center;
-    padding: 8px 12px; /* Daha az dolgu */
+    padding: 8px 12px; 
     border-radius: 4px;
     border: 1px solid rgba(255,255,255,0.05);
     background: rgba(255,255,255,0.02);

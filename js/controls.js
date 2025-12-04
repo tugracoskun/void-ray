@@ -3,7 +3,7 @@
  */
 
 // Tuş Durumları (Global erişim için)
-const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, c:false, Escape:false };
+const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, c:false, p:false, Escape:false };
 
 function initControls() {
     console.log("Kontroller başlatılıyor...");
@@ -28,14 +28,13 @@ function initControls() {
             if (typeof echoRay !== 'undefined' && echoRay && !echoRay.attached) {
                 
                 // YENİ: MESAFE KONTROLÜ
-                // Eğer Yankı radardan kaybolduysa kamera bağlantısı kurma
                 const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
                 const maxRange = player.radarRadius;
 
                 if (dist > maxRange) {
                     showNotification({name: "BAĞLANTI HATASI", type:{color:'#ef4444'}}, "Yankı radar menzili dışında.");
                     if(audio) audio.playError();
-                    return; // Fonksiyondan çık
+                    return; 
                 }
 
                 const indicator = document.getElementById('echo-vision-indicator');
@@ -63,6 +62,15 @@ function initControls() {
                 if(indicator) indicator.classList.remove('active');
             }
             keys.c = false;
+        }
+
+        // --- PROFİL (P TUŞU) ---
+        if(e.key.toLowerCase() === 'p') {
+            if (typeof profileOpen !== 'undefined') {
+                if (profileOpen) closeProfile();
+                else openProfile();
+            }
+            keys.p = false;
         }
 
         if(e.key.toLowerCase() === 'h') {
@@ -135,8 +143,6 @@ function initControls() {
             const mx = e.clientX - rect.left;
             const my = e.clientY - rect.top;
             
-            // DÜZELTME: Tıklamalar artık görsel odak (cameraFocus) üzerinden hesaplanıyor.
-            // Bu sayede kamera kayarken bile tıklama doğru çalışır.
             const focusPoint = window.cameraFocus || window.cameraTarget;
             const screenX = (echoRay.x - focusPoint.x) * currentZoom + width/2;
             const screenY = (echoRay.y - focusPoint.y) * currentZoom + height/2;

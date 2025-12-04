@@ -12,6 +12,11 @@
     </div>
 
     <div class="hud-icon-group">
+        <!-- PROFİL BUTONU -->
+        <div id="btn-profile-icon" class="hud-btn" title="Profil (P)" onclick="openProfile()" onmouseenter="showInfoTooltip(event, 'PROFİL (P): Evrim seviyesi ve pilot verileri.')" onmouseleave="hideTooltip()">
+            ⏣
+        </div>
+
         <div id="btn-inv-icon" class="hud-btn" title="Envanter (I)" onmouseenter="showInfoTooltip(event, 'ENVANTER (I): Toplanan kaynakları ve kargoyu gösterir.')" onmouseleave="hideTooltip()">
             ❖ <span id="inv-total-badge" class="hud-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#fff; color:#000; border-radius:50%; width:15px; height:15px; font-size:0.7rem; display:flex; justify-content:center; align-items:center;">0</span>
         </div>
@@ -20,10 +25,7 @@
             ≣
         </div>
 
-        <!-- BAŞARIMLAR BUTONU (GÜNCELLENDİ: İkon ★ yapıldı) -->
-        <div id="btn-achievements-icon" class="hud-btn" title="Başarımlar" onclick="openAchievements()" onmouseenter="showInfoTooltip(event, 'BAŞARIMLAR: Tamamlanan görevleri ve hedefleri gösterir.')" onmouseleave="hideTooltip()">
-            ★
-        </div>
+        <!-- BAŞARIMLAR BUTONU KALDIRILDI -->
         
         <!-- BAĞLAMLAR BUTONU -->
         <div id="btn-context-icon" class="hud-btn" title="Bağlamlar" onclick="toggleContext()" onmouseenter="showInfoTooltip(event, 'BAĞLAMLAR: Oyun mekaniklerinin mantıksal dökümü.')" onmouseleave="hideTooltip()">
@@ -55,9 +57,140 @@
         </div>
     </div>
 
-    <div id="xp-container" onmouseenter="showInfoTooltip(event, 'EVRİM DURUMU: Seviye atlamak için gereken biyokütle.')" onmouseleave="hideTooltip()">
-        <div class="level-text">EVRİM SEVİYESİ <span id="level-val" class="text-white font-bold text-lg">1</span></div>
-        <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+    <!-- PROFİL PENCERESİ (RPG Tarzı Layout) -->
+    <div id="profile-overlay" class="overlay-base">
+        <div class="profile-window rpg-style">
+            
+            <!-- ÜST BAŞLIK: AVATAR VE İSİM -->
+            <div class="profile-rpg-header">
+                <div class="p-rpg-avatar">
+                    <div class="p-rpg-img">⏣</div>
+                </div>
+                <div class="p-rpg-info">
+                    <div class="p-rpg-title">KARAKTER</div>
+                    <div class="p-rpg-name">VOID RAY</div>
+                    <div id="profile-rank-text" class="p-rpg-rank">ACEMİ PİLOT</div>
+                </div>
+                <div class="cursor-pointer text-xl opacity-50 hover:opacity-100 absolute top-3 right-3" onclick="closeProfile()">✕</div>
+            </div>
+
+            <div class="profile-content no-padding">
+                
+                <!-- SEKME 1: GENEL BAKIŞ -->
+                <div id="p-tab-summary" class="profile-tab-content active" style="height: 100%;">
+                    
+                    <!-- LEVEL / XP ŞERİDİ -->
+                    <div class="p-rpg-level-strip">
+                        <div class="p-rpg-lvl-box">
+                            <span class="lbl">SEVİYE</span>
+                            <span id="level-val" class="val">1</span>
+                        </div>
+                        <div class="p-rpg-lvl-box">
+                            <span class="lbl">MEVCUT XP</span>
+                            <span id="xp-current" class="val">0</span>
+                        </div>
+                        <div class="p-rpg-lvl-box">
+                            <span class="lbl">GEREKLİ XP</span>
+                            <span id="xp-max" class="val">100</span>
+                        </div>
+                    </div>
+
+                    <!-- ORTA BÖLÜM: STATÜLER VE DEĞERLER -->
+                    <div class="p-rpg-main-grid">
+                        <!-- SOL: GELİŞTİRMELER (VIT/INT/STR/DEX Karşılığı) -->
+                        <div class="p-rpg-col">
+                            <div class="p-rpg-section-title">GEMİ STATÜSÜ</div>
+                            
+                            <div class="p-rpg-stat-row">
+                                <span class="stat-name">MOTOR</span>
+                                <div class="stat-val-group">
+                                    <span class="stat-plus" onclick="enterNexus()">+</span>
+                                    <span id="stat-lvl-speed" class="stat-num">1</span>
+                                </div>
+                            </div>
+                            <div class="p-rpg-stat-row">
+                                <span class="stat-name">MANEVRA</span>
+                                <div class="stat-val-group">
+                                    <span class="stat-plus" onclick="enterNexus()">+</span>
+                                    <span id="stat-lvl-turn" class="stat-num">1</span>
+                                </div>
+                            </div>
+                            <div class="p-rpg-stat-row">
+                                <span class="stat-name">ÇEKİM</span>
+                                <div class="stat-val-group">
+                                    <span class="stat-plus" onclick="enterNexus()">+</span>
+                                    <span id="stat-lvl-magnet" class="stat-num">1</span>
+                                </div>
+                            </div>
+                            <div class="p-rpg-stat-row">
+                                <span class="stat-name">KARGO</span>
+                                <div class="stat-val-group">
+                                    <span class="stat-plus" onclick="enterNexus()">+</span>
+                                    <span id="stat-lvl-cap" class="stat-num">1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SAĞ: ANLIK DEĞERLER (HP/SP Karşılığı) -->
+                        <div class="p-rpg-col">
+                            <div class="p-rpg-section-title">DURUM</div>
+                            
+                            <div class="p-rpg-val-row">
+                                <span class="val-icon text-emerald-400">✚</span>
+                                <span class="val-name">GÖVDE</span>
+                                <span id="val-hp-text" class="val-num">100/100</span>
+                            </div>
+                            <div class="p-rpg-val-row">
+                                <span class="val-icon text-sky-400">⚡</span>
+                                <span class="val-name">ENERJİ</span>
+                                <span id="val-ep-text" class="val-num">100/100</span>
+                            </div>
+                            <div class="p-rpg-val-row">
+                                <span class="val-icon text-amber-400">⚔</span>
+                                <span class="val-name">HASAR</span>
+                                <span class="val-num">YOK</span>
+                            </div>
+                            <div class="p-rpg-val-row">
+                                <span class="val-icon text-purple-400">🛡</span>
+                                <span class="val-name">KALKAN</span>
+                                <span class="val-num">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ALT BÖLÜM: DETAYLI ÖZELLİKLER -->
+                    <div class="p-rpg-attributes">
+                        <div class="p-rpg-section-title">ÖZELLİKLER</div>
+                        <div class="p-attr-grid">
+                            <div class="p-attr-item"><span>Hız</span><span id="attr-speed">0</span></div>
+                            <div class="p-attr-item"><span>Yankı Hızı</span><span id="attr-echo-speed">0</span></div>
+                            <div class="p-attr-item"><span>Mesafe</span><span id="p-stat-dist">0 km</span></div>
+                            <div class="p-attr-item"><span>Toplanan</span><span id="p-stat-loot">0</span></div>
+                            <div class="p-attr-item"><span>Kristal</span><span id="p-stat-dust">0</span></div>
+                            <div class="p-attr-item"><span>Oyun Süresi</span><span id="p-stat-time">00:00</span></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SEKME 2: BAŞARIMLAR -->
+                <div id="p-tab-achievements" class="profile-tab-content" style="display: none; padding: 15px;">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
+                        <span class="text-xs text-gray-400 tracking-widest">GÖREV DURUMU</span>
+                        <span id="ach-progress-text" class="text-xs text-emerald-400 font-mono">0 / 0</span>
+                    </div>
+                    <div id="profile-achievements-list" class="space-y-2 max-h-[350px] overflow-y-auto pr-2">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALT SEKMELER (En Altta) -->
+            <div class="profile-tabs-bottom">
+                <div id="p-tab-btn-summary" class="profile-tab-btn active" onclick="switchProfileTab('summary')">STATÜ</div>
+                <div id="p-tab-btn-achievements" class="profile-tab-btn" onclick="switchProfileTab('achievements')">GÖREVLER</div>
+            </div>
+        </div>
     </div>
 
     <!-- AYARLAR BUTONU VE PANELİ -->

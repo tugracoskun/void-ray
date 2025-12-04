@@ -39,6 +39,7 @@ js:
     - chat.js
     - context.js
     - achievements.js
+    - profile.js
 
   entities:
     - VoidRay.js
