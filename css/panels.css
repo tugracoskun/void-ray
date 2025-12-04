@@ -62,7 +62,8 @@
 /* --- PROFİL PENCERESİ (RPG STYLE) --- */
 .profile-window.rpg-style {
     width: 400px; /* Daha dar, referans gibi */
-    height: 550px;
+    height: auto; /* GÜNCELLEME: Sabit 550px yerine içerik odaklı */
+    max-height: 85vh; /* GÜNCELLEME: Ekran taşmasını önle */
     background: rgba(10, 12, 16, 0.95); /* Biraz daha opak arka plan */
     border: 1px solid rgba(56, 189, 248, 0.2);
     border-radius: 8px; /* Köşeler biraz daha keskin */
@@ -71,6 +72,7 @@
     backdrop-filter: blur(15px);
     overflow: hidden;
     position: relative;
+    transition: height 0.3s ease; /* Yumuşak geçiş */
 }
 
 /* ÜST BAŞLIK */
@@ -79,6 +81,7 @@
     background: rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     display: flex; align-items: center; padding: 0 15px; gap: 15px;
+    flex-shrink: 0; /* Başlık küçülmesin */
 }
 .p-rpg-avatar {
     width: 50px; height: 50px; border: 1px solid #38bdf8;
@@ -92,6 +95,10 @@
 .p-rpg-rank { font-size: 0.7rem; color: #f59e0b; margin-top: 2px; }
 
 /* İÇERİK */
+.profile-content {
+    overflow-y: auto; /* İçerik taşarsa kaydır */
+    min-height: 0;
+}
 .profile-content.no-padding { padding: 0; }
 
 /* LEVEL ŞERİDİ */
@@ -142,7 +149,11 @@
 .val-num { color: white; font-family: monospace; font-weight: bold; }
 
 /* ATTRIBUTES (Alt Liste) */
-.p-rpg-attributes { padding: 10px; flex: 1; overflow-y: auto; background: rgba(0,0,0,0.1); }
+.p-rpg-attributes { 
+    padding: 10px; 
+    /* flex: 1; overflow-y: auto; <-- KALDIRILDI: Bu satır içeriğin pencereyi aşağı kadar zorlamasına neden oluyordu. */
+    background: rgba(0,0,0,0.1); 
+}
 .p-attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
 .p-attr-item { display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 2px; }
 .p-attr-item span:first-child { color: #94a3b8; }
@@ -154,6 +165,7 @@
     background: rgba(0,0,0,0.5);
     border-top: 1px solid rgba(255,255,255,0.1);
     height: 40px;
+    flex-shrink: 0; /* Alt bar küçülmesin */
 }
 .profile-tab-btn {
     flex: 1; display: flex; justify-content: center; align-items: center;
