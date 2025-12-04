@@ -26,6 +26,7 @@ js:
   
   managers:
     - save_manager.js
+    - achievement_manager.js
 
   windows:
     - inventory.js
@@ -37,6 +38,7 @@ js:
     - map.js
     - chat.js
     - context.js
+    - achievements.js
 
   entities:
     - VoidRay.js

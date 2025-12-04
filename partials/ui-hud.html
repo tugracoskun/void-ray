@@ -4,7 +4,7 @@
         FPS: <span id="debug-fps-val">0</span> | OBJ: <span id="debug-obj-val">0</span>
     </div>
 
-    <!-- YANKI GÖRÜŞ GÖSTERGESİ (YENİ) -->
+    <!-- YANKI GÖRÜŞ GÖSTERGESİ -->
     <div id="echo-vision-indicator">
         <div class="scan-line"></div>
         <div class="vision-text">⚠ UZAKTAN BAĞLANTI: YANKI GÖRÜŞÜ ⚠</div>
@@ -18,6 +18,11 @@
         
         <div id="btn-stats-icon" class="hud-btn" title="İstatistikler" onmouseenter="showInfoTooltip(event, 'İSTATİSTİKLER: Oyun verilerini ve sayaçları gösterir.')" onmouseleave="hideTooltip()">
             ≣
+        </div>
+
+        <!-- BAŞARIMLAR BUTONU (GÜNCELLENDİ: İkon ★ yapıldı) -->
+        <div id="btn-achievements-icon" class="hud-btn" title="Başarımlar" onclick="openAchievements()" onmouseenter="showInfoTooltip(event, 'BAŞARIMLAR: Tamamlanan görevleri ve hedefleri gösterir.')" onmouseleave="hideTooltip()">
+            ★
         </div>
         
         <!-- BAĞLAMLAR BUTONU -->
@@ -67,9 +72,7 @@
             <div id="tab-btn-game" class="settings-tab active" onclick="switchSettingsTab('game')">OYUN</div>
             <div id="tab-btn-view" class="settings-tab" onclick="switchSettingsTab('view')">GÖRÜNÜM</div>
             <div id="tab-btn-audio" class="settings-tab" onclick="switchSettingsTab('audio')">SES</div>
-            <!-- YENİ: KAYIT SEKMESİ -->
             <div id="tab-btn-save" class="settings-tab" onclick="switchSettingsTab('save')">KAYIT</div>
-            <!-- Geliştirici Sekmesi -->
             <div id="tab-btn-dev" class="settings-tab text-red-400" onclick="switchSettingsTab('dev')" style="display: none;">DEV</div>
         </div>
 
@@ -190,7 +193,7 @@
             </div>
         </div>
 
-        <!-- YENİ: SEKME 4: KAYIT YÖNETİMİ -->
+        <!-- SEKME 4: KAYIT YÖNETİMİ -->
         <div id="set-tab-save" class="settings-content">
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">KAYIT İŞLEMLERİ</div>
             <p class="text-xs text-gray-400 mb-4">Oyun her 30 saniyede bir otomatik kaydedilir. Kaydınızı yedekleyebilir veya başka bir cihaza taşıyabilirsiniz.</p>

@@ -41,7 +41,6 @@
             if (typeof checkMobile === 'function') checkMobile();
 
             // 2. Ana Menü Mantığını (Save Kontrolü) Başlat
-            // BU SATIR EKLENDİ
             if (typeof initMainMenu === 'function') initMainMenu();
 
             // 3. Boot Sürecini Başlat
@@ -70,8 +69,9 @@
     <script src="js/audio.js"></script>
     <script src="js/game-rules.js"></script>
     
-    <!-- YÖNETİCİLER (UI'dan önce yüklenmeli) -->
+    <!-- YÖNETİCİLER -->
     <script src="js/managers/save_manager.js"></script>
+    <script src="js/managers/achievement_manager.js"></script>
     
     <!-- UI ve PENCERELER -->
     <script src="js/ui.js"></script>
@@ -84,6 +84,7 @@
     <script src="js/windows/echo.js"></script>
     <script src="js/windows/map.js"></script>
     <script src="js/windows/context.js"></script>
+    <script src="js/windows/achievements.js"></script>
     
     <!-- VARLIKLAR -->
     <script src="js/entities/Nexus.js"></script>
