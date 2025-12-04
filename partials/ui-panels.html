@@ -52,7 +52,7 @@
     </div>
 </div>
 
-<!-- BAĞLAMLAR PENCERESİ (GÜNCELLENDİ) -->
+<!-- BAĞLAMLAR PENCERESİ -->
 <div id="context-overlay" class="overlay-base">
     <div class="context-window compact">
         <div class="context-header">
@@ -128,6 +128,46 @@
         </div>
     </div>
 </div>
+
+<!-- YENİ: BAŞARIM PANELİ -->
+<div id="achievements-overlay" class="overlay-base">
+    <div class="stats-window">
+        <div class="stats-header">
+            <div>
+                <h2 class="text-2xl font-light tracking-widest text-white">BAŞARIMLAR</h2>
+                <div id="ach-progress-text" class="text-xs text-gray-400 tracking-widest mt-1">0 / 0 TAMAMLANDI</div>
+            </div>
+            <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeAchievements()">✕</div>
+        </div>
+        <div class="stats-content">
+            <div id="achievements-list" class="space-y-2 p-2">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* BAŞARIM LİSTESİ STİLİ - KOMPAKT TASARIM */
+.achievement-item {
+    display: flex; gap: 10px; align-items: center;
+    padding: 8px 12px; /* Dolgu azaltıldı */
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    transition: 0.2s;
+    min-height: 50px;
+}
+.achievement-item.unlocked {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+.ach-list-icon { font-size: 1.2rem; width: 30px; text-align: center; }
+.ach-list-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.ach-list-title { font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 2px; }
+.ach-list-desc { font-size: 0.7rem; line-height: 1.2; opacity: 0.8; }
+.ach-check { color: #10b981; font-weight: bold; font-size: 1rem; }
+</style>
 
 <!-- DEPO YÖNETİMİ -->
 <div id="storage-overlay" class="overlay-base">

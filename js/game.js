@@ -229,6 +229,11 @@ function init() {
 
     entityManager.init();
     
+    // --- BAŞARIM SİSTEMİNİ BAŞLAT (YENİ) ---
+    if (typeof AchievementManager !== 'undefined') {
+        AchievementManager.init();
+    }
+
     // --- KAYIT YÖNETİCİSİNİ BAŞLAT ---
     if (typeof SaveManager !== 'undefined') {
         SaveManager.init();
