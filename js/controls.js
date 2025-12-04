@@ -125,7 +125,17 @@ function initControls() {
 
     // --- FARE TEKERLEĞİ ---
     window.addEventListener('wheel', e => { 
-        if (e.target.closest('#chat-content')) return; 
+        // UI pencereleri üzerindeyken oyunun zoom yapmasını engelle ve normal kaydırmaya izin ver
+        if (e.target.closest('.chat-content') || 
+            e.target.closest('.profile-content') || 
+            e.target.closest('.nexus-content') || 
+            e.target.closest('.inv-content') || 
+            e.target.closest('.stats-content') ||
+            e.target.closest('.overflow-y-auto') || // Tailwind class'ı olan scroll alanları
+            e.target.closest('#settings-panel')) {
+            return; 
+        }
+
         if (window.cinematicMode) return;
         if (typeof mapOpen !== 'undefined' && mapOpen) return;
 
