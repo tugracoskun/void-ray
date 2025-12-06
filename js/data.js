@@ -57,7 +57,8 @@ const GAME_CONFIG = {
         RADAR_RADIUS: 10000,
         DRAIN_RATE: 0.005,       // Normal enerji tüketimi
         OUT_OF_BOUNDS_DRAIN: 0.5, // Radyasyon alanı tüketimi
-        INTERACTION_DIST: 350    // Oyuncu ile birleşme mesafesi
+        INTERACTION_DIST: 350,   // Oyuncu ile birleşme mesafesi
+        SIGNAL_INTERFERENCE_START: 0.6  // Sinyal parazit başlangıç oranı
     },
     
     PLANETS: {
