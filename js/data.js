@@ -20,6 +20,8 @@ const GAME_CONFIG = {
         BASE_XP: 150,            // Level atlamak için gereken taban XP
         BASE_HEALTH: 100,        // Başlangıç canı
         BASE_ENERGY: 100,        // Başlangıç enerjisi
+        BASE_CAPACITY: 150,      // Başlangıç envanter kapasitesi (YENİ EKLENDİ)
+        CAPACITY_PER_LEVEL: 25,  // Yükseltme başına artan kapasite (YENİ EKLENDİ)
         SCAN_RADIUS: 4000,       // Tarama (Görünürlük) menzili
         RADAR_RADIUS: 10000,     // Radar (Sinyal) menzili
         BASE_TAIL_COUNT: 20,     // Normal kuyruk uzunluğu
@@ -32,6 +34,8 @@ const GAME_CONFIG = {
     },
     ECHO: {
         BASE_ENERGY: 100,
+        BASE_CAPACITY: 80,       // Yankı başlangıç kapasitesi (YENİ EKLENDİ)
+        CAPACITY_PER_LEVEL: 10,  // Yankı yükseltme başına artan kapasite (YENİ EKLENDİ)
         SCAN_RADIUS: 4000,
         RADAR_RADIUS: 10000,
         DRAIN_RATE: 0.005,       // Normal enerji tüketimi
@@ -77,12 +81,12 @@ const UPGRADES = {
     playerSpeed: { name: "İyon Motorları", desc: "Maksimum uçuş hızı.", baseCost: 100, max: 5 },
     playerTurn:  { name: "Manevra İticileri", desc: "Dönüş kabiliyeti.", baseCost: 150, max: 5 },
     playerMagnet:{ name: "Çekim Alanı", desc: "Eşya toplama mesafesi.", baseCost: 200, max: 5 },
-    playerCapacity: { name: "Kargo Genişletme", desc: "Envanter kapasitesini artırır (+10).", baseCost: 300, max: 5 },
+    playerCapacity: { name: "Kargo Genişletme", desc: "Envanter kapasitesini artırır.", baseCost: 300, max: 5 },
     
     echoSpeed:   { name: "Yankı Hızı", desc: "Yankı'nın uçuş hızı.", baseCost: 150, max: 5 },
     echoRange:   { name: "Sensör Ağı", desc: "Yankı'nın toplama çapı.", baseCost: 250, max: 5 },
     echoDurability: { name: "Yankı Bataryası", desc: "Enerji tüketim verimliliği.", baseCost: 200, max: 5 },
-    echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesi (+5).", baseCost: 250, max: 5 }
+    echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesini artırır.", baseCost: 250, max: 5 }
 };
 
 // ==========================================

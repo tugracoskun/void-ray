@@ -100,26 +100,36 @@ function calculatePlanetXp(type) {
 
 /**
  * Oyuncunun güncel taşıma kapasitesini hesaplar.
- * Taban: 150, Seviye Başına: +25
+ * * GÜNCELLEME: Sabit sayılar yerine GAME_CONFIG'den değer alır.
  * * GÜVENLİK: playerData henüz yüklenmediyse varsayılan değer döner.
  */
 function getPlayerCapacity() {
-    const base = 150;
+    // data.js yüklü değilse fallback
+    if (typeof GAME_CONFIG === 'undefined') return 150;
+
+    const base = GAME_CONFIG.PLAYER.BASE_CAPACITY;
+    const perLevel = GAME_CONFIG.PLAYER.CAPACITY_PER_LEVEL;
+    
     const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
-        ? (playerData.upgrades.playerCapacity * 25) 
+        ? (playerData.upgrades.playerCapacity * perLevel) 
         : 0;
     return base + added;
 }
 
 /**
  * Yankı'nın güncel taşıma kapasitesini hesaplar.
- * Taban: 80, Seviye Başına: +10
+ * * GÜNCELLEME: Sabit sayılar yerine GAME_CONFIG'den değer alır.
  * * GÜVENLİK: playerData kontrolü eklendi.
  */
 function getEchoCapacity() {
-    const base = 80;
+    // data.js yüklü değilse fallback
+    if (typeof GAME_CONFIG === 'undefined') return 80;
+
+    const base = GAME_CONFIG.ECHO.BASE_CAPACITY;
+    const perLevel = GAME_CONFIG.ECHO.CAPACITY_PER_LEVEL;
+
     const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
-        ? (playerData.upgrades.echoCapacity * 10) 
+        ? (playerData.upgrades.echoCapacity * perLevel) 
         : 0;
     return base + added;
 }
