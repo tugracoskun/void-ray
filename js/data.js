@@ -41,6 +41,29 @@ const GAME_CONFIG = {
     }
 };
 
+// Varsayılan Oyun Ayarları (UI ve Görünüm Tercihleri)
+const DEFAULT_GAME_SETTINGS = {
+    showNexusArrow: true,
+    showRepairArrow: false,
+    showStorageArrow: false,
+    showEchoArrow: true, 
+    hudOpacity: 1.0,
+    hudHoverEffect: false,
+    showShipBars: false,
+    cameraOffsetX: 0, 
+    cameraOffsetY: 0,
+    adaptiveCamera: false,
+    smoothCameraTransitions: true,
+    developerMode: false,
+    showGravityFields: false,
+    showHitboxes: false,
+    showVectors: false,
+    showTargetVectors: false,
+    showFps: false,
+    godMode: false,
+    hidePlayer: false
+};
+
 const RARITY = {
     COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.5, xp: 10, value: 10 },
     RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.2, xp: 40, value: 30 },
