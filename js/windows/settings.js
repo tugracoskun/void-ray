@@ -7,27 +7,8 @@ let settingsOpen = false;
 
 // Global Ayar Nesnesi (Varsayılanlar, game.js ile aynı olmalı)
 if (!window.gameSettings) {
-    window.gameSettings = {
-        showNexusArrow: true,
-        showRepairArrow: false,
-        showStorageArrow: false,
-        showEchoArrow: true, 
-        hudOpacity: 1.0,
-        hudHoverEffect: false,
-        showShipBars: false, // YENİ: Gemi üstü barlar
-        cameraOffsetX: 0, 
-        cameraOffsetY: 0,
-        adaptiveCamera: false,
-        smoothCameraTransitions: true,
-        developerMode: false,
-        showGravityFields: false,
-        showHitboxes: false,
-        showVectors: false,
-        showTargetVectors: false,
-        showFps: false,
-        godMode: false,
-        hidePlayer: false
-    };
+    // data.js yüklendiyse oradaki varsayılanları kullan, yoksa boş obje başlat (hata önleme)
+    window.gameSettings = typeof DEFAULT_GAME_SETTINGS !== 'undefined' ? Object.assign({}, DEFAULT_GAME_SETTINGS) : {};
 }
 
 function initSettings() {

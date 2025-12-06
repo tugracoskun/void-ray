@@ -26,26 +26,8 @@ let lastCameraTarget = null;
 let isCameraTransitioning = false;
 
 // OYUN AYARLARI
-window.gameSettings = {
-    showNexusArrow: true,
-    showRepairArrow: false,
-    showStorageArrow: false,
-    showEchoArrow: true, 
-    hudOpacity: 1.0,
-    hudHoverEffect: false,
-    cameraOffsetX: 0, 
-    cameraOffsetY: 0,
-    adaptiveCamera: false,
-    smoothCameraTransitions: true, // YENİ: Varsayılan olarak açık
-    developerMode: false,
-    showGravityFields: false,
-    showHitboxes: false,
-    showVectors: false,
-    showTargetVectors: false,
-    showFps: false,
-    godMode: false,
-    hidePlayer: false
-};
+// data.js dosyasındaki DEFAULT_GAME_SETTINGS üzerinden ilklendirilir.
+window.gameSettings = Object.assign({}, DEFAULT_GAME_SETTINGS);
 
 let currentRenderOffsetX = 0;
 let currentRenderOffsetY = 0;
