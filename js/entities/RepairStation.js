@@ -12,7 +12,8 @@ class RepairStation {
     update() {
         this.rotation -= 0.005;
         // Oyuncu yakındaysa can yenile
-        const dist = Math.hypot(player.x - this.x, player.y - this.y);
+        // Utils güncellemesi:
+        const dist = Utils.distEntity(player, this);
         // player objesinin global scope'ta var olduğu varsayılır (game.js'de tanımlı)
         if (dist < 300 && player.health < player.maxHealth) {
             player.health = Math.min(player.maxHealth, player.health + 0.5);

@@ -113,7 +113,8 @@ function renderContext() {
 
     // 4. ORTAM
     // game.js'deki global nexus değişkenine erişim
-    const distToNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+    // Utils güncellemesi:
+    const distToNexus = Utils.distEntity(player, nexus);
     const isOutOfBounds = player.x < 0 || player.x > WORLD_SIZE || player.y < 0 || player.y > WORLD_SIZE;
     
     if(ctxEl.envStatus) {

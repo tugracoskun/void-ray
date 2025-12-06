@@ -121,7 +121,8 @@ class EchoRay {
             targetX = nexus.x; targetY = nexus.y;
             this.debugTarget = {x: nexus.x, y: nexus.y};
             
-            const d = Math.hypot(this.x - nexus.x, this.y - nexus.y);
+            // Utils güncellemesi:
+            const d = Utils.distEntity(this, nexus);
             if (d < 100) { 
                 this.vx *= 0.5; this.vy *= 0.5; 
                 this.energy = Math.min(100, this.energy + 0.05); 
@@ -135,7 +136,8 @@ class EchoRay {
             targetX = storageCenter.x; targetY = storageCenter.y;
             this.debugTarget = {x: storageCenter.x, y: storageCenter.y};
 
-            const d = Math.hypot(this.x - storageCenter.x, this.y - storageCenter.y);
+            // Utils güncellemesi:
+            const d = Utils.distEntity(this, storageCenter);
             if (d < 150) {
                 // Global fonksiyon
                 depositToStorage(this.lootBag, "YANKI");
@@ -159,7 +161,8 @@ class EchoRay {
                         let playerIsCloser = false;
                         // player ve autopilot globaldir, güvenli erişim
                         if (typeof player !== 'undefined' && typeof autopilot !== 'undefined' && autopilot && typeof aiMode !== 'undefined' && aiMode === 'gather' && collectedItems.length < getPlayerCapacity()) {
-                            const distToPlayer = (p.x - player.x)**2 + (p.y - player.y)**2;
+                            // Utils güncellemesi:
+                            const distToPlayer = Utils.distEntity(p, player) ** 2;
                             // Eşitlik durumunda önceliği oyuncuya verelim (<=)
                             if (distToPlayer <= distToMe) playerIsCloser = true;
                         }
@@ -196,7 +199,8 @@ class EchoRay {
                 let diff = targetA - this.angle; while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
                 this.angle += diff * 0.1;
                 
-                const dist = Math.hypot(targetX - this.x, targetY - this.y);
+                // Utils güncellemesi:
+                const dist = Utils.dist(targetX, targetY, this.x, this.y);
                 const stopDistance = (this.mode === 'return') ? 250 : 100;
 
                 if (dist < stopDistance && this.mode !== 'roam') {
@@ -240,7 +244,8 @@ class EchoRay {
                 if (this.lootBag.length < echoCap) {
                     for(let p of planets) { // Global planets
                         if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
-                            const d = Math.hypot(this.x-p.x, this.y-p.y);
+                            // Utils güncellemesi:
+                            const d = Utils.distEntity(this, p);
                             if(d < p.radius + pickupRange) { 
                                 p.collected = true; 
                                 if(p.type.id === 'tardigrade') {
@@ -294,7 +299,8 @@ class EchoRay {
         const dynamicColor = `rgb(${finalR},${finalG},${finalB})`;
 
         // Global nexus
-        if (this.mode === 'recharge' && Math.hypot(this.x - nexus.x, this.y - nexus.y) < 150) {
+        // Utils güncellemesi:
+        if (this.mode === 'recharge' && Utils.distEntity(this, nexus) < 150) {
              const pulse = 0.5 + Math.sin(Date.now() * 0.005) * 0.5; 
              ctx.shadowBlur = 30 + pulse * 30; 
              ctx.shadowColor = "#cbd5e1"; // Gri parıltı (Şarj olurken nötr renk)

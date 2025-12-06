@@ -151,7 +151,8 @@ function setEchoMode(mode) {
 
 function echoManualMerge() {
     if(!echoRay) return;
-    const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+    // Utils güncellemesi:
+    const dist = Utils.distEntity(player, echoRay);
     
     if (dist < 350) {
         if(audio) audio.playEvolve(); 
@@ -216,7 +217,8 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    const startSafeDist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+    // Utils güncellemesi:
+    const startSafeDist = Utils.distEntity(player, nexus);
     isInSafeZone = startSafeDist < 1500;
 
     // --- SES BAŞLATMA (YUMUŞAK GİRİŞ) ---
@@ -364,7 +366,8 @@ function loop() {
         if(echoRay) {
             echoRay.update(); 
             if (echoRay.mode === 'return' && echoRay.pendingMerge) {
-                 const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                 // Utils güncellemesi:
+                 const dist = Utils.distEntity(player, echoRay);
                  if (dist < 300) echoManualMerge();
             }
         }
@@ -389,7 +392,8 @@ function loop() {
 
         // --- GÜVENLİ BÖLGE VE MÜZİK GEÇİŞ MANTIĞI ---
         const SAFE_ZONE_R = 1500;
-        const distToNexusSafe = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+        // Utils güncellemesi:
+        const distToNexusSafe = Utils.distEntity(player, nexus);
         
         if (distToNexusSafe < SAFE_ZONE_R) {
             // Eğer daha önce güvenli bölgede değilsek, şimdi girdik
@@ -487,7 +491,8 @@ function loop() {
             window.cameraFocus.y = window.cameraTarget.y;
             isCameraTransitioning = false;
         } else {
-            const distCam = Math.hypot(window.cameraTarget.x - window.cameraFocus.x, window.cameraTarget.y - window.cameraFocus.y);
+            // Utils güncellemesi:
+            const distCam = Utils.distEntity(window.cameraTarget, window.cameraFocus);
             
             if (distCam > 5000) {
                 window.cameraFocus.x = window.cameraTarget.x;
@@ -550,7 +555,8 @@ function loop() {
             ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
             
             if (echoRay.mode === 'return') {
-                const distToEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                // Utils güncellemesi:
+                const distToEcho = Utils.distEntity(player, echoRay);
                 let lineAlpha = 0.4;
                 if (distToEcho < player.scanRadius) {
                     lineAlpha = Math.max(0, (distToEcho / player.scanRadius) * 0.4);
@@ -577,7 +583,8 @@ function loop() {
         player.draw(ctx); ctx.restore();
         
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
-            const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+            // Utils güncellemesi:
+            const dist = Utils.distEntity(player, echoRay);
             const maxRange = player.radarRadius; 
             const interferenceStart = maxRange * 0.6; 
 
@@ -595,8 +602,9 @@ function loop() {
 
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
-            const distNexus = Math.hypot(player.x - nexus.x, player.y - nexus.y);
-            const distStorage = Math.hypot(player.x - storageCenter.x, player.y - storageCenter.y);
+            // Utils güncellemesi:
+            const distNexus = Utils.distEntity(player, nexus);
+            const distStorage = Utils.distEntity(player, storageCenter);
             
             let isNexusOpen = (typeof nexusOpen !== 'undefined' && nexusOpen);
             let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
@@ -607,7 +615,8 @@ function loop() {
             let showEchoMergePrompt = false;
 
             if (echoRay && !isMapOpen) {
-                 const distEcho = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                 // Utils güncellemesi:
+                 const distEcho = Utils.distEntity(player, echoRay);
                  if (!echoRay.attached && distEcho < 300) {
                      showEchoMergePrompt = true;
                  }

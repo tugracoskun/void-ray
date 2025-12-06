@@ -323,12 +323,14 @@ class VoidRay {
 
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
-                 const distToNexus = Math.hypot(this.x - nexus.x, this.y - nexus.y);
+                 // Utils güncellemesi:
+                 const distToNexus = Utils.distEntity(this, nexus);
                  if(distToNexus < 400) doThrust = false;
             } 
             else if (aiMode === 'deposit') {
                 targetX = storageCenter.x; targetY = storageCenter.y;
-                const distToStorage = Math.hypot(this.x - storageCenter.x, this.y - storageCenter.y);
+                // Utils güncellemesi:
+                const distToStorage = Utils.distEntity(this, storageCenter);
                 
                 if(distToStorage < 200) {
                     doThrust = false;
@@ -340,7 +342,8 @@ class VoidRay {
             }
             else if (aiMode === 'travel' && manualTarget) {
                 targetX = manualTarget.x; targetY = manualTarget.y;
-                const distToTarget = Math.hypot(this.x - targetX, this.y - targetY);
+                // Utils güncellemesi:
+                const distToTarget = Utils.dist(this.x, this.y, targetX, targetY);
                 if(distToTarget < 200) {
                      doThrust = false; 
                      autopilot = false; manualTarget = null; 
@@ -501,7 +504,8 @@ class VoidRay {
         for (let i = 1; i < this.tail.length; i++) {
             let prev = this.tail[i-1]; let curr = this.tail[i];
             let dx = prev.x - curr.x; let dy = prev.y - curr.y;
-            let d = Math.sqrt(dx*dx + dy*dy); let a = Math.atan2(dy, dx);
+            // Utils güncellemesi:
+            let d = Utils.dist(prev.x, prev.y, curr.x, curr.y); let a = Math.atan2(dy, dx);
             if(d > 5 * this.scale) { curr.x = prev.x - Math.cos(a) * 5 * this.scale; curr.y = prev.y - Math.sin(a) * 5 * this.scale; }
         }
         const coordsEl = document.getElementById('coords');

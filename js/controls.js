@@ -28,7 +28,8 @@ function initControls() {
             if (typeof echoRay !== 'undefined' && echoRay && !echoRay.attached) {
                 
                 // YENİ: MESAFE KONTROLÜ
-                const dist = Math.hypot(player.x - echoRay.x, player.y - echoRay.y);
+                // Utils güncellemesi:
+                const dist = Utils.distEntity(player, echoRay);
                 const maxRange = player.radarRadius;
 
                 if (dist > maxRange) {
@@ -157,7 +158,8 @@ function initControls() {
             const screenX = (echoRay.x - focusPoint.x) * currentZoom + width/2;
             const screenY = (echoRay.y - focusPoint.y) * currentZoom + height/2;
             
-            const dist = Math.hypot(mx - screenX, my - screenY);
+            // Utils güncellemesi:
+            const dist = Utils.dist(mx, my, screenX, screenY);
             if (dist < 40 * currentZoom) {
                 echoRay.energyDisplayTimer = 240; 
             }

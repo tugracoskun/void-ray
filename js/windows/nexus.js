@@ -14,7 +14,8 @@ function isNearNexus() {
     
     // Nexus yarıçapı (varsayılan 300) + Etkileşim tamponu (200)
     const interactionRange = (nexus.radius || 300) + 200;
-    const dist = Math.hypot(player.x - nexus.x, player.y - nexus.y);
+    // Utils güncellemesi:
+    const dist = Utils.distEntity(player, nexus);
     
     return dist <= interactionRange;
 }

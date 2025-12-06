@@ -13,7 +13,8 @@
  */
 function getPlanetVisibility(p, player, echo) {
     let visibility = 0;
-    const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
+    // Utils güncellemesi:
+    const dPlayer = Utils.distEntity(player, p);
     
     // Oyuncu Tarama Alanı (Tam Görüş)
     if (dPlayer < player.scanRadius) return 2; 
@@ -21,7 +22,8 @@ function getPlanetVisibility(p, player, echo) {
     else if (dPlayer < player.radarRadius) visibility = 1; 
 
     if (echo) {
-        const dEcho = Math.hypot(echo.x - p.x, echo.y - p.y);
+        // Utils güncellemesi:
+        const dEcho = Utils.distEntity(echo, p);
         // Yankı Tarama Alanı (Tam Görüş)
         if (dEcho < echo.scanRadius) return 2; 
         // Yankı Radar Alanı (Sinyal)
@@ -126,7 +128,8 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
     if (entities.player && reference !== entities.player) {
         const px = (entities.player.x - centerPos.x) * scale + cx;
         const py = (entities.player.y - centerPos.y) * scale + cy;
-        if (Math.hypot(px - cx, py - cy) < radius) {
+        // Utils güncellemesi:
+        if (Utils.dist(px, py, cx, cy) < radius) {
             ctx.fillStyle = MAP_CONFIG.colors.player; 
             ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill(); 
         }
@@ -136,7 +139,8 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
     if(entities.echoRay && reference !== entities.echoRay) {
         const ex = (entities.echoRay.x - centerPos.x) * scale + cx;
         const ey = (entities.echoRay.y - centerPos.y) * scale + cy;
-        if (Math.hypot(ex - cx, ey - cy) < radius) {
+        // Utils güncellemesi:
+        if (Utils.dist(ex, ey, cx, cy) < radius) {
             ctx.fillStyle = MAP_CONFIG.colors.echo; 
             ctx.beginPath(); ctx.arc(ex, ey, 3, 0, Math.PI*2); ctx.fill(); 
         }
@@ -146,7 +150,8 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
     const drawBase = (entity, color) => {
         const bx = (entity.x - centerPos.x) * scale + cx; 
         const by = (entity.y - centerPos.y) * scale + cy;
-        if(Math.hypot(bx - cx, by - cy) < radius) {
+        // Utils güncellemesi:
+        if(Utils.dist(bx, by, cx, cy) < radius) {
             ctx.fillStyle = color; ctx.beginPath(); ctx.arc(bx, by, 3.5, 0, Math.PI*2); ctx.fill();
         }
     }
@@ -161,7 +166,8 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
             let px = (p.x - centerPos.x) * scale + cx; 
             let py = (p.y - centerPos.y) * scale + cy;
             
-            if(Math.hypot(px - cx, py - cy) < radius) {
+            // Utils güncellemesi:
+            if(Utils.dist(px, py, cx, cy) < radius) {
                 const visibility = getPlanetVisibility(p, entities.player, entities.echoRay);
                 if (visibility === 1) ctx.fillStyle = "rgba(255,255,255,0.3)"; 
                 else if (visibility === 2) ctx.fillStyle = p.type.color; 
@@ -175,7 +181,8 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
     if(state.manualTarget) {
         const tx = (state.manualTarget.x - centerPos.x) * scale + cx; 
         const ty = (state.manualTarget.y - centerPos.y) * scale + cy;
-        const distToTarget = Math.hypot(tx - cx, ty - cy);
+        // Utils güncellemesi:
+        const distToTarget = Utils.dist(tx, ty, cx, cy);
         const angle = Math.atan2(ty - cy, tx - cx);
         
         ctx.strokeStyle = MAP_CONFIG.colors.target; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); 
