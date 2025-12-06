@@ -107,11 +107,64 @@ const GameRules = {
             ? (playerData.upgrades.echoCapacity * perLevel) 
             : 0;
         return base + added;
+    },
+
+    // ==========================================
+    // 4. DURUM KONTROLLERİ (STATE CHECKS) - YENİ
+    // ==========================================
+
+    /**
+     * Envanterin dolu olup olmadığını kontrol eder.
+     * @param {number} currentCount - Mevcut eşya sayısı
+     * @returns {boolean} Doluysa true
+     */
+    isInventoryFull: function(currentCount) {
+        return currentCount >= this.getPlayerCapacity();
+    },
+
+    /**
+     * Bir varlığın (gemi veya yankı) güvenli bölge sınırları içinde olup olmadığını kontrol eder.
+     * @param {Object} entity - Kontrol edilecek varlık {x, y}
+     * @param {Object} nexus - Nexus varlığı {x, y}
+     * @returns {boolean} Güvenli bölgedeyse true
+     */
+    isInSafeZone: function(entity, nexus) {
+        if (!entity || !nexus) return false;
+        const dx = entity.x - nexus.x;
+        const dy = entity.y - nexus.y;
+        // Basit öklid mesafesi karesiyle kontrol (karekök almaktan daha hızlı)
+        const distSq = dx*dx + dy*dy;
+        const safeR = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
+        return distSq < safeR * safeR;
+    },
+
+    /**
+     * Yankı'nın birleşme mesafesinde olup olmadığını kontrol eder.
+     * @param {number} distance - Oyuncu ile Yankı arasındaki mesafe
+     * @returns {boolean} Birleşebilir ise true
+     */
+    canEchoMerge: function(distance) {
+        return distance < GAME_CONFIG.ECHO.INTERACTION_DIST;
+    },
+
+    /**
+     * Kamera mesafesine göre sinyal parazit (noise) oranını hesaplar.
+     * @param {number} dist - Oyuncu ile Yankı arası mesafe
+     * @param {number} maxRange - Maksimum sinyal menzili
+     * @returns {number} 0.0 (Temiz) ile 1.0 (Kopuk) arası değer
+     */
+    calculateSignalInterference: function(dist, maxRange) {
+        const interferenceStart = maxRange * 0.6; // Menzilin %60'ından sonra başlar
+        
+        if (dist <= interferenceStart) return 0;
+        if (dist >= maxRange) return 1.0;
+        
+        return (dist - interferenceStart) / (maxRange - interferenceStart);
     }
 };
 
 // ==========================================
-// 4. GLOBAL ALIAS (UYUMLULUK KATMANI)
+// 5. GLOBAL ALIAS (UYUMLULUK KATMANI)
 // ==========================================
 // Mevcut oyun kod tabanı (game.js, ui.js vb.) bu fonksiyonları doğrudan çağırdığı için,
 // GameRules metotlarını global scope'a bağlıyoruz.

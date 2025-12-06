@@ -21,22 +21,20 @@ var audio;
 window.cameraTarget = null; // Mantıksal hedef (Gemi veya Yankı)
 window.cameraFocus = { x: 0, y: 0 }; // Görsel odak noktası (Yumuşak geçiş için)
 
-// KAMERA GEÇİŞ DURUMU (YENİ)
+// KAMERA GEÇİŞ DURUMU
 let lastCameraTarget = null;
 let isCameraTransitioning = false;
 
 // OYUN AYARLARI
-// data.js dosyasındaki DEFAULT_GAME_SETTINGS üzerinden ilklendirilir.
 window.gameSettings = Object.assign({}, DEFAULT_GAME_SETTINGS);
 
 let currentRenderOffsetX = 0;
 let currentRenderOffsetY = 0;
 
-// GÜNCELLEME: playerData yapısı artık data.js içindeki INITIAL_PLAYER_DATA'dan 
-// derin kopya (deep copy) alınarak oluşturuluyor.
+// OYUNCU VERİSİ
 let playerData = JSON.parse(JSON.stringify(INITIAL_PLAYER_DATA));
 
-// GÜNCELLEME: Zoom değerleri Config'den
+// ZOOM
 let currentZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM; 
 let targetZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;
 let isPaused = false;
@@ -73,19 +71,15 @@ function spawnEcho(x, y) {
     if(wrapper) {
         wrapper.style.display = 'flex'; 
     }
-    // Metin ve Renk Config'den
     showNotification({name: MESSAGES.ECHO.SPAWN, type:{color: MAP_CONFIG.colors.echo}}, ""); 
 }
 
 function addItemToInventory(planet) { 
-    const currentCount = collectedItems.length;
-    const capacity = getPlayerCapacity();
-
-    if (currentCount >= capacity) {
+    // MANTIK TAŞINDI: GameRules.isInventoryFull
+    if (GameRules.isInventoryFull(collectedItems.length)) {
         if (!autopilot) {
-            // Metin Config'den
             showNotification({name: MESSAGES.UI.INVENTORY_FULL, type:{color:'#ef4444'}}, "");
-            if(audio) audio.playError(); // HATA SESİ
+            if(audio) audio.playError();
         }
         return false; 
     }
@@ -106,7 +100,6 @@ function setEchoMode(mode) {
 
     if (mode === 'roam' && echoRay.attached) { 
         echoRay.attached = false; 
-        // Metin Config'den
         showNotification({name: MESSAGES.ECHO.DETACH, type:{color: MAP_CONFIG.colors.echo}}, ""); 
     }
     if (mode === 'return') echoRay.attached = false; 
@@ -118,13 +111,13 @@ function echoManualMerge() {
     if(!echoRay) return;
     const dist = Utils.distEntity(player, echoRay);
     
-    if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST) {
+    // MANTIK TAŞINDI: GameRules.canEchoMerge
+    if (GameRules.canEchoMerge(dist)) {
         if(audio) audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
         echoRay.pendingMerge = false;
 
-        // Metinler Config'den
         showNotification({name: MESSAGES.ECHO.MERGE, type:{color: MAP_CONFIG.colors.echo}}, MESSAGES.ECHO.MERGE_DESC);
         updateEchoDropdownUI();
         
@@ -180,10 +173,8 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    const SAFE_ZONE_R = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
-    
-    const startSafeDist = Utils.distEntity(player, nexus);
-    isInSafeZone = startSafeDist < SAFE_ZONE_R;
+    // MANTIK TAŞINDI: GameRules.isInSafeZone
+    isInSafeZone = GameRules.isInSafeZone(player, nexus);
 
     if (audio) {
         audio.init();
@@ -218,12 +209,10 @@ function init() {
             const aiToggle = document.getElementById('btn-ai-toggle');
             if(aiToggle) aiToggle.classList.add('active');
             updateAIButton();
-            // Metin Config'den
             showNotification({name: MESSAGES.UI.ROUTE_CREATED, type:{color:'#fff'}}, "");
         });
     }
 
-    // Zoom Config'den
     currentZoom = GAME_CONFIG.CAMERA.INITIAL_ZOOM; 
     targetZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;  
     window.cinematicMode = true; 
@@ -311,6 +300,8 @@ function loop() {
             echoRay.update(); 
             if (echoRay.mode === 'return' && echoRay.pendingMerge) {
                  const dist = Utils.distEntity(player, echoRay);
+                 // MANTIK TAŞINDI: GameRules.canEchoMerge
+                 // Otomatik birleşme için biraz tolerans (-50) kullanıyoruz
                  if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST - 50) echoManualMerge();
             }
         }
@@ -325,26 +316,23 @@ function loop() {
         
         if (window.cameraTarget === echoRay && !echoRay) {
             window.cameraTarget = player;
-            // Metin Config'den
             showNotification({name: MESSAGES.ECHO.LOST_SIGNAL, type:{color:'#ef4444'}}, MESSAGES.ECHO.LOST_SIGNAL_DESC);
             const indicator = document.getElementById('echo-vision-indicator');
             if(indicator) indicator.classList.remove('active');
         }
 
-        const SAFE_ZONE_R = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
-        const distToNexusSafe = Utils.distEntity(player, nexus);
+        // MANTIK TAŞINDI: GameRules.isInSafeZone
+        const currentlySafe = GameRules.isInSafeZone(player, nexus);
         
-        if (distToNexusSafe < SAFE_ZONE_R) {
+        if (currentlySafe) {
             if (!isInSafeZone) {
                 isInSafeZone = true;
-                // Metin Config'den
                 showNotification({name: MESSAGES.UI.SAFE_ZONE_ENTER, type:{color:'#38bdf8'}}, MESSAGES.UI.SAFE_ZONE_ENTER_DESC);
                 if(audio) audio.playTheme('base');
             }
         } else {
             if (isInSafeZone) {
                 isInSafeZone = false;
-                // Metin Config'den
                 showNotification({name: MESSAGES.UI.SAFE_ZONE_EXIT, type:{color:'#fbbf24'}}, MESSAGES.UI.SAFE_ZONE_EXIT_DESC);
                 if(audio) audio.playTheme('space');
             }
@@ -391,7 +379,6 @@ function loop() {
         let targetOffsetY = window.gameSettings.cameraOffsetY;
 
         if (window.gameSettings.adaptiveCamera) {
-            // Değerler Config'den
             const lookAheadFactor = GAME_CONFIG.CAMERA.ADAPTIVE_FACTOR; 
             const maxAdaptiveOffset = GAME_CONFIG.CAMERA.MAX_OFFSET; 
             
@@ -402,7 +389,6 @@ function loop() {
             targetOffsetY = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetY));
         }
 
-        // Lerp Hızı Config'den
         const lerpVal = GAME_CONFIG.CAMERA.LERP_SPEED;
         currentRenderOffsetX += (targetOffsetX - currentRenderOffsetX) * lerpVal;
         currentRenderOffsetY += (targetOffsetY - currentRenderOffsetY) * lerpVal;
@@ -449,17 +435,19 @@ function loop() {
             entityManager.drawPlanets(ctx, player, echoRay, width, height, currentZoom);
         }
 
+        // Güvenli Bölge Görseli (Güvenli bölge yarıçapı Config'den)
+        const safeR = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
         ctx.save();
         ctx.translate(nexus.x, nexus.y);
         ctx.rotate(Date.now() * 0.0001);
         ctx.beginPath();
-        ctx.arc(0, 0, SAFE_ZONE_R, 0, Math.PI * 2);
+        ctx.arc(0, 0, safeR, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; 
         ctx.lineWidth = 20;
         ctx.setLineDash([100, 100]); 
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(0, 0, SAFE_ZONE_R - 50, 0, Math.PI * 2);
+        ctx.arc(0, 0, safeR - 50, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(56, 189, 248, 0.05)";
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
@@ -514,18 +502,20 @@ function loop() {
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
             const dist = Utils.distEntity(player, echoRay);
             const maxRange = player.radarRadius; 
-            const interferenceStart = maxRange * 0.6; 
+            
+            // MANTIK TAŞINDI: GameRules.calculateSignalInterference
+            const interference = GameRules.calculateSignalInterference(dist, maxRange);
 
-            if (dist > maxRange) {
+            if (interference >= 1.0) {
+                // Sinyal koptu
                 window.cameraTarget = player;
-                // Metin Config'den
                 showNotification({name: MESSAGES.ECHO.RANGE_WARNING, type:{color:'#ef4444'}}, MESSAGES.ECHO.LOST_SIGNAL_DESC);
                 if(audio) audio.playError();
                 const indicator = document.getElementById('echo-vision-indicator');
                 if(indicator) indicator.classList.remove('active');
-            } else if (dist > interferenceStart) {
-                const intensity = (dist - interferenceStart) / (maxRange - interferenceStart);
-                drawStaticNoise(ctx, width, height, intensity);
+            } else if (interference > 0) {
+                // Parazit çiz
+                drawStaticNoise(ctx, width, height, interference);
             }
         }
 
@@ -576,7 +566,6 @@ function loop() {
                      echoRay.mode = 'roam'; 
                      updateEchoDropdownUI(); 
                      keys.f = false; 
-                     // Metin Config'den
                      showNotification({name: MESSAGES.ECHO.DETACH, type:{color: MAP_CONFIG.colors.echo}}, "");
                 }
             }
