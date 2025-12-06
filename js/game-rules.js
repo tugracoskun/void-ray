@@ -154,7 +154,8 @@ const GameRules = {
      * @returns {number} 0.0 (Temiz) ile 1.0 (Kopuk) arası değer
      */
     calculateSignalInterference: function(dist, maxRange) {
-        const interferenceStart = maxRange * 0.6; // Menzilin %60'ından sonra başlar
+        const threshold = GAME_CONFIG.ECHO.SIGNAL_INTERFERENCE_START;
+        const interferenceStart = maxRange * threshold;
         
         if (dist <= interferenceStart) return 0;
         if (dist >= maxRange) return 1.0;
