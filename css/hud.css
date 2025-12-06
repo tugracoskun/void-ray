@@ -1,6 +1,5 @@
 /* * HUD.CSS
  * Oyun içi arayüz, minimap ve araçlar.
- * (Chat stilleri chat.css dosyasına taşındı)
  */
 
 /* HUD Elements */
@@ -63,7 +62,7 @@
 }
 .echo-p-stats { display: flex; flex-direction: column; }
 .echo-p-name { font-size: 0.85rem; color: white; font-weight: 600; }
-.echo-p-rate { font-size: 0.65rem; color: #94a3b8; }
+.echo-p-rate { font-size: 0.65rem; color: var(--color-text-dim); }
 
 .echo-menu-item {
     padding: 10px; border-radius: 4px; cursor: pointer;
@@ -112,8 +111,8 @@
     display: flex; flex-direction: column; gap: 0px;
     opacity: 0.8; text-align: right; pointer-events: none; z-index: 55;
 }
-.speed-label { font-size: 0.6rem; color: #64748b; letter-spacing: 2px; text-transform: uppercase; }
-.speed-val { font-size: 2rem; color: #e2e8f0; font-weight: 300; font-family: monospace; line-height: 1; }
+.speed-label { font-size: 0.6rem; color: var(--color-text-dark); letter-spacing: 2px; text-transform: uppercase; }
+.speed-val { font-size: 2rem; color: var(--color-text-main); font-weight: 300; font-family: monospace; line-height: 1; }
 .speed-unit { font-size: 0.8rem; color: rgba(255,255,255,0.3); margin-left: 5px; font-weight: 300; }
 
 /* Settings Menu */
@@ -136,7 +135,7 @@
     text-align: center;
     padding: 8px 0;
     font-size: 0.7rem;
-    color: #64748b;
+    color: var(--color-text-dark);
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: 0.2s;
@@ -147,14 +146,14 @@
 .settings-tab:hover { color: white; background: rgba(255,255,255,0.05); }
 .settings-tab.active { color: var(--ray-color); border-bottom-color: var(--ray-color); background: rgba(56, 189, 248, 0.05); }
 
-.settings-content { display: none; animation: fadeInMsg 0.2s ease; } /* fadeInMsg chat.css'te kaldıysa buraya da kopyalamak gerekebilir veya global yapmak. Şimdilik core'a taşınmadığı için burada hata verebilir, ama modern browserlar tolere eder. */
+.settings-content { display: none; animation: fadeInMsg 0.2s ease; }
 .settings-content.active { display: block; }
 
 input[type=range] { width: 100%; -webkit-appearance: none; height: 2px; background: rgba(255,255,255,0.1); outline: none; margin-top: 10px; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: white; cursor: pointer; border-radius: 0; }
 
 /* --- TOGGLE SWITCH --- */
-.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.75rem; color: #94a3b8; letter-spacing: 1px; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.75rem; color: var(--color-text-dim); letter-spacing: 1px; }
 .toggle-switch { position: relative; display: inline-block; width: 34px; height: 18px; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 18px; }
@@ -191,13 +190,13 @@ input:checked + .slider:before { transform: translateX(16px); }
     overflow: hidden;
 }
 #energy-bar-fill {
-    height: 100%; background: #38bdf8; width: 100%;
-    box-shadow: 0 0 8px #38bdf8;
+    height: 100%; background: var(--ray-color); width: 100%;
+    box-shadow: 0 0 8px var(--ray-color);
     transition: width 0.2s linear, background 0.3s;
 }
 #health-bar-fill {
-    height: 100%; background: #10b981; width: 100%;
-    box-shadow: 0 0 8px #10b981;
+    height: 100%; background: var(--color-success); width: 100%;
+    box-shadow: 0 0 8px var(--color-success);
     transition: width 0.2s linear, background 0.3s;
 }
 .coords { font-family: monospace; font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
@@ -207,7 +206,7 @@ input:checked + .slider:before { transform: translateX(16px); }
     position: fixed; 
     background: rgba(5, 5, 8, 0.98);
     border: 1px solid var(--ray-color);
-    color: #e2e8f0;
+    color: var(--color-text-main);
     padding: 8px 12px;
     border-radius: 4px;
     font-size: 0.8rem;
@@ -220,5 +219,5 @@ input:checked + .slider:before { transform: translateX(16px); }
     transform: translate(15px, 15px); 
 }
 .tooltip-title { font-weight: 600; color: white; display: block; margin-bottom: 2px; }
-.tooltip-desc { font-size: 0.7rem; color: #94a3b8; }
+.tooltip-desc { font-size: 0.7rem; color: var(--color-text-dim); }
 .tooltip-xp { color: var(--ray-color); font-family: monospace; }

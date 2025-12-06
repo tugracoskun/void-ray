@@ -1,6 +1,5 @@
 /* * CHAT.CSS
  * İletişim paneli, mesajlar ve giriş alanı stilleri.
- * hud.css dosyasından ayrıştırılmıştır.
  */
 
 /* --- CHAT PANELİ --- */
@@ -66,7 +65,7 @@
 
 .chat-tab {
     flex: 1; padding: 10px 0; text-align: center;
-    font-size: 0.75rem; letter-spacing: 1px; color: #94a3b8;
+    font-size: 0.75rem; letter-spacing: 1px; color: var(--color-text-dim);
     cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent;
 }
 .chat-tab:hover:not(.disabled) { background: rgba(255,255,255,0.05); color: white; }
@@ -79,10 +78,10 @@
     font-size: 0.85rem;
 }
 .chat-message { line-height: 1.4; word-break: break-word; text-shadow: 0 1px 2px black; animation: fadeInMsg 0.2s ease; }
-.chat-message.system { color: #94a3b8; font-style: italic; }
-.chat-message.loot { color: #e2e8f0; }
-.chat-message.alert { color: #ef4444; font-weight: 500; }
-.chat-message.info { color: #38bdf8; }
+.chat-message.system { color: var(--color-text-dim); font-style: italic; }
+.chat-message.loot { color: var(--color-text-main); }
+.chat-message.alert { color: var(--color-danger); font-weight: 500; }
+.chat-message.info { color: var(--ray-color); }
 @keyframes fadeInMsg { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
 
 /* Chat Input Area */
@@ -99,13 +98,13 @@
 #chat-input:focus { border-color: var(--ray-color); background: rgba(255,255,255,0.1); }
 #chat-send-btn {
     background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3);
-    color: #38bdf8; border-radius: 4px; cursor: pointer; padding: 0 10px;
+    color: var(--ray-color); border-radius: 4px; cursor: pointer; padding: 0 10px;
     transition: 0.2s;
 }
 #chat-send-btn:hover { background: var(--ray-color); color: black; }
 
 /* Chat Timestamp */
 .chat-timestamp {
-    color: #64748b; font-size: 0.7rem; margin-right: 6px; font-family: monospace;
+    color: var(--color-text-dark); font-size: 0.7rem; margin-right: 6px; font-family: monospace;
     opacity: 0.8;
 }

@@ -3,10 +3,25 @@
  */
 
 :root {
-    --ray-color: #38bdf8;
-    --echo-color: #67e8f9;
-    --toxic-color: #84cc16;
-    --tardigrad-color: #C7C0AE;
+    /* --- OYUN RENKLERİ (VARLIKLAR) --- */
+    --ray-color: #38bdf8;       /* Vatoz / Oyuncu Mavisi */
+    --echo-color: #67e8f9;      /* Yankı / Echo Turkuazı */
+    --toxic-color: #84cc16;     /* Zehir Yeşili */
+    --tardigrad-color: #C7C0AE; /* Tardigrad Beji */
+    
+    /* --- DURUM RENKLERİ (UI) --- */
+    --color-success: #10b981;   /* Yeşil / Başarı / Can Dolu */
+    --color-danger: #ef4444;    /* Kırmızı / Hata / Tehlike */
+    --color-warning: #f59e0b;   /* Turuncu / Uyarı */
+    --color-gold: #fbbf24;      /* Altın / Para / Efsanevi */
+    --color-storage: #a855f7;   /* Mor / Depo / Kayıp Kargo */
+    
+    /* --- METİN RENKLERİ --- */
+    --color-text-main: #e2e8f0;  /* Ana Metin (Parlak) */
+    --color-text-dim: #94a3b8;   /* Sönük Metin (Açıklamalar) */
+    --color-text-dark: #64748b;  /* Koyu Metin (Etiketler) */
+
+    /* --- YAPI & CAM EFEKTLERİ --- */
     --glass-bg: rgba(5, 5, 5, 0.95);
     --glass-border: rgba(255, 255, 255, 0.15);
     --sharp-radius: 2px;
