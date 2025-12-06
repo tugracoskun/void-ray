@@ -75,7 +75,7 @@ function spawnEcho(x, y) {
 }
 
 function addItemToInventory(planet) { 
-    // MANTIK TAŞINDI: GameRules.isInventoryFull
+    // MANTIK: GameRules.isInventoryFull
     if (GameRules.isInventoryFull(collectedItems.length)) {
         if (!autopilot) {
             showNotification({name: MESSAGES.UI.INVENTORY_FULL, type:{color:'#ef4444'}}, "");
@@ -111,7 +111,7 @@ function echoManualMerge() {
     if(!echoRay) return;
     const dist = Utils.distEntity(player, echoRay);
     
-    // MANTIK TAŞINDI: GameRules.canEchoMerge
+    // MANTIK: GameRules.canEchoMerge
     if (GameRules.canEchoMerge(dist)) {
         if(audio) audio.playEvolve(); 
         echoRay.attached = true; 
@@ -173,7 +173,7 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    // MANTIK TAŞINDI: GameRules.isInSafeZone
+    // MANTIK: GameRules.isInSafeZone
     isInSafeZone = GameRules.isInSafeZone(player, nexus);
 
     if (audio) {
@@ -300,7 +300,7 @@ function loop() {
             echoRay.update(); 
             if (echoRay.mode === 'return' && echoRay.pendingMerge) {
                  const dist = Utils.distEntity(player, echoRay);
-                 // MANTIK TAŞINDI: GameRules.canEchoMerge
+                 // MANTIK: GameRules.canEchoMerge
                  // Otomatik birleşme için biraz tolerans (-50) kullanıyoruz
                  if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST - 50) echoManualMerge();
             }
@@ -321,7 +321,7 @@ function loop() {
             if(indicator) indicator.classList.remove('active');
         }
 
-        // MANTIK TAŞINDI: GameRules.isInSafeZone
+        // MANTIK: GameRules.isInSafeZone
         const currentlySafe = GameRules.isInSafeZone(player, nexus);
         
         if (currentlySafe) {
@@ -503,7 +503,7 @@ function loop() {
             const dist = Utils.distEntity(player, echoRay);
             const maxRange = player.radarRadius; 
             
-            // MANTIK TAŞINDI: GameRules.calculateSignalInterference
+            // MANTIK: GameRules.calculateSignalInterference
             const interference = GameRules.calculateSignalInterference(dist, maxRange);
 
             if (interference >= 1.0) {
@@ -521,20 +521,22 @@ function loop() {
 
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
-            const distNexus = Utils.distEntity(player, nexus);
-            const distStorage = Utils.distEntity(player, storageCenter);
+            // MANTIK: GameRules.canInteract ile manuel mesafe hesapları değiştirildi
             
             let isNexusOpen = (typeof nexusOpen !== 'undefined' && nexusOpen);
             let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
             let isMapOpen = (typeof mapOpen !== 'undefined' && mapOpen);
 
-            let showNexusPrompt = (distNexus < nexus.radius + 200) && !isNexusOpen;
-            let showStoragePrompt = (distStorage < storageCenter.radius + 200) && !isStorageOpen;
+            // Nexus: Radius + 200 birim
+            let showNexusPrompt = GameRules.canInteract(player, nexus, 200) && !isNexusOpen;
+            // Storage: Radius + 200 birim
+            let showStoragePrompt = GameRules.canInteract(player, storageCenter, 200) && !isStorageOpen;
+            
             let showEchoMergePrompt = false;
 
             if (echoRay && !isMapOpen) {
-                 const distEcho = Utils.distEntity(player, echoRay);
-                 if (!echoRay.attached && distEcho < 300) {
+                 // Echo ile manuel birleşme: 300 birim
+                 if (!echoRay.attached && GameRules.canInteract(player, echoRay, 300)) {
                      showEchoMergePrompt = true;
                  }
             }

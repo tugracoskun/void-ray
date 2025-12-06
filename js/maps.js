@@ -4,35 +4,9 @@
  * * hesaplama ve çizim fonksiyonlarını içerir.
  */
 
-/**
- * Gezegenin oyuncu ve yankıya göre görünürlük seviyesini hesaplar.
- * @param {Planet} p - Gezegen nesnesi
- * @param {VoidRay} player - Oyuncu nesnesi
- * @param {EchoRay | null} echo - Yankı nesnesi
- * @returns {number} 0: Görünmez, 1: Radar (Sinyal), 2: Tarama (Tam Görüş)
- */
-function getPlanetVisibility(p, player, echo) {
-    let visibility = 0;
-    // Utils güncellemesi:
-    const dPlayer = Utils.distEntity(player, p);
-    
-    // Oyuncu Tarama Alanı (Tam Görüş)
-    if (dPlayer < player.scanRadius) return 2; 
-    // Oyuncu Radar Alanı (Sinyal)
-    else if (dPlayer < player.radarRadius) visibility = 1; 
-
-    if (echo) {
-        // Utils güncellemesi:
-        const dEcho = Utils.distEntity(echo, p);
-        // Yankı Tarama Alanı (Tam Görüş)
-        if (dEcho < echo.scanRadius) return 2; 
-        // Yankı Radar Alanı (Sinyal)
-        else if (dEcho < echo.radarRadius) {
-            if (visibility < 1) visibility = 1; 
-        }
-    }
-    return visibility;
-}
+// getPlanetVisibility fonksiyonu artık GameRules içinde.
+// Geriye dönük uyumluluk için alias tanımlayabiliriz veya kodu direkt GameRules'tan çağırabiliriz.
+// Doğrudan GameRules kullanımı game.js ve ui.js içinde yapılıyor.
 
 /**
  * Hedef göstergesini çizer.
@@ -168,7 +142,7 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
             
             // Utils güncellemesi:
             if(Utils.dist(px, py, cx, cy) < radius) {
-                const visibility = getPlanetVisibility(p, entities.player, entities.echoRay);
+                const visibility = GameRules.getPlanetVisibility(p, entities.player, entities.echoRay);
                 if (visibility === 1) ctx.fillStyle = "rgba(255,255,255,0.3)"; 
                 else if (visibility === 2) ctx.fillStyle = p.type.color; 
                 else return; 
