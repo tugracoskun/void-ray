@@ -609,7 +609,38 @@ class VoidRay {
 
         ctx.restore();
 
-        // --- GÖRSEL DEBUG: HİTBOX VE VEKTÖRLER ---
+        // --- GEMİ ÜSTÜ BARLAR (CAN VE ENERJİ) ---
+        // DarkOrbit tarzı: Geminin hemen üzerinde, dönmeyen (yatay) barlar
+        if (window.gameSettings && window.gameSettings.showShipBars && !isHidden) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // Dönmemesi için sadece translate yapıyoruz, rotate yok.
+            // Barların konumu: Geminin biraz yukarısı (-60px offset)
+            const barW = 60;
+            const barH = 6;
+            const offset = -60;
+
+            // Arka Plan (Konteyner)
+            ctx.fillStyle = "rgba(0,0,0,0.6)";
+            ctx.fillRect(-barW/2, offset, barW, barH * 2 + 2); // İki bar + boşluk
+
+            // 1. CAN BARI (Üstte)
+            const hpPct = this.health / this.maxHealth;
+            // Renk: %50+ Yeşil, %20-%50 Turuncu, <%20 Kırmızı
+            ctx.fillStyle = hpPct > 0.5 ? "#10b981" : (hpPct > 0.2 ? "#f59e0b" : "#ef4444");
+            // Kenarlık boşluğu (1px) bırakarak çiz
+            ctx.fillRect(-barW/2 + 1, offset + 1, (barW - 2) * hpPct, barH);
+
+            // 2. ENERJİ BARI (Altta)
+            const epPct = this.energy / this.maxEnergy;
+            ctx.fillStyle = "#38bdf8"; // Mavi
+            ctx.fillRect(-barW/2 + 1, offset + barH + 1, (barW - 2) * epPct, barH);
+
+            ctx.restore();
+        }
+
+        // --- GÖRSEL DEBUG: VEKTÖRLER ---
         if (window.gameSettings && window.gameSettings.developerMode) {
             ctx.save();
             ctx.translate(this.x, this.y); // Gemi merkezine git
