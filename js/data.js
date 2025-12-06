@@ -47,7 +47,8 @@ const GAME_CONFIG = {
         SCAN_RADIUS: 4000,
         RADAR_RADIUS: 10000,
         DRAIN_RATE: 0.005,       // Normal enerji tüketimi
-        OUT_OF_BOUNDS_DRAIN: 0.5 // Radyasyon alanı tüketimi
+        OUT_OF_BOUNDS_DRAIN: 0.5, // Radyasyon alanı tüketimi
+        INTERACTION_DIST: 350    // Oyuncu ile birleşme mesafesi
     },
     
     PLANETS: {
@@ -85,8 +86,14 @@ const GAME_CONFIG = {
 // 2. İÇERİK, EKONOMİ VE GANİMET SİSTEMİ
 // ==========================================
 
-// OYUNCU VERİ ŞEMASI (game.js'den taşındı)
-// Bu yapı, oyun sıfırlandığında veya ilk açılışta kullanılır.
+// OYUN AÇILIŞ SENARYOSU (YENİ EKLENDİ)
+const INTRO_SEQUENCE = [
+    { time: 0, text: "Sistem başlatılıyor...", type: "system" },
+    { time: 1000, text: "Optik sensörler kalibre ediliyor...", type: "info" },
+    { time: 3500, text: "Hoş geldin, Pilot. Motorlar aktif.", type: "loot" }
+];
+
+// OYUNCU VERİ ŞEMASI
 const INITIAL_PLAYER_DATA = {
     stardust: 0, 
     upgrades: { 

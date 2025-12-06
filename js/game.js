@@ -71,7 +71,8 @@ function spawnEcho(x, y) {
     if(wrapper) {
         wrapper.style.display = 'flex'; 
     }
-    showNotification({name: "YANKI DOĞDU", type:{color:'#67e8f9'}}, ""); 
+    // Hardcoded renk yerine Config'den al
+    showNotification({name: "YANKI DOĞDU", type:{color: MAP_CONFIG.colors.echo}}, ""); 
 }
 
 function addItemToInventory(planet) { 
@@ -102,7 +103,7 @@ function setEchoMode(mode) {
 
     if (mode === 'roam' && echoRay.attached) { 
         echoRay.attached = false; 
-        showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, ""); 
+        showNotification({name: "YANKI AYRILDI", type:{color: MAP_CONFIG.colors.echo}}, ""); 
     }
     if (mode === 'return') echoRay.attached = false; 
     echoRay.mode = mode; 
@@ -111,16 +112,17 @@ function setEchoMode(mode) {
 
 function echoManualMerge() {
     if(!echoRay) return;
-    // Utils güncellemesi:
+    // Utils güncellemesi ve Config'den mesafe
     const dist = Utils.distEntity(player, echoRay);
     
-    if (dist < 350) {
+    // Hardcoded 350 yerine Config
+    if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST) {
         if(audio) audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
         echoRay.pendingMerge = false;
 
-        showNotification({name: "SİSTEMLER BİRLEŞTİ", type:{color:'#67e8f9'}}, "Yankı deposuna erişilebilir.");
+        showNotification({name: "SİSTEMLER BİRLEŞTİ", type:{color: MAP_CONFIG.colors.echo}}, "Yankı deposuna erişilebilir.");
         updateEchoDropdownUI();
         
         // Eğer kamera Yankı'daysa, birleşince gemiye geri al
@@ -230,9 +232,12 @@ function init() {
     targetZoom = 1.0;  
     window.cinematicMode = true; 
 
-    addChatMessage("Sistem başlatılıyor...", "system", "genel");
-    setTimeout(() => addChatMessage("Optik sensörler kalibre ediliyor...", "info", "genel"), 1000);
-    setTimeout(() => addChatMessage("Hoş geldin, Pilot. Motorlar aktif.", "loot", "genel"), 3500);
+    // --- AÇILIŞ SENARYOSU (DATA'DAN OKUNUR) ---
+    if (typeof INTRO_SEQUENCE !== 'undefined') {
+        INTRO_SEQUENCE.forEach(msg => {
+            setTimeout(() => addChatMessage(msg.text, msg.type, "genel"), msg.time);
+        });
+    }
 
     if (typeof initContextSystem === 'function') {
         initContextSystem();
@@ -331,7 +336,8 @@ function loop() {
             if (echoRay.mode === 'return' && echoRay.pendingMerge) {
                  // Utils güncellemesi:
                  const dist = Utils.distEntity(player, echoRay);
-                 if (dist < 300) echoManualMerge();
+                 // Config'den mesafe okuma
+                 if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST - 50) echoManualMerge();
             }
         }
         nexus.update();
@@ -615,7 +621,7 @@ function loop() {
                      echoRay.mode = 'roam'; 
                      updateEchoDropdownUI(); 
                      keys.f = false; 
-                     showNotification({name: "YANKI AYRILDI", type:{color:'#67e8f9'}}, "");
+                     showNotification({name: "YANKI AYRILDI", type:{color: MAP_CONFIG.colors.echo}}, "");
                 }
             }
 
