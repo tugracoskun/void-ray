@@ -104,9 +104,6 @@ function calculatePlanetXp(type) {
  * * GÜVENLİK: playerData henüz yüklenmediyse varsayılan değer döner.
  */
 function getPlayerCapacity() {
-    // data.js yüklü değilse fallback
-    if (typeof GAME_CONFIG === 'undefined') return 150;
-
     const base = GAME_CONFIG.PLAYER.BASE_CAPACITY;
     const perLevel = GAME_CONFIG.PLAYER.CAPACITY_PER_LEVEL;
     
@@ -122,9 +119,6 @@ function getPlayerCapacity() {
  * * GÜVENLİK: playerData kontrolü eklendi.
  */
 function getEchoCapacity() {
-    // data.js yüklü değilse fallback
-    if (typeof GAME_CONFIG === 'undefined') return 80;
-
     const base = GAME_CONFIG.ECHO.BASE_CAPACITY;
     const perLevel = GAME_CONFIG.ECHO.CAPACITY_PER_LEVEL;
 
