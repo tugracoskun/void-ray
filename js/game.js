@@ -36,7 +36,9 @@ let currentRenderOffsetY = 0;
 // derin kopya (deep copy) alınarak oluşturuluyor.
 let playerData = JSON.parse(JSON.stringify(INITIAL_PLAYER_DATA));
 
-let currentZoom = 1.0, targetZoom = 1.0;
+// GÜNCELLEME: Zoom değerleri Config'den
+let currentZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM; 
+let targetZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;
 let isPaused = false;
 let animationId = null;
 let manualTarget = null; 
@@ -71,8 +73,8 @@ function spawnEcho(x, y) {
     if(wrapper) {
         wrapper.style.display = 'flex'; 
     }
-    // Hardcoded renk yerine Config'den al
-    showNotification({name: "YANKI DOĞDU", type:{color: MAP_CONFIG.colors.echo}}, ""); 
+    // Metin ve Renk Config'den
+    showNotification({name: MESSAGES.ECHO.SPAWN, type:{color: MAP_CONFIG.colors.echo}}, ""); 
 }
 
 function addItemToInventory(planet) { 
@@ -81,7 +83,8 @@ function addItemToInventory(planet) {
 
     if (currentCount >= capacity) {
         if (!autopilot) {
-            showNotification({name: "ENVANTER DOLU! NEXUS VEYA DEPOYA GİDİN.", type:{color:'#ef4444'}}, "");
+            // Metin Config'den
+            showNotification({name: MESSAGES.UI.INVENTORY_FULL, type:{color:'#ef4444'}}, "");
             if(audio) audio.playError(); // HATA SESİ
         }
         return false; 
@@ -103,7 +106,8 @@ function setEchoMode(mode) {
 
     if (mode === 'roam' && echoRay.attached) { 
         echoRay.attached = false; 
-        showNotification({name: "YANKI AYRILDI", type:{color: MAP_CONFIG.colors.echo}}, ""); 
+        // Metin Config'den
+        showNotification({name: MESSAGES.ECHO.DETACH, type:{color: MAP_CONFIG.colors.echo}}, ""); 
     }
     if (mode === 'return') echoRay.attached = false; 
     echoRay.mode = mode; 
@@ -112,29 +116,26 @@ function setEchoMode(mode) {
 
 function echoManualMerge() {
     if(!echoRay) return;
-    // Utils güncellemesi ve Config'den mesafe
     const dist = Utils.distEntity(player, echoRay);
     
-    // Hardcoded 350 yerine Config
     if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST) {
         if(audio) audio.playEvolve(); 
         echoRay.attached = true; 
         echoRay.mode = 'roam'; 
         echoRay.pendingMerge = false;
 
-        showNotification({name: "SİSTEMLER BİRLEŞTİ", type:{color: MAP_CONFIG.colors.echo}}, "Yankı deposuna erişilebilir.");
+        // Metinler Config'den
+        showNotification({name: MESSAGES.ECHO.MERGE, type:{color: MAP_CONFIG.colors.echo}}, MESSAGES.ECHO.MERGE_DESC);
         updateEchoDropdownUI();
         
-        // Eğer kamera Yankı'daysa, birleşince gemiye geri al
         if (window.cameraTarget === echoRay) {
             window.cameraTarget = player;
-            showNotification({name: "KAMERA SIFIRLANDI", type:{color:'#38bdf8'}}, "Gemiye dönüldü.");
-            // Göstergeyi kapat
+            showNotification({name: MESSAGES.UI.CAMERA_RESET, type:{color:'#38bdf8'}}, MESSAGES.UI.CAMERA_RESET_DESC);
             const indicator = document.getElementById('echo-vision-indicator');
             if(indicator) indicator.classList.remove('active');
         }
     } else { 
-        showNotification({name: "YANKI BİRLEŞMEK İÇİN GELİYOR...", type:{color:'#fbbf24'}}, ""); 
+        showNotification({name: MESSAGES.ECHO.COMING, type:{color:'#fbbf24'}}, ""); 
         setEchoMode('return'); 
         echoRay.pendingMerge = true;
     }
@@ -166,8 +167,8 @@ function init() {
 
     player = new VoidRay(); 
     window.cameraTarget = player; 
-    window.cameraFocus = { x: player.x, y: player.y }; // Başlangıçta odak gemide
-    lastCameraTarget = player; // Takip başlangıcı
+    window.cameraFocus = { x: player.x, y: player.y }; 
+    lastCameraTarget = player; 
 
     nexus = new Nexus(); 
     repairStation = new RepairStation(); 
@@ -179,15 +180,11 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
-    // GÜNCELLEME: Sabit 1500 yerine Config'den değer okuma
     const SAFE_ZONE_R = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
     
-    // Utils güncellemesi:
     const startSafeDist = Utils.distEntity(player, nexus);
     isInSafeZone = startSafeDist < SAFE_ZONE_R;
 
-    // --- SES BAŞLATMA (YUMUŞAK GİRİŞ) ---
-    // Eğer güvenli bölgedeysek 'base', değilse 'space'
     if (audio) {
         audio.init();
         if (isInSafeZone) audio.playTheme('base');
@@ -196,15 +193,12 @@ function init() {
 
     entityManager.init();
     
-    // --- BAŞARIM SİSTEMİNİ BAŞLAT (YENİ) ---
     if (typeof AchievementManager !== 'undefined') {
         AchievementManager.init();
     }
 
-    // --- KAYIT YÖNETİCİSİNİ BAŞLAT ---
     if (typeof SaveManager !== 'undefined') {
         SaveManager.init();
-        // Load sonrası UI'ı bir kez daha güncellemekte fayda var
         updateInventoryCount();
         player.updateUI();
     } else {
@@ -224,15 +218,16 @@ function init() {
             const aiToggle = document.getElementById('btn-ai-toggle');
             if(aiToggle) aiToggle.classList.add('active');
             updateAIButton();
-            showNotification({name: "ROTA OLUŞTURULDU", type:{color:'#fff'}}, "");
+            // Metin Config'den
+            showNotification({name: MESSAGES.UI.ROUTE_CREATED, type:{color:'#fff'}}, "");
         });
     }
 
-    currentZoom = 0.2; 
-    targetZoom = 1.0;  
+    // Zoom Config'den
+    currentZoom = GAME_CONFIG.CAMERA.INITIAL_ZOOM; 
+    targetZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;  
     window.cinematicMode = true; 
 
-    // --- AÇILIŞ SENARYOSU (DATA'DAN OKUNUR) ---
     if (typeof INTRO_SEQUENCE !== 'undefined') {
         INTRO_SEQUENCE.forEach(msg => {
             setTimeout(() => addChatMessage(msg.text, msg.type, "genel"), msg.time);
@@ -252,45 +247,27 @@ function startLoop() {
     loop();
 }
 
-/**
- * Ekrana parazit (karıncalanma) efekti çizer.
- * @param {CanvasRenderingContext2D} ctx 
- * @param {number} w - Ekran genişliği
- * @param {number} h - Ekran yüksekliği
- * @param {number} intensity - Yoğunluk (0.0 ile 1.0 arası)
- */
 function drawStaticNoise(ctx, w, h, intensity) {
     ctx.save();
-    
-    // 1. Genel parazit (Rastgele şeritler)
-    const count = 20 * intensity; // Yoğunluğa göre şerit sayısı
-    
+    const count = 20 * intensity; 
     for (let i = 0; i < count; i++) {
         const y = Math.random() * h;
         const height = Math.random() * 20 + 2;
-        // Beyaz/Gri şeritler
         ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3 * intensity})`;
         ctx.fillRect(0, y, w, height);
     }
-
-    // 2. Rastgele bloklar (Dijital bozulma/Glitch)
     const blockCount = 50 * intensity;
     for (let i = 0; i < blockCount; i++) {
         const x = Math.random() * w;
         const y = Math.random() * h;
         const size = Math.random() * 50 + 10;
-        // Açık gri bloklar
         ctx.fillStyle = `rgba(200, 200, 200, ${Math.random() * 0.4 * intensity})`;
         ctx.fillRect(x, y, size, size/4);
     }
-    
-    // 3. Renk kanalı kayması efekti (Kritik seviyede kırmızımsı)
     if (intensity > 0.5) {
         ctx.fillStyle = `rgba(255, 0, 0, ${0.1 * intensity})`;
         ctx.fillRect(Math.random() * 10 - 5, 0, w, h);
     }
-
-    // 4. Uyarı Yazısı (Nadir yanıp sönme)
     if (intensity > 0.4 && Math.random() < 0.1) {
         ctx.fillStyle = `rgba(239, 68, 68, ${intensity})`;
         ctx.font = "bold 20px monospace";
@@ -299,7 +276,6 @@ function drawStaticNoise(ctx, w, h, intensity) {
         ctx.shadowColor = "red";
         ctx.fillText("⚠ SİNYAL ZAYIF ⚠", w/2, h/2 - 50);
     }
-
     ctx.restore();
 }
 
@@ -334,9 +310,7 @@ function loop() {
         if(echoRay) {
             echoRay.update(); 
             if (echoRay.mode === 'return' && echoRay.pendingMerge) {
-                 // Utils güncellemesi:
                  const dist = Utils.distEntity(player, echoRay);
-                 // Config'den mesafe okuma
                  if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST - 50) echoManualMerge();
             }
         }
@@ -344,42 +318,34 @@ function loop() {
         repairStation.update();
         storageCenter.update();
 
-        // --- KAMERA HEDEFİ GÜVENLİK KONTROLÜ ---
         if (!window.cameraTarget) {
             window.cameraTarget = player;
             lastCameraTarget = player;
         }
         
-        // Eğer hedef Yankı ise ve Yankı yoksa/yok olduysa kamerayı gemiye al
         if (window.cameraTarget === echoRay && !echoRay) {
             window.cameraTarget = player;
-            showNotification({name: "SİNYAL KAYBI", type:{color:'#ef4444'}}, "Kamera Vatoz'a döndü.");
-            // Göstergeyi kapat
+            // Metin Config'den
+            showNotification({name: MESSAGES.ECHO.LOST_SIGNAL, type:{color:'#ef4444'}}, MESSAGES.ECHO.LOST_SIGNAL_DESC);
             const indicator = document.getElementById('echo-vision-indicator');
             if(indicator) indicator.classList.remove('active');
         }
 
-        // --- GÜVENLİ BÖLGE VE MÜZİK GEÇİŞ MANTIĞI ---
-        // GÜNCELLEME: Hardcoded 1500 değeri yerine Config'den okuma
         const SAFE_ZONE_R = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
-        
-        // Utils güncellemesi:
         const distToNexusSafe = Utils.distEntity(player, nexus);
         
         if (distToNexusSafe < SAFE_ZONE_R) {
-            // Eğer daha önce güvenli bölgede değilsek, şimdi girdik
             if (!isInSafeZone) {
                 isInSafeZone = true;
-                showNotification({name: "GÜVENLİ BÖLGEYE VARILDI", type:{color:'#38bdf8'}}, "Nexus Koruma Alanı");
-                // Müzik: Soft geçiş ile Base
+                // Metin Config'den
+                showNotification({name: MESSAGES.UI.SAFE_ZONE_ENTER, type:{color:'#38bdf8'}}, MESSAGES.UI.SAFE_ZONE_ENTER_DESC);
                 if(audio) audio.playTheme('base');
             }
         } else {
-            // Eğer daha önce güvenli bölgedeysek, şimdi çıktık
             if (isInSafeZone) {
                 isInSafeZone = false;
-                showNotification({name: "GÜVENLİ BÖLGEDEN AYRILDINIZ", type:{color:'#fbbf24'}}, "Dikkatli Olun");
-                // Müzik: Soft geçiş ile Space
+                // Metin Config'den
+                showNotification({name: MESSAGES.UI.SAFE_ZONE_EXIT, type:{color:'#fbbf24'}}, MESSAGES.UI.SAFE_ZONE_EXIT_DESC);
                 if(audio) audio.playTheme('space');
             }
         }
@@ -388,11 +354,7 @@ function loop() {
             playerData.stats.timeAI += dt;
         }
 
-        // --- PENCERE GÜNCELLEMELERİ ---
-        // Profil penceresi açıksa her karede (veya belli aralıklarla) güncelle
         if(typeof profileOpen !== 'undefined' && profileOpen) {
-            // Performans için her frame yerine her 5 frame'de bir güncellenebilir ama
-            // metin güncellemeleri çok ağır değil, akıcılık için her frame çağırıyoruz.
             renderProfile();
         }
 
@@ -412,17 +374,12 @@ function loop() {
             else if (typeof statsOpen !== 'undefined' && statsOpen) closeStats();
             else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
             else if (typeof contextOpen !== 'undefined' && contextOpen) closeContext(); 
-            
-            // YENİ: Profil penceresi kapatma
             else if (typeof profileOpen !== 'undefined' && profileOpen) closeProfile();
-
             else togglePause();
             keys.Escape = false;
         }
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
-        
-        // ... (Çizim kodlarının geri kalanı aynı)
         
         if (entityManager) {
             entityManager.drawStars(ctx, width, height, window.cameraFocus || window.cameraTarget);
@@ -434,8 +391,9 @@ function loop() {
         let targetOffsetY = window.gameSettings.cameraOffsetY;
 
         if (window.gameSettings.adaptiveCamera) {
-            const lookAheadFactor = 30; 
-            const maxAdaptiveOffset = 400; 
+            // Değerler Config'den
+            const lookAheadFactor = GAME_CONFIG.CAMERA.ADAPTIVE_FACTOR; 
+            const maxAdaptiveOffset = GAME_CONFIG.CAMERA.MAX_OFFSET; 
             
             targetOffsetX = -window.cameraTarget.vx * lookAheadFactor;
             targetOffsetY = -window.cameraTarget.vy * lookAheadFactor;
@@ -444,8 +402,10 @@ function loop() {
             targetOffsetY = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetY));
         }
 
-        currentRenderOffsetX += (targetOffsetX - currentRenderOffsetX) * 0.05;
-        currentRenderOffsetY += (targetOffsetY - currentRenderOffsetY) * 0.05;
+        // Lerp Hızı Config'den
+        const lerpVal = GAME_CONFIG.CAMERA.LERP_SPEED;
+        currentRenderOffsetX += (targetOffsetX - currentRenderOffsetX) * lerpVal;
+        currentRenderOffsetY += (targetOffsetY - currentRenderOffsetY) * lerpVal;
 
         ctx.translate(width/2 + currentRenderOffsetX, height/2 + currentRenderOffsetY); 
         ctx.scale(currentZoom, currentZoom); 
@@ -462,7 +422,6 @@ function loop() {
             window.cameraFocus.y = window.cameraTarget.y;
             isCameraTransitioning = false;
         } else {
-            // Utils güncellemesi:
             const distCam = Utils.distEntity(window.cameraTarget, window.cameraFocus);
             
             if (distCam > 5000) {
@@ -494,7 +453,6 @@ function loop() {
         ctx.translate(nexus.x, nexus.y);
         ctx.rotate(Date.now() * 0.0001);
         ctx.beginPath();
-        // GÜNCELLEME: hardcoded yerine config kullanımı
         ctx.arc(0, 0, SAFE_ZONE_R, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; 
         ctx.lineWidth = 20;
@@ -527,7 +485,6 @@ function loop() {
             ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
             
             if (echoRay.mode === 'return') {
-                // Utils güncellemesi:
                 const distToEcho = Utils.distEntity(player, echoRay);
                 let lineAlpha = 0.4;
                 if (distToEcho < player.scanRadius) {
@@ -555,14 +512,14 @@ function loop() {
         player.draw(ctx); ctx.restore();
         
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
-            // Utils güncellemesi:
             const dist = Utils.distEntity(player, echoRay);
             const maxRange = player.radarRadius; 
             const interferenceStart = maxRange * 0.6; 
 
             if (dist > maxRange) {
                 window.cameraTarget = player;
-                showNotification({name: "SİNYAL KAYBI: MENZİL DIŞI", type:{color:'#ef4444'}}, "Kamera Vatoz'a döndü.");
+                // Metin Config'den
+                showNotification({name: MESSAGES.ECHO.RANGE_WARNING, type:{color:'#ef4444'}}, MESSAGES.ECHO.LOST_SIGNAL_DESC);
                 if(audio) audio.playError();
                 const indicator = document.getElementById('echo-vision-indicator');
                 if(indicator) indicator.classList.remove('active');
@@ -574,7 +531,6 @@ function loop() {
 
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
-            // Utils güncellemesi:
             const distNexus = Utils.distEntity(player, nexus);
             const distStorage = Utils.distEntity(player, storageCenter);
             
@@ -587,7 +543,6 @@ function loop() {
             let showEchoMergePrompt = false;
 
             if (echoRay && !isMapOpen) {
-                 // Utils güncellemesi:
                  const distEcho = Utils.distEntity(player, echoRay);
                  if (!echoRay.attached && distEcho < 300) {
                      showEchoMergePrompt = true;
@@ -621,7 +576,8 @@ function loop() {
                      echoRay.mode = 'roam'; 
                      updateEchoDropdownUI(); 
                      keys.f = false; 
-                     showNotification({name: "YANKI AYRILDI", type:{color: MAP_CONFIG.colors.echo}}, "");
+                     // Metin Config'den
+                     showNotification({name: MESSAGES.ECHO.DETACH, type:{color: MAP_CONFIG.colors.echo}}, "");
                 }
             }
 

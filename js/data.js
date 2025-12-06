@@ -23,6 +23,15 @@ const GAME_CONFIG = {
         SAFE_ZONE_RADIUS: 2000   // Başlangıçta gezegen oluşmayacak ve müzik değişecek alan
     },
     
+    // KAMERA AYARLARI (YENİ)
+    CAMERA: {
+        INITIAL_ZOOM: 0.2,       // Oyun açılışındaki uzaklık
+        DEFAULT_ZOOM: 1.0,       // Normal oyun içi zoom
+        LERP_SPEED: 0.05,        // Kamera takip yumuşaklığı (Düşük = Daha yumuşak)
+        ADAPTIVE_FACTOR: 30,     // Hıza göre kameranın ne kadar önüne bakacağı
+        MAX_OFFSET: 400          // Kameranın merkezden maksimum sapma mesafesi
+    },
+    
     PLAYER: {
         BASE_XP: 150,            // Level atlamak için gereken taban XP
         BASE_HEALTH: 100,        // Başlangıç canı
@@ -86,12 +95,36 @@ const GAME_CONFIG = {
 // 2. İÇERİK, EKONOMİ VE GANİMET SİSTEMİ
 // ==========================================
 
-// OYUN AÇILIŞ SENARYOSU (YENİ EKLENDİ)
+// OYUN AÇILIŞ SENARYOSU
 const INTRO_SEQUENCE = [
     { time: 0, text: "Sistem başlatılıyor...", type: "system" },
     { time: 1000, text: "Optik sensörler kalibre ediliyor...", type: "info" },
     { time: 3500, text: "Hoş geldin, Pilot. Motorlar aktif.", type: "loot" }
 ];
+
+// OYUN İÇİ METİNLER (YENİ)
+const MESSAGES = {
+    ECHO: {
+        SPAWN: "YANKI DOĞDU",
+        DETACH: "YANKI AYRILDI",
+        MERGE: "SİSTEMLER BİRLEŞTİ",
+        MERGE_DESC: "Yankı deposuna erişilebilir.",
+        COMING: "YANKI BİRLEŞMEK İÇİN GELİYOR...",
+        LOST_SIGNAL: "SİNYAL KAYBI",
+        LOST_SIGNAL_DESC: "Kamera Vatoz'a döndü.",
+        RANGE_WARNING: "SİNYAL KAYBI: MENZİL DIŞI"
+    },
+    UI: {
+        INVENTORY_FULL: "ENVANTER DOLU! NEXUS VEYA DEPOYA GİDİN.",
+        ROUTE_CREATED: "ROTA OLUŞTURULDU",
+        CAMERA_RESET: "KAMERA SIFIRLANDI",
+        CAMERA_RESET_DESC: "Gemiye dönüldü.",
+        SAFE_ZONE_ENTER: "GÜVENLİ BÖLGEYE VARILDI",
+        SAFE_ZONE_ENTER_DESC: "Nexus Koruma Alanı",
+        SAFE_ZONE_EXIT: "GÜVENLİ BÖLGEDEN AYRILDINIZ",
+        SAFE_ZONE_EXIT_DESC: "Dikkatli Olun"
+    }
+};
 
 // OYUNCU VERİ ŞEMASI
 const INITIAL_PLAYER_DATA = {
