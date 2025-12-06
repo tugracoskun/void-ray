@@ -1,6 +1,10 @@
 /**
  * Void Ray - Veri ve Konfigürasyon
  * Bu dosya oyunun tüm sabitlerini, ayarlarını ve içerik veritabanını içerir.
+ * * DEĞİŞİKLİK RAPORU:
+ * - LOCATIONS (Konumlar) buraya taşındı.
+ * - LOOT_DISTRIBUTION (Ganimet oranları) buraya taşındı.
+ * - Multipliers (Çarpanlar) buraya taşındı.
  */
 
 // ==========================================
@@ -11,6 +15,15 @@ const WORLD_SIZE = 120000;
 
 // Oyun dengesini sağlayan temel sayılar
 const GAME_CONFIG = {
+    // Sabit Konumlar (Harita Tasarımı)
+    LOCATIONS: {
+        NEXUS:          { x: 3000, y: 3000 },
+        STORAGE_CENTER: { x: 2400, y: 2400 },
+        REPAIR_STATION: { x: 3600, y: 3200 },
+        PLAYER_START:   { x: 3000, y: 3800 },
+        PLAYER_RESPAWN: { x: 3600, y: 3200 }
+    },
+    
     WORLD_GEN: {
         PLANET_COUNT: 1200,      // Toplam gezegen sayısı
         STAR_COUNT: 5000,        // Arka plan yıldız sayısı
@@ -20,8 +33,8 @@ const GAME_CONFIG = {
         BASE_XP: 150,            // Level atlamak için gereken taban XP
         BASE_HEALTH: 100,        // Başlangıç canı
         BASE_ENERGY: 100,        // Başlangıç enerjisi
-        BASE_CAPACITY: 150,      // Başlangıç envanter kapasitesi (YENİ EKLENDİ)
-        CAPACITY_PER_LEVEL: 25,  // Yükseltme başına artan kapasite (YENİ EKLENDİ)
+        BASE_CAPACITY: 150,      // Başlangıç envanter kapasitesi
+        CAPACITY_PER_LEVEL: 25,  // Yükseltme başına artan kapasite
         SCAN_RADIUS: 4000,       // Tarama (Görünürlük) menzili
         RADAR_RADIUS: 10000,     // Radar (Sinyal) menzili
         BASE_TAIL_COUNT: 20,     // Normal kuyruk uzunluğu
@@ -34,8 +47,8 @@ const GAME_CONFIG = {
     },
     ECHO: {
         BASE_ENERGY: 100,
-        BASE_CAPACITY: 80,       // Yankı başlangıç kapasitesi (YENİ EKLENDİ)
-        CAPACITY_PER_LEVEL: 10,  // Yankı yükseltme başına artan kapasite (YENİ EKLENDİ)
+        BASE_CAPACITY: 80,       // Yankı başlangıç kapasitesi
+        CAPACITY_PER_LEVEL: 10,  // Yankı yükseltme başına artan kapasite
         SCAN_RADIUS: 4000,
         RADAR_RADIUS: 10000,
         DRAIN_RATE: 0.005,       // Normal enerji tüketimi
@@ -50,7 +63,21 @@ const GAME_CONFIG = {
             BASE: 40,            // Standart gezegen taban yarıçapı
             VARIANCE: 60         // Rastgele eklenebilecek ek yarıçap
         }
-    }
+    },
+    // Ekonomi ve İlerleme Çarpanları
+    ECONOMY: {
+        UPGRADE_COST_MULTIPLIER: 1.5, // Her seviyede fiyat artış oranı
+        LEVEL_XP_MULTIPLIER: 1.5      // Her seviyede zorluk artış oranı
+    },
+    // Kaynak Düşme Olasılıkları (Ağırlıklı Dağılım)
+    // count: Düşecek eşya sayısı, weight: Olasılık ağırlığı
+    LOOT_DISTRIBUTION: [
+        { count: 0, weight: 20 }, // %20 ihtimalle BOŞ (Sadece XP)
+        { count: 1, weight: 45 }, // %45 ihtimalle 1 kaynak
+        { count: 2, weight: 25 }, // %25 ihtimalle 2 kaynak
+        { count: 3, weight: 7 },  // %7 ihtimalle 3 kaynak
+        { count: 4, weight: 3 }   // %3 ihtimalle 4 kaynak (Jackpot!)
+    ]
 };
 
 // ==========================================
