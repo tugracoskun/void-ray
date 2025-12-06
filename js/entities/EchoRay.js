@@ -98,7 +98,7 @@ class EchoRay {
         badge.style.display = count > 0 ? 'flex' : 'none';
         
         // Kapasite Kontrolü
-        const echoCap = getEchoCapacity();
+        const echoCap = GameRules.getEchoCapacity();
         
         if (count >= echoCap) {
              badge.style.background = '#ef4444'; // Dolu ise kırmızı
@@ -160,7 +160,7 @@ class EchoRay {
                         // YENİ: Çarpışma Önleme (Vatoz otopilotta ve daha yakınsa o gitsin, ben vazgeçeyim)
                         let playerIsCloser = false;
                         // player ve autopilot globaldir, güvenli erişim
-                        if (typeof player !== 'undefined' && typeof autopilot !== 'undefined' && autopilot && typeof aiMode !== 'undefined' && aiMode === 'gather' && collectedItems.length < getPlayerCapacity()) {
+                        if (typeof player !== 'undefined' && typeof autopilot !== 'undefined' && autopilot && typeof aiMode !== 'undefined' && aiMode === 'gather' && collectedItems.length < GameRules.getPlayerCapacity()) {
                             // Utils güncellemesi:
                             const distToPlayer = Utils.distEntity(p, player) ** 2;
                             // Eşitlik durumunda önceliği oyuncuya verelim (<=)

@@ -56,8 +56,8 @@ function renderEchoInventory() {
     const playerCapLabel = document.getElementById('echo-player-cap');
     const echoCapLabel = document.getElementById('echo-storage-cap');
 
-    const pCap = getPlayerCapacity();
-    const eCap = getEchoCapacity();
+    const pCap = GameRules.getPlayerCapacity();
+    const eCap = GameRules.getEchoCapacity();
     
     if(playerCapLabel) playerCapLabel.innerText = `${collectedItems.length} / ${pCap}`;
     if(echoCapLabel) echoCapLabel.innerText = `${echoRay.lootBag.length} / ${eCap}`;
@@ -75,7 +75,7 @@ function renderEchoInventory() {
 // Global Transfer Fonksiyonları (Yankı için)
 window.transferToEcho = function(item) {
     if (!echoRay) return;
-    if (echoRay.lootBag.length >= getEchoCapacity()) {
+    if (echoRay.lootBag.length >= GameRules.getEchoCapacity()) {
          showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
          Utils.playSound('playError'); // Güvenli Ses
          return;
@@ -90,7 +90,7 @@ window.transferToEcho = function(item) {
 }
 
 window.transferToPlayer = function(item) {
-    if (collectedItems.length >= getPlayerCapacity()) {
+    if (collectedItems.length >= GameRules.getPlayerCapacity()) {
          showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
          Utils.playSound('playError'); // Güvenli Ses
          return;
@@ -101,7 +101,7 @@ window.transferToPlayer = function(item) {
         
         if (item.type.id === 'tardigrade') {
             player.energy = Math.min(player.energy + 50, player.maxEnergy);
-            const xp = calculatePlanetXp(item.type);
+            const xp = GameRules.calculatePlanetXp(item.type);
             player.gainXp(xp);
             showNotification({name: "TARDİGRAD KULLANILDI", type:{color:'#C7C0AE'}}, "");
         } else {
@@ -115,7 +115,7 @@ window.transferToPlayer = function(item) {
 
 window.transferAllToEcho = function() {
     if (!echoRay) return;
-    const eCap = getEchoCapacity();
+    const eCap = GameRules.getEchoCapacity();
     let movedCount = 0;
 
     while (echoRay.lootBag.length < eCap && collectedItems.length > 0) {
@@ -144,7 +144,7 @@ window.transferAllToEcho = function() {
 
 window.transferAllToPlayer = function() {
     if (!echoRay) return;
-    const pCap = getPlayerCapacity();
+    const pCap = GameRules.getPlayerCapacity();
     let movedCount = 0;
 
     while (echoRay.lootBag.length > 0) {
@@ -159,7 +159,7 @@ window.transferAllToPlayer = function() {
         
         if (item.type.id === 'tardigrade') {
             player.energy = Math.min(player.energy + 50, player.maxEnergy);
-            const xp = calculatePlanetXp(item.type);
+            const xp = GameRules.calculatePlanetXp(item.type);
             player.gainXp(xp);
             showNotification({name: "TARDİGRAD KULLANILDI", type:{color:'#C7C0AE'}}, "");
         } else {

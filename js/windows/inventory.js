@@ -12,9 +12,9 @@ let inventoryOpen = false;
  */
 function updateInventoryCount() {
     const badge = document.getElementById('inv-total-badge'); 
-    // collectedItems ve getPlayerCapacity game.js ve game-rules.js üzerinden gelir
+    // collectedItems ve GameRules.getPlayerCapacity game.js ve game-rules.js üzerinden gelir
     const count = collectedItems.length;
-    const capacity = getPlayerCapacity();
+    const capacity = GameRules.getPlayerCapacity();
     
     if(badge) {
         badge.innerText = count; 
@@ -41,7 +41,7 @@ function renderInventory() {
     if(!gridContainer) return;
     
     const invHeader = document.querySelector('.inv-header h2');
-    const cap = getPlayerCapacity();
+    const cap = GameRules.getPlayerCapacity();
     const count = collectedItems.length;
     const color = count >= cap ? '#ef4444' : '#94a3b8';
     

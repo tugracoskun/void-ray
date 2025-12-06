@@ -32,11 +32,11 @@ function renderStorageUI() {
     const centerCount = document.getElementById('storage-center-count');
 
     // Kapasite bilgilerini güncelle
-    if (shipCap) shipCap.innerText = `${collectedItems.length} / ${getPlayerCapacity()}`;
+    if (shipCap) shipCap.innerText = `${collectedItems.length} / ${GameRules.getPlayerCapacity()}`;
     if (centerCount) centerCount.innerText = `${centralStorage.length} EŞYA`;
 
     // renderGrid fonksiyonu ui.js içinden gelir
-    renderGrid(shipListContainer, collectedItems, getPlayerCapacity(), (item) => {
+    renderGrid(shipListContainer, collectedItems, GameRules.getPlayerCapacity(), (item) => {
         depositItem(item.name);
     });
 
@@ -92,7 +92,7 @@ window.depositAllToStorage = function() {
 };
 
 window.withdrawItem = function(name) {
-    if (collectedItems.length >= getPlayerCapacity()) {
+    if (collectedItems.length >= GameRules.getPlayerCapacity()) {
         showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
         Utils.playSound('playError'); // Güvenli Ses
         return;
@@ -107,7 +107,7 @@ window.withdrawItem = function(name) {
 };
 
 window.withdrawAllFromStorage = function() {
-    const cap = getPlayerCapacity();
+    const cap = GameRules.getPlayerCapacity();
     let moved = 0;
     
     // Kapasite dolana kadar veya depo bitene kadar çek

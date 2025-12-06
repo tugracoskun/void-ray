@@ -118,7 +118,7 @@ class EntityManager {
                              if (p.lootContent && p.lootContent.length > 0) { 
                                  p.lootContent.forEach(item => { 
                                      if(addItemToInventory(item)) {
-                                         const xp = calculatePlanetXp(item.type);
+                                         const xp = GameRules.calculatePlanetXp(item.type);
                                          player.gainXp(xp);
                                      }
                                  }); 
@@ -128,14 +128,14 @@ class EntityManager {
                         p.collected = true; 
                         Utils.playSound('playChime', p.type);
                         player.energy = Math.min(player.energy + 50, player.maxEnergy);
-                        const xp = calculatePlanetXp(p.type);
+                        const xp = GameRules.calculatePlanetXp(p.type);
                         showNotification({name: "TARDİGRAD YENDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${xp} XP)`);
                         player.gainXp(xp);
                     } else { 
                         const lootCount = GameRules.calculateLootCount(); 
                         if (lootCount === 0) {
                             p.collected = true;
-                            const xp = calculatePlanetXp(p.type);
+                            const xp = GameRules.calculatePlanetXp(p.type);
                             player.gainXp(xp);
                             showNotification({ name: `+${xp} XP`, type: { color: '#94a3b8' } }, "(Veri Analizi)");
                         } else {
@@ -144,7 +144,7 @@ class EntityManager {
                             for(let i=0; i<lootCount; i++) { 
                                 if(addItemToInventory(p)) { 
                                     addedCount++; 
-                                    const xp = calculatePlanetXp(p.type);
+                                    const xp = GameRules.calculatePlanetXp(p.type);
                                     totalXp += xp;
                                     player.gainXp(xp); 
                                 } else { 
@@ -189,7 +189,7 @@ class EntityManager {
         const viewH = height / zoom; 
         
         this.planets.forEach(p => { 
-            const visibility = getPlanetVisibility(p, player, echoRay);
+            const visibility = GameRules.getPlanetVisibility(p, player, echoRay);
             if (visibility === 0) return;
             
             if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) { 

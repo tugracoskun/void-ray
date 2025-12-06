@@ -209,15 +209,3 @@ const GameRules = {
         return visibility;
     }
 };
-
-// ==========================================
-// 5. GLOBAL ALIAS (UYUMLULUK KATMANI)
-// ==========================================
-// Mevcut oyun kod tabanı (game.js, ui.js vb.) bu fonksiyonları doğrudan çağırdığı için,
-// GameRules metotlarını global scope'a bağlıyoruz.
-
-window.calculatePlanetXp = GameRules.calculatePlanetXp.bind(GameRules);
-window.getPlayerCapacity = GameRules.getPlayerCapacity.bind(GameRules);
-window.getEchoCapacity   = GameRules.getEchoCapacity.bind(GameRules);
-// Yeni eklenenler için alias gerekirse buraya eklenebilir, 
-// ancak yeni kodlarda GameRules.methodName şeklinde kullanmak daha temizdir.

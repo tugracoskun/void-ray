@@ -303,7 +303,7 @@ class VoidRay {
         this.debugTarget = null; // Debug hedefini sıfırla
 
         // Hareket Mantığı
-        // Global autopilot, aiMode, nexus, storageCenter, planets, collectedItems, manualTarget, updateAIButton, depositToStorage, showNotification, getPlayerCapacity
+        // Global autopilot, aiMode, nexus, storageCenter, planets, collectedItems, manualTarget, updateAIButton, depositToStorage, showNotification, GameRules.getPlayerCapacity
         if (window.cinematicMode) {
             this.vx *= 0.95; 
             this.vy *= 0.95;
@@ -313,7 +313,7 @@ class VoidRay {
             let targetX, targetY, doThrust = true;
             
             // --- OTOPİLOT VE DEPO MANTIĞI ---
-            const cap = getPlayerCapacity();
+            const cap = GameRules.getPlayerCapacity();
             
             if (collectedItems.length >= cap && aiMode !== 'deposit' && aiMode !== 'base') {
                 aiMode = 'deposit'; 
@@ -364,7 +364,7 @@ class VoidRay {
                             
                             // YENİ: Çarpışma Önleme (Yankı daha yakınsa o gitsin, ben vazgeçeyim)
                             let echoIsCloser = false;
-                            if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < getEchoCapacity()) {
+                            if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < GameRules.getEchoCapacity()) {
                                 const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
                                 // Eğer Yankı daha yakınsa, bu gezegeni hedeflemeyi bırak
                                 if (distToEcho < distToMe) echoIsCloser = true;

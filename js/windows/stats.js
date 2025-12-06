@@ -50,7 +50,7 @@ function renderStats() {
         <tr><th>KAZANILAN KRİSTAL</th><td>${playerData.stats.totalStardust} ◆</td></tr>
         <tr><th>HARCANAN KRİSTAL</th><td>${playerData.stats.totalSpentStardust} ◆</td></tr>
         <tr><th>HARCANAN ENERJİ</th><td>${Math.floor(playerData.stats.totalEnergySpent)} BİRİM</td></tr>
-        <tr><th>ENVANTER KAPASİTESİ</th><td>${collectedItems.length} / ${getPlayerCapacity()}</td></tr>
+        <tr><th>ENVANTER KAPASİTESİ</th><td>${collectedItems.length} / ${GameRules.getPlayerCapacity()}</td></tr>
         <tr><th>DEPO (MERKEZ)</th><td>${centralStorage.length} EŞYA</td></tr>
     `;
 }
