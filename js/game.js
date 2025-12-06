@@ -32,31 +32,9 @@ window.gameSettings = Object.assign({}, DEFAULT_GAME_SETTINGS);
 let currentRenderOffsetX = 0;
 let currentRenderOffsetY = 0;
 
-let playerData = { 
-    stardust: 0, 
-    upgrades: { 
-        playerSpeed: 0, 
-        playerTurn: 0, 
-        playerMagnet: 0, 
-        playerCapacity: 0,
-        echoSpeed: 0, 
-        echoRange: 0, 
-        echoDurability: 0,
-        echoCapacity: 0
-    },
-    stats: { 
-        maxSpeed: 0, 
-        echoMaxSpeed: 0, 
-        totalResources: 0, 
-        distance: 0, 
-        totalStardust: 0,
-        totalSpentStardust: 0,
-        totalEnergySpent: 0,
-        timeIdle: 0,
-        timeMoving: 0,
-        timeAI: 0
-    }
-};
+// GÜNCELLEME: playerData yapısı artık data.js içindeki INITIAL_PLAYER_DATA'dan 
+// derin kopya (deep copy) alınarak oluşturuluyor.
+let playerData = JSON.parse(JSON.stringify(INITIAL_PLAYER_DATA));
 
 let currentZoom = 1.0, targetZoom = 1.0;
 let isPaused = false;
@@ -199,9 +177,12 @@ function init() {
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
+    // GÜNCELLEME: Sabit 1500 yerine Config'den değer okuma
+    const SAFE_ZONE_R = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
+    
     // Utils güncellemesi:
     const startSafeDist = Utils.distEntity(player, nexus);
-    isInSafeZone = startSafeDist < 1500;
+    isInSafeZone = startSafeDist < SAFE_ZONE_R;
 
     // --- SES BAŞLATMA (YUMUŞAK GİRİŞ) ---
     // Eğer güvenli bölgedeysek 'base', değilse 'space'
@@ -373,7 +354,9 @@ function loop() {
         }
 
         // --- GÜVENLİ BÖLGE VE MÜZİK GEÇİŞ MANTIĞI ---
-        const SAFE_ZONE_R = 1500;
+        // GÜNCELLEME: Hardcoded 1500 değeri yerine Config'den okuma
+        const SAFE_ZONE_R = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
+        
         // Utils güncellemesi:
         const distToNexusSafe = Utils.distEntity(player, nexus);
         
@@ -505,6 +488,7 @@ function loop() {
         ctx.translate(nexus.x, nexus.y);
         ctx.rotate(Date.now() * 0.0001);
         ctx.beginPath();
+        // GÜNCELLEME: hardcoded yerine config kullanımı
         ctx.arc(0, 0, SAFE_ZONE_R, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(56, 189, 248, 0.1)"; 
         ctx.lineWidth = 20;
