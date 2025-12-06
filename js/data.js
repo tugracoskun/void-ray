@@ -1,7 +1,15 @@
-// --- OYUN AYARLARI VE SABİTLER ---
+/**
+ * Void Ray - Veri ve Konfigürasyon
+ * Bu dosya oyunun tüm sabitlerini, ayarlarını ve içerik veritabanını içerir.
+ */
+
+// ==========================================
+// 1. ÇEKİRDEK DÜNYA VE FİZİK AYARLARI
+// ==========================================
+
 const WORLD_SIZE = 120000; 
 
-// OYUN KONFİGÜRASYONU (SAYILAR BURADAN YÖNETİLİR)
+// Oyun dengesini sağlayan temel sayılar
 const GAME_CONFIG = {
     WORLD_GEN: {
         PLANET_COUNT: 1200,      // Toplam gezegen sayısı
@@ -41,35 +49,16 @@ const GAME_CONFIG = {
     }
 };
 
-// Varsayılan Oyun Ayarları (UI ve Görünüm Tercihleri)
-const DEFAULT_GAME_SETTINGS = {
-    showNexusArrow: true,
-    showRepairArrow: false,
-    showStorageArrow: false,
-    showEchoArrow: true, 
-    hudOpacity: 1.0,
-    hudHoverEffect: false,
-    showShipBars: false,
-    cameraOffsetX: 0, 
-    cameraOffsetY: 0,
-    adaptiveCamera: false,
-    smoothCameraTransitions: true,
-    developerMode: false,
-    showGravityFields: false,
-    showHitboxes: false,
-    showVectors: false,
-    showTargetVectors: false,
-    showFps: false,
-    godMode: false,
-    hidePlayer: false
-};
+// ==========================================
+// 2. İÇERİK, EKONOMİ VE GANİMET SİSTEMİ
+// ==========================================
 
 const RARITY = {
     COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.5, xp: 10, value: 10 },
     RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.2, xp: 40, value: 30 },
     EPIC:      { id: 'epic',      name: 'Öz',        color: '#c084fc', prob: 0.1, xp: 100, value: 100 },
     LEGENDARY: { id: 'legendary', name: 'Yadigâr',   color: '#fbbf24', prob: 0.04, xp: 500, value: 400 },
-    TOXIC:     { id: 'toxic',     name: 'Veri Sisi', color: '#10b981', prob: 0.01, xp: 0, value: 0 }, // İsim ve renk güncellendi
+    TOXIC:     { id: 'toxic',     name: 'Veri Sisi', color: '#10b981', prob: 0.01, xp: 0, value: 0 },
     TARDIGRADE:{ id: 'tardigrade',name: 'Tardigrad Yuvası', color: '#C7C0AE', prob: 0.02, xp: 20, value: 0 }, 
     LOST:      { id: 'lost',      name: 'Kayıp Kargo', color: '#a855f7', prob: 0, xp: 0, value: 0 }
 };
@@ -96,6 +85,10 @@ const UPGRADES = {
     echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesi (+5).", baseCost: 250, max: 5 }
 };
 
+// ==========================================
+// 3. UI METİNLERİ VE YARDIMCI BİLGİLER
+// ==========================================
+
 const TIPS = [
     "Enerjinizi yenilemek için Tardigradlar çok değerlidir.",
     "Yankı, Nexus istasyonunda enerjisini yenileyebilir.",
@@ -105,7 +98,11 @@ const TIPS = [
     "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın."
 ];
 
-// --- HARİTA VE GÖRÜNÜM AYARLARI ---
+// ==========================================
+// 4. GÖRSELLEŞTİRME VE KULLANICI AYARLARI
+// ==========================================
+
+// Harita ve Minimap Renk/Grid Ayarları
 const MAP_CONFIG = {
     grid: {
         major: 20000,    // Ana grid çizgileri
@@ -140,4 +137,27 @@ const MAP_CONFIG = {
         max: 1.5,
         speed: 0.001
     }
+};
+
+// Varsayılan Oyun Ayarları (Başlangıç Değerleri)
+const DEFAULT_GAME_SETTINGS = {
+    showNexusArrow: true,
+    showRepairArrow: false,
+    showStorageArrow: false,
+    showEchoArrow: true, 
+    hudOpacity: 1.0,
+    hudHoverEffect: false,
+    showShipBars: false,
+    cameraOffsetX: 0, 
+    cameraOffsetY: 0,
+    adaptiveCamera: false,
+    smoothCameraTransitions: true,
+    developerMode: false,
+    showGravityFields: false,
+    showHitboxes: false,
+    showVectors: false,
+    showTargetVectors: false,
+    showFps: false,
+    godMode: false,
+    hidePlayer: false
 };
