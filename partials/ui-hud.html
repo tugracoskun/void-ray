@@ -25,7 +25,7 @@
             ≣
         </div>
 
-        <!-- CHAT BUTONU (GÜNCELLENDİ) -->
+        <!-- CHAT BUTONU -->
         <div id="btn-chat-mode" class="hud-btn" title="İletişim Modu" onclick="cycleChatMode()" onmouseenter="showInfoTooltip(event, 'İLETİŞİM MODU: Aktif / Yarım / Kapalı')" onmouseleave="hideTooltip()">
             ✉
         </div>
@@ -78,11 +78,8 @@
             </div>
 
             <div class="profile-content no-padding">
-                
                 <!-- SEKME 1: GENEL BAKIŞ -->
-                <!-- GÜNCELLEME: height: 100% kaldırıldı -->
                 <div id="p-tab-summary" class="profile-tab-content active">
-                    
                     <!-- LEVEL / XP ŞERİDİ -->
                     <div class="p-rpg-level-strip">
                         <div class="p-rpg-lvl-box">
@@ -174,7 +171,6 @@
                             <div class="p-attr-item"><span>Oyun Süresi</span><span id="p-stat-time">00:00</span></div>
                         </div>
                     </div>
-
                 </div>
 
                 <!-- SEKME 2: BAŞARIMLAR -->
@@ -189,7 +185,7 @@
                 </div>
             </div>
 
-            <!-- ALT SEKMELER (En Altta) -->
+            <!-- ALT SEKMELER -->
             <div class="profile-tabs-bottom">
                 <div id="p-tab-btn-summary" class="profile-tab-btn active" onclick="switchProfileTab('summary')">STATÜ</div>
                 <div id="p-tab-btn-achievements" class="profile-tab-btn" onclick="switchProfileTab('achievements')">GÖREVLER</div>
@@ -197,7 +193,7 @@
         </div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ -->
+    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ) -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
@@ -272,6 +268,15 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+
+                <!-- YENİ: GEMİ DURUM ÇUBUKLARI TOGGLE -->
+                <div class="toggle-row mt-3" onmouseenter="showInfoTooltip(event, 'DURUM ÇUBUKLARI: Geminin üzerinde can ve enerji barlarını gösterir.')" onmouseleave="hideTooltip()">
+                    <span>GEMİ DURUM ÇUBUKLARI</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-ship-bars">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
 
             <!-- KAMERA -->
@@ -304,7 +309,6 @@
                 </div>
             </div>
 
-            <!-- SADECE GÖRÜNÜM SEKMESİ İÇİN İPUÇLARI -->
             <div class="mt-4 pt-3 border-t border-white/10 text-[9px] text-gray-500 font-mono text-center tracking-widest">
                 VARSAYILAN DEĞER İÇİN ÇİFT TIKLAYIN
             </div>

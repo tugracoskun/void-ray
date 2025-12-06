@@ -14,6 +14,7 @@ if (!window.gameSettings) {
         showEchoArrow: true, 
         hudOpacity: 1.0,
         hudHoverEffect: false,
+        showShipBars: false, // YENİ: Gemi üstü barlar
         cameraOffsetX: 0, 
         cameraOffsetY: 0,
         adaptiveCamera: false,
@@ -44,6 +45,10 @@ function initSettings() {
     const storageToggle = document.getElementById('toggle-storage-arrow');
     const echoToggle = document.getElementById('toggle-echo-arrow');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
+    
+    // YENİ: Gemi Durum Çubukları Toggle
+    const shipBarsToggle = document.getElementById('toggle-ship-bars');
+    
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     const smoothCamToggle = document.getElementById('toggle-smooth-cam');
     
@@ -86,6 +91,10 @@ function initSettings() {
                 else el.style.opacity = window.gameSettings.hudOpacity;
             });
         });
+    }
+
+    if (shipBarsToggle) {
+        shipBarsToggle.addEventListener('change', (e) => window.gameSettings.showShipBars = e.target.checked);
     }
 
     if (adaptiveCamToggle) {
