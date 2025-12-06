@@ -1,7 +1,7 @@
 /**
  * Void Ray - Pencere: Yankı (Echo) Yönetimi
  * * Yankı dronunun envanterini, modlarını ve oyuncu ile etkileşimini yönetir.
- * * ui.js dosyasından ayrıştırılmıştır.
+ * * GÜNCELLEME: Sesler artık Utils.playSound ile güvenli çağrılıyor.
  */
 
 // Pencere Durumu
@@ -33,7 +33,7 @@ function openEchoInventory() {
     
     if (!echoRay.attached) {
         showNotification({name: "BAĞLANTI YOK", type:{color:'#ef4444'}}, "Yankı envanterine erişmek için birleşin.");
-        if(audio) audio.playError(); // HATA SESİ
+        Utils.playSound('playError'); // Güvenli Ses
         return;
     }
     
@@ -77,7 +77,7 @@ window.transferToEcho = function(item) {
     if (!echoRay) return;
     if (echoRay.lootBag.length >= getEchoCapacity()) {
          showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
-         if(audio) audio.playError(); // HATA SESİ
+         Utils.playSound('playError'); // Güvenli Ses
          return;
     }
     const idx = collectedItems.indexOf(item);
@@ -92,7 +92,7 @@ window.transferToEcho = function(item) {
 window.transferToPlayer = function(item) {
     if (collectedItems.length >= getPlayerCapacity()) {
          showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
-         if(audio) audio.playError(); // HATA SESİ
+         Utils.playSound('playError'); // Güvenli Ses
          return;
     }
     const idx = echoRay.lootBag.indexOf(item);
@@ -126,15 +126,15 @@ window.transferAllToEcho = function() {
 
     if (movedCount > 0) {
         showNotification({name: `${movedCount} EŞYA AKTARILDI`, type:{color:'#67e8f9'}}, "");
-        if (audio) audio.playCash();
+        Utils.playSound('playCash'); // Güvenli Ses
     } else {
          if(collectedItems.length > 0) {
              showNotification({name: "YANKI DOLU!", type:{color:'#ef4444'}}, "");
-             if(audio) audio.playError(); // HATA SESİ
+             Utils.playSound('playError'); // Güvenli Ses
          }
          else {
              showNotification({name: "GEMİ BOŞ!", type:{color:'#ef4444'}}, "");
-             if(audio) audio.playError(); // HATA SESİ
+             Utils.playSound('playError'); // Güvenli Ses
          }
     }
 
@@ -151,7 +151,7 @@ window.transferAllToPlayer = function() {
         const nextItem = echoRay.lootBag[0];
         if (nextItem.type.id !== 'tardigrade' && collectedItems.length >= pCap) {
              showNotification({name: "GEMİ DOLU!", type:{color:'#ef4444'}}, "");
-             if(audio) audio.playError(); // HATA SESİ
+             Utils.playSound('playError'); // Güvenli Ses
              break;
         }
 
@@ -170,7 +170,7 @@ window.transferAllToPlayer = function() {
 
     if (movedCount > 0) {
          showNotification({name: `${movedCount} EŞYA ALINDI`, type:{color:'#38bdf8'}}, "");
-         if (audio) audio.playCash();
+         Utils.playSound('playCash'); // Güvenli Ses
     }
 
     renderEchoInventory();

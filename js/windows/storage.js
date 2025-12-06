@@ -1,7 +1,7 @@
 /**
  * Void Ray - Pencere: Depo Merkezi (Storage)
  * * Oyuncunun ve AI'nın eşya depoladığı, sınırsız kapasiteli merkez.
- * * game.js ve ui.js içindeki depo mantığı buraya taşınmıştır.
+ * * GÜNCELLEME: Sesler artık Utils.playSound ile güvenli çağrılıyor.
  */
 
 let storageOpen = false;
@@ -63,7 +63,9 @@ function depositToStorage(sourceArray, sourceName) {
     // Kaynak dizisini boşalt (Referans üzerinden çalıştığı için orijinal dizi boşalır)
     sourceArray.length = 0;
     
-    if(audio) audio.playCash(); 
+    // Güvenli Ses Çağrısı
+    Utils.playSound('playCash');
+    
     showNotification({name: `${sourceName}: ${count} EŞYA DEPOYA AKTARILDI`, type:{color:'#a855f7'}}, "");
     
     // İlgili tüm UI'ları güncelle
@@ -92,7 +94,7 @@ window.depositAllToStorage = function() {
 window.withdrawItem = function(name) {
     if (collectedItems.length >= getPlayerCapacity()) {
         showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
-        if(audio) audio.playError(); // HATA SESİ
+        Utils.playSound('playError'); // Güvenli Ses
         return;
     }
     const index = centralStorage.findIndex(i => i.name === name);
@@ -117,7 +119,7 @@ window.withdrawAllFromStorage = function() {
     if (moved > 0) showNotification({name: `${moved} EŞYA GEMİYE ALINDI`, type:{color:'#38bdf8'}}, "");
     else if (centralStorage.length > 0) {
         showNotification({name: "GEMİ DEPOSU DOLU!", type:{color:'#ef4444'}}, "");
-        if(audio) audio.playError(); // HATA SESİ
+        Utils.playSound('playError'); // Güvenli Ses
     }
     
     renderStorageUI();

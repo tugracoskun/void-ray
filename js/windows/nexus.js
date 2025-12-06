@@ -1,19 +1,6 @@
 /**
- * -------------------------------------------------------------------------
- * DEVELOPER NOTE: NEXUS (UI / WINDOW) MODULE
- * -------------------------------------------------------------------------
- * Bu dosya, Nexus istasyonunun "Kullanıcı Arayüzü" (Window) mantığını yönetir.
- * * Sorumlulukları:
- * - HTML elementlerinin (Market, Hangar, Sekmeler) yönetimi.
- * - Buton tıklamaları (Satın al, Sat, Geliştir).
- * - Market hesaplamaları ve Envanter etkileşimleri.
- * - DOM manipülasyonu.
- * * Kapsam Dışı (Burada OLMAMASI gerekenler):
- * - Canvas üzerine çizim kodları (draw).
- * - Fiziksel koordinatlar (x, y) veya çarpışma testleri.
- * - Oyun döngüsü (game loop) içindeki animasyonlar.
- * * İlgili Fiziksel Varlık Dosyası: js/entities/Nexus.js
- * -------------------------------------------------------------------------
+ * Void Ray - Pencere: Nexus (UI)
+ * * GÜNCELLEME: Sesler artık Utils.playSound ile güvenli çağrılıyor.
  */
 
 let nexusOpen = false;
@@ -37,7 +24,7 @@ function enterNexus() {
     // Profil penceresinden veya dışarıdan çağrıldığında mesafe kontrolü yap
     if (!isNearNexus()) {
         showNotification({name: "ERİŞİM REDDEDİLDİ", type:{color:'#ef4444'}}, "Nexus menzili dışındasınız.");
-        if(typeof audio !== 'undefined' && audio) audio.playError();
+        Utils.playSound('playError'); // Güvenli Ses
         return;
     }
 
@@ -162,12 +149,12 @@ window.buyUpgrade = function(key) {
     if (key.startsWith('echo')) {
         if (!echoRay) {
              showNotification({name: "YANKI MEVCUT DEĞİL!", type:{color:'#ef4444'}}, "");
-             if(audio) audio.playError(); // HATA SESİ
+             Utils.playSound('playError'); // Güvenli Ses
              return;
         }
         if (!echoRay.attached) {
             showNotification({name: "YANKI BAĞLI DEĞİL!", type:{color:'#ef4444'}}, "Yükseltme için birleşin.");
-            if(audio) audio.playError(); // HATA SESİ (Eskiden playToxic idi)
+            Utils.playSound('playError'); // Güvenli Ses
             return;
         }
     }
@@ -179,7 +166,7 @@ window.buyUpgrade = function(key) {
         playerData.stardust -= cost; 
         playerData.upgrades[key]++; 
         playerData.stats.totalSpentStardust += cost;
-        if(audio) audio.playCash(); 
+        Utils.playSound('playCash'); // Güvenli Ses
         player.updateUI(); 
         renderUpgrades(); 
         updateEchoDropdownUI(); 
@@ -187,7 +174,7 @@ window.buyUpgrade = function(key) {
     } else {
         // Para yetersiz
         showNotification({name: "YETERSİZ KRİSTAL!", type:{color:'#ef4444'}}, "");
-        if(audio) audio.playError(); // HATA SESİ
+        Utils.playSound('playError'); // Güvenli Ses
     }
 };
 
@@ -206,7 +193,7 @@ window.sellItem = function(name, unitPrice, count) {
     const totalEarned = count * unitPrice;
     playerData.stardust += totalEarned; 
     playerData.stats.totalStardust += totalEarned;
-    if(audio) audio.playCash(); 
+    Utils.playSound('playCash'); // Güvenli Ses
     player.updateUI(); 
     updateInventoryCount(); 
     renderMarket();
@@ -228,7 +215,7 @@ window.sellAll = function() {
         
         playerData.stardust += total; 
         playerData.stats.totalStardust += total;
-        if(audio) audio.playCash(); 
+        Utils.playSound('playCash'); // Güvenli Ses
         player.updateUI(); 
         updateInventoryCount(); 
         renderMarket(); 

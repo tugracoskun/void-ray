@@ -33,7 +33,7 @@ function initControls() {
 
                 if (dist > maxRange) {
                     showNotification({name: "BAĞLANTI HATASI", type:{color:'#ef4444'}}, "Yankı radar menzili dışında.");
-                    if(audio) audio.playError();
+                    Utils.playSound('playError'); // Güvenli Ses
                     return; 
                 }
 
