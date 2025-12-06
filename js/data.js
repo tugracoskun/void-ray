@@ -20,7 +20,7 @@ const GAME_CONFIG = {
     WORLD_GEN: {
         PLANET_COUNT: 1200,      // Toplam gezegen sayısı
         STAR_COUNT: 5000,        // Arka plan yıldız sayısı
-        SAFE_ZONE_RADIUS: 2000   // Başlangıçta gezegen oluşmayacak güvenli alan yarıçapı
+        SAFE_ZONE_RADIUS: 2000   // Başlangıçta gezegen oluşmayacak ve müzik değişecek alan
     },
     
     PLAYER: {
@@ -84,6 +84,34 @@ const GAME_CONFIG = {
 // ==========================================
 // 2. İÇERİK, EKONOMİ VE GANİMET SİSTEMİ
 // ==========================================
+
+// OYUNCU VERİ ŞEMASI (game.js'den taşındı)
+// Bu yapı, oyun sıfırlandığında veya ilk açılışta kullanılır.
+const INITIAL_PLAYER_DATA = {
+    stardust: 0, 
+    upgrades: { 
+        playerSpeed: 0, 
+        playerTurn: 0, 
+        playerMagnet: 0, 
+        playerCapacity: 0,
+        echoSpeed: 0, 
+        echoRange: 0, 
+        echoDurability: 0,
+        echoCapacity: 0
+    },
+    stats: { 
+        maxSpeed: 0, 
+        echoMaxSpeed: 0, 
+        totalResources: 0, 
+        distance: 0, 
+        totalStardust: 0,
+        totalSpentStardust: 0,
+        totalEnergySpent: 0,
+        timeIdle: 0,
+        timeMoving: 0,
+        timeAI: 0
+    }
+};
 
 const RARITY = {
     COMMON:    { id: 'common',    name: 'Madde',         color: '#94a3b8', prob: 0.5, xp: 10, value: 10 },
