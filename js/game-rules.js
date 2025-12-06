@@ -161,6 +161,52 @@ const GameRules = {
         if (dist >= maxRange) return 1.0;
         
         return (dist - interferenceStart) / (maxRange - interferenceStart);
+    },
+
+    /**
+     * İki varlığın etkileşime girip giremeyeceğini kontrol eder.
+     * (Nexus girişi, Depo açma vb. için kullanılır)
+     * @param {Object} source - Etkileşimi başlatan (Genelde Player)
+     * @param {Object} target - Hedef (Nexus, Storage vb.)
+     * @param {number} buffer - Hedef yarıçapına eklenecek ek mesafe (tolerans)
+     */
+    canInteract: function(source, target, buffer = 0) {
+        if (!source || !target) return false;
+        // Utils global bir araçtır, burada kullanılabilir
+        const dist = Math.hypot(source.x - target.x, source.y - target.y);
+        const targetRadius = target.radius || 0;
+        return dist <= targetRadius + buffer;
+    },
+
+    /**
+     * Gezegenin oyuncu ve yankıya göre görünürlük seviyesini hesaplar.
+     * (Eskiden maps.js içindeydi, burası daha mantıklı)
+     * @param {Planet} p - Gezegen nesnesi
+     * @param {VoidRay} player - Oyuncu nesnesi
+     * @param {EchoRay | null} echo - Yankı nesnesi
+     * @returns {number} 0: Görünmez, 1: Radar (Sinyal), 2: Tarama (Tam Görüş)
+     */
+    getPlanetVisibility: function(p, player, echo) {
+        let visibility = 0;
+        
+        // Utils kullanılabilir veya Math.hypot ile doğrudan hesaplanabilir
+        const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
+        
+        // Oyuncu Tarama Alanı (Tam Görüş)
+        if (dPlayer < player.scanRadius) return 2; 
+        // Oyuncu Radar Alanı (Sinyal)
+        else if (dPlayer < player.radarRadius) visibility = 1; 
+
+        if (echo) {
+            const dEcho = Math.hypot(echo.x - p.x, echo.y - p.y);
+            // Yankı Tarama Alanı (Tam Görüş)
+            if (dEcho < echo.scanRadius) return 2; 
+            // Yankı Radar Alanı (Sinyal)
+            else if (dEcho < echo.radarRadius) {
+                if (visibility < 1) visibility = 1; 
+            }
+        }
+        return visibility;
     }
 };
 
@@ -173,3 +219,5 @@ const GameRules = {
 window.calculatePlanetXp = GameRules.calculatePlanetXp.bind(GameRules);
 window.getPlayerCapacity = GameRules.getPlayerCapacity.bind(GameRules);
 window.getEchoCapacity   = GameRules.getEchoCapacity.bind(GameRules);
+// Yeni eklenenler için alias gerekirse buraya eklenebilir, 
+// ancak yeni kodlarda GameRules.methodName şeklinde kullanmak daha temizdir.
