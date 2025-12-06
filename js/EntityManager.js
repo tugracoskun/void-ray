@@ -1,7 +1,7 @@
 /**
  * Void Ray - Varlık Yöneticisi (Entity Manager)
  * * Gezegenlerin ve yıldızların oluşturulması, yaşam döngüsü ve çizimini yönetir.
- * * game.js içindeki ana döngüyü sadeleştirmek için oluşturulmuştur.
+ * * Utils.js kullanılarak sadeleştirilmiştir.
  */
 class EntityManager {
     constructor() {
@@ -22,9 +22,10 @@ class EntityManager {
         for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) {
             let px, py, d;
             do {
-                px = Math.random() * WORLD_SIZE;
-                py = Math.random() * WORLD_SIZE;
-                d = Math.hypot(px - GameRules.LOCATIONS.NEXUS.x, py - GameRules.LOCATIONS.NEXUS.y);
+                px = Utils.random(WORLD_SIZE);
+                py = Utils.random(WORLD_SIZE);
+                // Utils ile mesafe hesabı
+                d = Utils.dist(px, py, GameRules.LOCATIONS.NEXUS.x, GameRules.LOCATIONS.NEXUS.y);
             } while(d < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS);
 
             this.planets.push(new Planet(px, py));
@@ -33,17 +34,19 @@ class EntityManager {
         // 2. Yıldızları Oluştur
         this.stars = [];
         for(let i=0; i < GAME_CONFIG.WORLD_GEN.STAR_COUNT; i++) {
-            this.stars.push({x:Math.random()*WORLD_SIZE, y:Math.random()*WORLD_SIZE, s:Math.random()*2});
+            this.stars.push({
+                x: Utils.random(WORLD_SIZE), 
+                y: Utils.random(WORLD_SIZE), 
+                s: Utils.random(0, 2)
+            });
         }
         
-        // Global değişkenleri güncelle (Diğer modüller için uyumluluk)
         window.planets = this.planets;
         window.stars = this.stars;
     }
 
     /**
-     * Varlıkların mantıksal güncellemelerini yapar (Temizleme, Çarpışma, Yeniden Doğma).
-     * @param {number} dt - Delta time
+     * Varlıkların mantıksal güncellemelerini yapar.
      */
     update(dt) {
         // A. Toplananları Temizle
@@ -55,11 +58,13 @@ class EntityManager {
             for(let i=0; i<needed; i++) {
                 let px, py, dNexus, dPlayer; 
                 do { 
-                    px = Math.random() * WORLD_SIZE; 
-                    py = Math.random() * WORLD_SIZE; 
-                    // player global değişkendir
-                    dPlayer = Math.hypot(px - player.x, py - player.y);
-                    dNexus = Math.hypot(px - GameRules.LOCATIONS.NEXUS.x, py - GameRules.LOCATIONS.NEXUS.y);
+                    px = Utils.random(WORLD_SIZE); 
+                    py = Utils.random(WORLD_SIZE); 
+                    
+                    // Utils ile varlık tabanlı ve koordinat tabanlı mesafe
+                    dPlayer = Utils.dist(px, py, player.x, player.y);
+                    dNexus = Utils.dist(px, py, GameRules.LOCATIONS.NEXUS.x, GameRules.LOCATIONS.NEXUS.y);
+                    
                 } while(dNexus < GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS || dPlayer < 1500);
                 this.planets.push(new Planet(px, py));
             }
@@ -68,7 +73,6 @@ class EntityManager {
         // C. Çarpışma Kontrolleri
         this.checkCollisions();
 
-        // Global değişkeni güncelle
         window.planets = this.planets;
     }
 
@@ -78,14 +82,16 @@ class EntityManager {
     checkCollisions() {
         this.planets.forEach(p => {
             if(!p.collected) {
-                 // Çarpışma mesafesi
-                 if(Math.hypot(player.x-p.x, player.y-p.y) < p.radius + 30*player.scale) { 
+                 // Utils.distEntity ile temiz mesafe kontrolü
+                 if(Utils.distEntity(player, p) < p.radius + 30 * player.scale) { 
                     
                     if(p.type.id === 'toxic') { 
-                        if(audio) audio.playToxic(); 
+                        // Utils.playSound ile güvenli ses çağırma
+                        Utils.playSound('playToxic'); 
+
                         if(echoRay && echoRay.attached) { 
                             if (!window.gameSettings.godMode) {
-                                window.echoRay = null; // Global echoRay'i güncelle
+                                window.echoRay = null; 
                                 window.echoDeathLevel = player.level; 
                                 document.getElementById('echo-wrapper-el').style.display = 'none'; 
                                 if(typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory(); 
@@ -106,7 +112,8 @@ class EntityManager {
                     } else if (p.type.id === 'lost') { 
                          if (addItemToInventory(p)) { 
                              p.collected = true; 
-                             if(audio) audio.playChime({id:'legendary'}); 
+                             // Parametreli ses çağırma örneği
+                             Utils.playSound('playChime', {id:'legendary'}); 
                              showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
                              if (p.lootContent && p.lootContent.length > 0) { 
                                  p.lootContent.forEach(item => { 
@@ -118,7 +125,8 @@ class EntityManager {
                              }
                          }
                     } else if (p.type.id === 'tardigrade') {
-                        p.collected = true; if(audio) audio.playChime(p.type); 
+                        p.collected = true; 
+                        Utils.playSound('playChime', p.type);
                         player.energy = Math.min(player.energy + 50, player.maxEnergy);
                         const xp = calculatePlanetXp(p.type);
                         showNotification({name: "TARDİGRAD YENDİ", type:{color:'#C7C0AE'}}, `(+%50 ENERJİ, +${xp} XP)`);
@@ -145,7 +153,7 @@ class EntityManager {
                             }
                             if (addedCount > 0) { 
                                 p.collected = true; 
-                                if(audio) audio.playChime(p.type); 
+                                Utils.playSound('playChime', p.type);
                                 const suffix = (addedCount > 1 ? `x${addedCount} ` : "") + `(+${totalXp} XP)`;
                                 showNotification(p, suffix); 
                             } 
@@ -157,11 +165,7 @@ class EntityManager {
     }
 
     /**
-     * Yıldızları çizer (Kamera transformundan ÖNCE çağrılmalı).
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {number} width - Ekran genişliği
-     * @param {number} height - Ekran yüksekliği
-     * @param {object} target - Parallax referans noktası (Kamera hedefi)
+     * Yıldızları çizer.
      */
     drawStars(ctx, width, height, target) {
         ctx.fillStyle="white"; 
@@ -169,20 +173,16 @@ class EntityManager {
             let sx = (s.x - target.x * 0.9) % width; 
             let sy = (s.y - target.y * 0.9) % height; 
             if(sx<0) sx+=width; if(sy<0) sy+=height; 
-            ctx.globalAlpha = 0.5 + Math.random()*0.3; 
+            
+            // Rastgelelik için Utils kullanılabilir veya performans için inline bırakılabilir
+            ctx.globalAlpha = 0.5 + Utils.random(0, 0.3); 
             ctx.fillRect(sx, sy, s.s, s.s); 
         }); 
         ctx.globalAlpha = 1;
     }
 
     /**
-     * Gezegenleri çizer (Kamera transformundan SONRA çağrılmalı).
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {object} player 
-     * @param {object|null} echoRay 
-     * @param {number} width 
-     * @param {number} height 
-     * @param {number} zoom 
+     * Gezegenleri çizer.
      */
     drawPlanets(ctx, player, echoRay, width, height, zoom) {
         const viewW = width / zoom; 
@@ -192,7 +192,6 @@ class EntityManager {
             const visibility = getPlanetVisibility(p, player, echoRay);
             if (visibility === 0) return;
             
-            // Ekran dışı optimizasyonu (Culling)
             if(p.x > player.x - viewW && p.x < player.x + viewW && p.y > player.y - viewH && p.y < player.y + viewH) { 
                 p.draw(ctx, visibility); 
             } 

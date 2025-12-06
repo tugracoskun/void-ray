@@ -16,6 +16,7 @@ css:
 js:
   - data.js
   - game-rules.js
+  - utils.js
   - loader.js
   - game.js
   - ui.js
