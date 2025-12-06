@@ -1,28 +1,24 @@
 /**
- * Void Ray - Oyun Kuralları ve Mantığı
+ * Void Ray - Oyun Kuralları ve Mantığı (Logic Layer)
  * * Bu dosya, oyunun mantıksal hesaplamalarını ve formüllerini içerir.
- * * Veriler (konumlar, oranlar vb.) data.js dosyasından alınır.
- * * GÜNCELLEME:
- * - Statik veriler (LOCATIONS, LOOT_DISTRIBUTION) buradan kaldırıldı.
- * - Artık GAME_CONFIG üzerinden verilere erişiyor.
+ * * Veriler (konumlar, oranlar vb.) MUTLAKA data.js (GAME_CONFIG) üzerinden alınır.
  */
 
 const GameRules = {
+    // Performans için önbellek (Runtime'da hesaplanır)
+    _cachedTotalWeight: null,
+
     // ==========================================
-    // 1. KONUM ERİŞİMİ (DATA REFERANSI)
+    // 1. KONUM ERİŞİMİ
     // ==========================================
     
-    // Artık data.js'den gelen referansı kullanıyoruz
     get LOCATIONS() {
         return GAME_CONFIG.LOCATIONS;
     },
 
     // ==========================================
-    // 2. HESAPLAMA METOTLARI
+    // 2. HESAPLAMA METOTLARI (MATEMATİKSEL)
     // ==========================================
-
-    // Performans için önbellek (Runtime'da hesaplanır)
-    _cachedTotalWeight: null,
 
     /**
      * Bir geliştirmenin o anki seviyesine göre maliyetini hesaplar.
@@ -62,50 +58,64 @@ const GameRules = {
             random -= item.weight;
         }
         
-        return 1; // Fallback (Hata durumunda varsayılan)
+        return 1; // Teorik olarak buraya ulaşılmaz ama fonksiyon yapısı gereği kalabilir
+    },
+
+    // ==========================================
+    // 3. OYNANIŞ MANTIĞI (GAMEPLAY LOGIC)
+    // ==========================================
+
+    /**
+     * Gezegenin türüne göre rastgele XP hesaplar.
+     * Varyans değerleri data.js -> ECONOMY'den alınır.
+     */
+    calculatePlanetXp: function(type) {
+        if (!type || !type.xp) return 0;
+
+        const min = GAME_CONFIG.ECONOMY.XP_VARIANCE_MIN;
+        const max = GAME_CONFIG.ECONOMY.XP_VARIANCE_MAX;
+        
+        // Örn: 0.5 ile 1.5 arasında rastgele bir çarpan
+        const variance = Math.random() * (max - min) + min;
+        
+        return Math.floor(type.xp * variance);
+    },
+
+    /**
+     * Oyuncunun güncel taşıma kapasitesini hesaplar.
+     * Geliştirmeler (Upgrades) hesaba katılır.
+     */
+    getPlayerCapacity: function() {
+        const base = GAME_CONFIG.PLAYER.BASE_CAPACITY;
+        const perLevel = GAME_CONFIG.PLAYER.CAPACITY_PER_LEVEL;
+        
+        // playerData game.js'de tanımlıdır
+        const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
+            ? (playerData.upgrades.playerCapacity * perLevel) 
+            : 0;
+        return base + added;
+    },
+
+    /**
+     * Yankı'nın güncel taşıma kapasitesini hesaplar.
+     */
+    getEchoCapacity: function() {
+        const base = GAME_CONFIG.ECHO.BASE_CAPACITY;
+        const perLevel = GAME_CONFIG.ECHO.CAPACITY_PER_LEVEL;
+
+        const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
+            ? (playerData.upgrades.echoCapacity * perLevel) 
+            : 0;
+        return base + added;
     }
 };
 
 // ==========================================
-// 3. GLOBAL YARDIMCI FONKSİYONLAR
+// 4. GLOBAL ALIAS (UYUMLULUK KATMANI)
 // ==========================================
-// Bu fonksiyonlar logic (mantık) içerdiği için burada kalmaya devam ediyor,
-// ancak parametrelerini data.js'den alıyorlar.
+// Mevcut oyun kod tabanı (game.js, ui.js vb.) bu fonksiyonları doğrudan çağırdığı için,
+// GameRules metotlarını global scope'a bağlıyoruz.
 
-/**
- * Gezegenin türüne göre rastgele XP hesaplar.
- * Taban XP değerinin %50'si ile %150'si arasında değişir.
- */
-function calculatePlanetXp(type) {
-    if (!type || !type.xp) return 0;
-    const variance = 0.5 + Math.random(); // 0.5 ile 1.5 arası çarpan
-    return Math.floor(type.xp * variance);
-}
-
-/**
- * Oyuncunun güncel taşıma kapasitesini hesaplar.
- * GAME_CONFIG referansı kullanılır.
- */
-function getPlayerCapacity() {
-    const base = GAME_CONFIG.PLAYER.BASE_CAPACITY;
-    const perLevel = GAME_CONFIG.PLAYER.CAPACITY_PER_LEVEL;
-    
-    const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
-        ? (playerData.upgrades.playerCapacity * perLevel) 
-        : 0;
-    return base + added;
-}
-
-/**
- * Yankı'nın güncel taşıma kapasitesini hesaplar.
- * GAME_CONFIG referansı kullanılır.
- */
-function getEchoCapacity() {
-    const base = GAME_CONFIG.ECHO.BASE_CAPACITY;
-    const perLevel = GAME_CONFIG.ECHO.CAPACITY_PER_LEVEL;
-
-    const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
-        ? (playerData.upgrades.echoCapacity * perLevel) 
-        : 0;
-    return base + added;
-}
+window.calculatePlanetXp = GameRules.calculatePlanetXp.bind(GameRules);
+window.getPlayerCapacity = GameRules.getPlayerCapacity.bind(GameRules);
+window.getEchoCapacity   = GameRules.getEchoCapacity.bind(GameRules);

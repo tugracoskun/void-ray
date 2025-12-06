@@ -1,15 +1,8 @@
 /**
- * Void Ray - Veri ve Konfigürasyon
+ * Void Ray - Veri ve Konfigürasyon (Data Source)
  * Bu dosya oyunun tüm sabitlerini, ayarlarını ve içerik veritabanını içerir.
- * * DEĞİŞİKLİK RAPORU:
- * - LOCATIONS (Konumlar) buraya taşındı.
- * - LOOT_DISTRIBUTION (Ganimet oranları) buraya taşındı.
- * - Multipliers (Çarpanlar) buraya taşındı.
+ * MANTIK İÇERMEZ. Sadece saf veri ve konfigürasyon barındırır.
  */
-
-// ==========================================
-// 1. ÇEKİRDEK DÜNYA VE FİZİK AYARLARI
-// ==========================================
 
 const WORLD_SIZE = 120000; 
 
@@ -29,6 +22,7 @@ const GAME_CONFIG = {
         STAR_COUNT: 5000,        // Arka plan yıldız sayısı
         SAFE_ZONE_RADIUS: 2000   // Başlangıçta gezegen oluşmayacak güvenli alan yarıçapı
     },
+    
     PLAYER: {
         BASE_XP: 150,            // Level atlamak için gereken taban XP
         BASE_HEALTH: 100,        // Başlangıç canı
@@ -45,6 +39,7 @@ const GAME_CONFIG = {
             REGEN: 0.01          // Enerji dolum hızı
         }
     },
+    
     ECHO: {
         BASE_ENERGY: 100,
         BASE_CAPACITY: 80,       // Yankı başlangıç kapasitesi
@@ -54,6 +49,7 @@ const GAME_CONFIG = {
         DRAIN_RATE: 0.005,       // Normal enerji tüketimi
         OUT_OF_BOUNDS_DRAIN: 0.5 // Radyasyon alanı tüketimi
     },
+    
     PLANETS: {
         RADIUS: {
             LEGENDARY: 120,
@@ -64,11 +60,16 @@ const GAME_CONFIG = {
             VARIANCE: 60         // Rastgele eklenebilecek ek yarıçap
         }
     },
+    
     // Ekonomi ve İlerleme Çarpanları
     ECONOMY: {
         UPGRADE_COST_MULTIPLIER: 1.5, // Her seviyede fiyat artış oranı
-        LEVEL_XP_MULTIPLIER: 1.5      // Her seviyede zorluk artış oranı
+        LEVEL_XP_MULTIPLIER: 1.5,     // Her seviyede zorluk artış oranı
+        // XP Varyansı: Gezegenlerden gelen XP'nin rastgelelik aralığı (0.5 = %50 ile %150 arası)
+        XP_VARIANCE_MIN: 0.5,
+        XP_VARIANCE_MAX: 1.5
     },
+    
     // Kaynak Düşme Olasılıkları (Ağırlıklı Dağılım)
     // count: Düşecek eşya sayısı, weight: Olasılık ağırlığı
     LOOT_DISTRIBUTION: [
@@ -85,13 +86,13 @@ const GAME_CONFIG = {
 // ==========================================
 
 const RARITY = {
-    COMMON:    { id: 'common',    name: 'Madde',   color: '#94a3b8', prob: 0.5, xp: 10, value: 10 },
-    RARE:      { id: 'rare',      name: 'Kristal',   color: '#38bdf8', prob: 0.2, xp: 40, value: 30 },
-    EPIC:      { id: 'epic',      name: 'Öz',        color: '#c084fc', prob: 0.1, xp: 100, value: 100 },
-    LEGENDARY: { id: 'legendary', name: 'Yadigâr',   color: '#fbbf24', prob: 0.04, xp: 500, value: 400 },
-    TOXIC:     { id: 'toxic',     name: 'Veri Sisi', color: '#10b981', prob: 0.01, xp: 0, value: 0 },
+    COMMON:    { id: 'common',    name: 'Madde',         color: '#94a3b8', prob: 0.5, xp: 10, value: 10 },
+    RARE:      { id: 'rare',      name: 'Kristal',       color: '#38bdf8', prob: 0.2, xp: 40, value: 30 },
+    EPIC:      { id: 'epic',      name: 'Öz',            color: '#c084fc', prob: 0.1, xp: 100, value: 100 },
+    LEGENDARY: { id: 'legendary', name: 'Yadigâr',       color: '#fbbf24', prob: 0.04, xp: 500, value: 400 },
+    TOXIC:     { id: 'toxic',     name: 'Veri Sisi',     color: '#10b981', prob: 0.01, xp: 0, value: 0 },
     TARDIGRADE:{ id: 'tardigrade',name: 'Tardigrad Yuvası', color: '#C7C0AE', prob: 0.02, xp: 20, value: 0 }, 
-    LOST:      { id: 'lost',      name: 'Kayıp Kargo', color: '#a855f7', prob: 0, xp: 0, value: 0 }
+    LOST:      { id: 'lost',      name: 'Kayıp Kargo',   color: '#a855f7', prob: 0, xp: 0, value: 0 }
 };
 
 const LOOT_DB = {
