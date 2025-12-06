@@ -9,6 +9,7 @@ css:
   - hud.css
   - panels.css
   - chat.css
+  - profile.css
   - world.css
   - boot.css
 
