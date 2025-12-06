@@ -13,6 +13,69 @@ let chatHistory = {
 };
 let activeChatTab = 'genel';
 
+// CHAT MODU: 2=Aktif (Tam), 1=Yarım (Fading), 0=Kapalı
+let chatState = 1; // Varsayılan olarak Yarım Mod başlat
+let wasSemiActive = false; // Enter ile açıldığında, geri dönüş için bayrak
+
+/**
+ * Chat modunu değiştirir (Buton tetikler).
+ * 2 -> 1 -> 0 -> 2 döngüsü.
+ */
+window.cycleChatMode = function() {
+    chatState--;
+    if (chatState < 0) chatState = 2;
+    wasSemiActive = false; // Manuel değişimde hafızayı sıfırla
+    updateChatUI();
+};
+
+/**
+ * Arayüzü mevcut chatState'e göre günceller.
+ */
+function updateChatUI() {
+    const panel = document.getElementById('chat-panel');
+    const btn = document.getElementById('btn-chat-mode');
+    const inputArea = document.getElementById('chat-input-area');
+    
+    if (!panel || !btn) return;
+
+    // Sınıfları temizle
+    panel.classList.remove('chat-mode-semi', 'chat-mode-off');
+
+    if (chatState === 2) {
+        // --- AKTİF MOD ---
+        btn.innerText = "✉"; 
+        btn.style.color = "white";
+        
+        // Input alanını görünür yap (Tab durumuna göre switchChatTab yönetecek)
+        if(inputArea) inputArea.style.removeProperty('display');
+        
+        // Tam geçmişi geri yükle
+        switchChatTab(activeChatTab); 
+    } 
+    else if (chatState === 1) {
+        // --- YARIM AKTİF ---
+        btn.innerText = "⋯"; 
+        btn.style.color = "#94a3b8"; 
+        panel.classList.add('chat-mode-semi');
+        
+        // Input alanını ZORLA gizle
+        if(inputArea) inputArea.style.display = 'none';
+
+        // Yarım moda geçerken eski kalabalığı temizle
+        const chatContent = document.getElementById('chat-content');
+        if (chatContent) chatContent.innerHTML = ''; 
+    } 
+    else {
+        // --- KAPALI MOD ---
+        btn.innerText = "⊘"; 
+        btn.style.color = "#ef4444"; 
+        panel.classList.add('chat-mode-off');
+        
+        // Input alanını ZORLA gizle
+        if(inputArea) inputArea.style.display = 'none';
+    }
+}
+
 /**
  * Ekrana ve chat paneline bildirim gönderir.
  * Game logic tarafından global olarak kullanılır.
@@ -59,21 +122,38 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
     const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     const msgObj = { text, type, time: timeStr };
     
+    // Veriyi her zaman kaydet
     chatHistory[channel].push(msgObj);
-    
     if (channel !== 'genel') {
         chatHistory['genel'].push(msgObj);
     }
     
-    if (activeChatTab === channel || activeChatTab === 'genel') {
-        const chatContent = document.getElementById('chat-content');
-        if (chatContent) {
-            const div = document.createElement('div');
-            div.className = `chat-message ${type}`;
-            div.innerHTML = `<span class="chat-timestamp">[${timeStr}]</span> ${text}`;
-            chatContent.appendChild(div);
-            chatContent.scrollTop = chatContent.scrollHeight;
-        }
+    // Eğer kapalıysa (0) ekrana çizme
+    if (chatState === 0) return;
+
+    // Eğer kanal aktif değilse ekrana çizme (Yarım modda sadece aktif kanaldakiler görünsün)
+    if (activeChatTab !== channel && activeChatTab !== 'genel') return;
+
+    const chatContent = document.getElementById('chat-content');
+    if (!chatContent) return;
+
+    const div = document.createElement('div');
+    div.className = `chat-message ${type}`;
+    div.innerHTML = `<span class="chat-timestamp">[${timeStr}]</span> ${text}`;
+
+    if (chatState === 1) {
+        // YARIM MOD: Solarak kaybolma efekti (6sn toplam ömür)
+        div.classList.add('fading-msg');
+        chatContent.appendChild(div);
+        
+        // Animasyon bitince DOM'dan sil (Tarihçede zaten var)
+        setTimeout(() => {
+            if (div.parentNode) div.parentNode.removeChild(div);
+        }, 6000); 
+    } else {
+        // AKTİF MOD: Normal ekle (Silme yok)
+        chatContent.appendChild(div);
+        chatContent.scrollTop = chatContent.scrollHeight;
     }
 }
 
@@ -86,8 +166,19 @@ function switchChatTab(tab) {
     
     const inputArea = document.getElementById('chat-input-area');
     if(inputArea) {
-        if(tab === 'bilgi') inputArea.style.display = 'none';
-        else inputArea.style.display = 'flex';
+        // Sadece AKTİF (2) moddaysa input görünürlüğünü yönet
+        // Diğer modlarda updateChatUI zaten gizliyor
+        if (chatState === 2) {
+            if(tab === 'bilgi') inputArea.style.display = 'none';
+            else inputArea.style.display = 'flex';
+        }
+    }
+
+    // Yarım moddaysa tarihçeyi yükleme, temiz kalsın (sadece yeni gelenler görünsün)
+    if (chatState === 1) {
+        const chatContent = document.getElementById('chat-content');
+        if (chatContent) chatContent.innerHTML = '';
+        return;
     }
 
     const chatContent = document.getElementById('chat-content');
@@ -108,34 +199,69 @@ function sendUserMessage() {
     if(!input) return;
     
     const msg = input.value.trim();
-    if(!msg) return;
+    if(msg) {
+        addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
+        input.value = '';
+        setTimeout(() => {
+            if(audio) audio.playError(); 
+            addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
+        }, 200);
+    }
 
-    input.value = '';
-    
-    addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
-    
-    setTimeout(() => {
-        if(audio) audio.playError(); // HATA SESİ
-        addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
-    }, 200);
+    // Mesaj gönderildikten sonra: Eğer Yarım Moddan geldiysek, oraya dön
+    if (wasSemiActive) {
+        chatState = 1;
+        wasSemiActive = false;
+        updateChatUI();
+        // Odağı oyuna geri ver (Tuval)
+        const canvas = document.getElementById('gameCanvas');
+        if(canvas) canvas.focus();
+    }
 }
 
 // --- BAŞLATMA FONKSİYONU ---
-// index.html içindeki loader callback'inde çağrılır.
 function initChatSystem() {
     console.log("Chat sistemi başlatılıyor...");
+    updateChatUI(); // Başlangıç modunu uygula (1: Yarım)
 
     const sendBtn = document.getElementById('chat-send-btn');
     if(sendBtn) {
         sendBtn.addEventListener('click', sendUserMessage);
     }
 
-    const chatInput = document.getElementById('chat-input');
-    if(chatInput) {
-        chatInput.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') sendUserMessage();
-        });
-    }
+    // Global Enter Listener
+    window.addEventListener('keydown', (e) => {
+        const input = document.getElementById('chat-input');
+        
+        if (e.key === 'Enter') {
+            if (chatState === 1 && document.activeElement !== input) {
+                // Eğer yarım moddaysak ve input odaklı değilse -> AKTİF ET
+                wasSemiActive = true;
+                chatState = 2; // Aktif yap
+                updateChatUI();
+                e.preventDefault();
+                setTimeout(() => {
+                    if(input) input.focus();
+                }, 50); 
+            } 
+            else if (document.activeElement === input) {
+                // Eğer input odaklıysa ve Enter'a basıldıysa -> Mesajı Gönder
+                sendUserMessage();
+            }
+        }
+        
+        // ESC ile iptal etme (Eğer input açıksa kapat)
+        if (e.key === 'Escape') {
+            if (chatState === 2 && wasSemiActive) {
+                chatState = 1;
+                wasSemiActive = false;
+                updateChatUI();
+                if(input) input.blur();
+                // ESC'nin menüyü açmasını engellemek için controls.js'de kontrol gerekebilir
+                // Ama buradaki logic öncelikli çalışacaktır.
+            }
+        }
+    });
 
     // Chat Panelini Sürüklenebilir Yap
     const chatPanelEl = document.getElementById('chat-panel');
@@ -149,53 +275,29 @@ function initChatSystem() {
 // --- SÜRÜKLE BIRAK SİSTEMİ ---
 function makeElementDraggable(el, handle) {
     if (!el || !handle) return;
-    
     handle.style.cursor = 'move';
-    
     let isDragging = false;
     let startX, startY, startLeft, startTop;
     
     handle.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
-        
+        if (e.button !== 0 || chatState !== 2) return; // Sadece aktifken taşı
         isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        
+        startX = e.clientX; startY = e.clientY;
         const rect = el.getBoundingClientRect();
-        
-        el.style.bottom = 'auto';
-        el.style.right = 'auto';
-        el.style.left = rect.left + 'px';
-        el.style.top = rect.top + 'px';
-        el.style.margin = '0';
-        
-        startLeft = rect.left;
-        startTop = rect.top;
-        
+        el.style.bottom = 'auto'; el.style.right = 'auto';
+        el.style.left = rect.left + 'px'; el.style.top = rect.top + 'px'; el.style.margin = '0';
+        startLeft = rect.left; startTop = rect.top;
         e.preventDefault();
-        
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     });
     
     function onMouseMove(e) {
         if (!isDragging) return;
-        
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        
-        let newLeft = startLeft + dx;
-        let newTop = startTop + dy;
-        
-        const maxLeft = window.innerWidth - el.offsetWidth;
-        const maxTop = window.innerHeight - el.offsetHeight;
-        
-        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-        newTop = Math.max(0, Math.min(newTop, maxTop));
-        
-        el.style.left = newLeft + 'px';
-        el.style.top = newTop + 'px';
+        const dx = e.clientX - startX; const dy = e.clientY - startY;
+        let newLeft = Math.max(0, Math.min(startLeft + dx, window.innerWidth - el.offsetWidth));
+        let newTop = Math.max(0, Math.min(startTop + dy, window.innerHeight - el.offsetHeight));
+        el.style.left = newLeft + 'px'; el.style.top = newTop + 'px';
     }
     
     function onMouseUp() {
@@ -206,16 +308,7 @@ function makeElementDraggable(el, handle) {
     
     window.addEventListener('resize', () => {
         const rect = el.getBoundingClientRect();
-        const maxLeft = window.innerWidth - el.offsetWidth;
-        const maxTop = window.innerHeight - el.offsetHeight;
-        
-        let newLeft = rect.left;
-        let newTop = rect.top;
-        
-        if (newLeft > maxLeft) newLeft = maxLeft;
-        if (newTop > maxTop) newTop = maxTop;
-        
-        el.style.left = Math.max(0, newLeft) + 'px';
-        el.style.top = Math.max(0, newTop) + 'px';
+        el.style.left = Math.max(0, Math.min(rect.left, window.innerWidth - el.offsetWidth)) + 'px';
+        el.style.top = Math.max(0, Math.min(rect.top, window.innerHeight - el.offsetHeight)) + 'px';
     });
 }

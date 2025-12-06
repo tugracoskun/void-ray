@@ -114,6 +114,46 @@
     backdrop-filter: blur(10px);
     overflow: hidden;
     z-index: 65;
+    transition: opacity 0.3s ease;
+}
+
+/* YARIM AKTİF MOD (SEMI-ACTIVE) */
+#chat-panel.chat-mode-semi {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    pointer-events: none; /* Tıklamalar geçsin */
+}
+
+/* Gizlenen elemanlar (Yarım mod) - !important EKLENDİ */
+#chat-panel.chat-mode-semi .chat-header,
+#chat-panel.chat-mode-semi .chat-input-area {
+    display: none !important;
+}
+
+#chat-panel.chat-mode-semi .chat-content {
+    overflow: visible; /* Kaydırma çubuğu gizlensin */
+    justify-content: flex-end; /* Mesajları alta daya */
+}
+
+/* Mesajın silinme animasyonu (Yarım mod) 
+   Toplam süre 6s: 5s bekle, 1s sol
+*/
+.fading-msg {
+    animation: messageLifeCycle 6s forwards;
+}
+
+@keyframes messageLifeCycle {
+    0% { opacity: 1; }
+    85% { opacity: 1; } /* İlk 5 saniye görünür kalır */
+    100% { opacity: 0; transform: translateY(-5px); } /* Son 1 saniye solarak gider */
+}
+
+/* DEAKTİF MOD */
+#chat-panel.chat-mode-off {
+    opacity: 0;
+    pointer-events: none;
+    display: none;
 }
 
 .chat-header {
