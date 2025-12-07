@@ -1,91 +1,124 @@
 /* * BOOT.CSS
- * Düzenlenmiş menü ve sistem kontrol stilleri.
+ * Wireframe System Boot & Controls
  */
 
 .interaction-zone {
     position: relative;
     width: 100%;
-    /* Yüksekliği artırıp esneklik sağladık */
     min-height: 50vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* İçeriği üstten başlatıp margin ile itiyoruz */
-    padding-top: 4vh; /* Başlıktan uzaklaşma */
+    justify-content: flex-start;
+    padding-top: 4vh;
 }
 
-/* --- MERKEZİ VATOZ SİMGESİ --- */
-.void-symbol-center {
-    width: 90px;
-    height: 90px; 
-    /* Alt boşluğu artırarak butondan uzaklaştırdık */
-    margin-bottom: 60px; 
-    animation: floatCenter 5s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
-}
-
-@keyframes floatCenter {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
-}
-
-/* --- BOOT CONTAINER --- */
+/* --- BOOT CONTAINER (TERMINAL GÖRÜNÜMÜ) --- */
 .boot-container-integrated {
-    width: 240px; /* Daraltıldı (Eski: 300px) */
+    width: 300px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
     transition: opacity 0.5s ease-out;
-    position: relative; 
+    position: relative;
+    
+    /* Terminal Çerçevesi */
+    border: 1px solid var(--hud-color-dim);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
 }
 
-.boot-container-integrated.fade-out {
-    opacity: 0;
-    pointer-events: none;
-    position: absolute; 
+/* Köşe Vurguları */
+.boot-container-integrated::before, .boot-container-integrated::after {
+    content: ''; position: absolute; width: 10px; height: 10px;
+    border: 2px solid var(--hud-color);
+    transition: all 0.3s;
 }
+.boot-container-integrated::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.boot-container-integrated::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
 
 .boot-status-text {
-    text-align: center; font-size: 0.75rem; letter-spacing: 3px; color: #94a3b8; font-family: monospace;
+    text-align: left; 
+    font-size: 0.7rem; 
+    letter-spacing: 2px; 
+    color: var(--hud-color); 
+    font-family: monospace;
+    border-bottom: 1px dashed var(--hud-color-dim);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
 }
+.boot-status-text::before { content: "> "; color: var(--hud-text-dim); }
 
 .check-list-integrated {
     display: flex; 
     flex-direction: column; 
-    gap: 4px; 
-    font-size: 0.7rem; 
-    color: #64748b; 
-    height: 300px; /* Uzatıldı (Eski: 100px) */
+    gap: 2px; 
+    font-size: 0.65rem; 
+    color: var(--hud-text-dim); 
+    height: 200px;
     overflow-y: auto; 
     font-family: 'Courier New', Courier, monospace; 
-    background: rgba(0,0,0,0.4); 
-    padding: 15px; 
-    border: 1px solid rgba(255,255,255,0.05); 
-    border-radius: 4px;
+    padding: 5px;
 }
-.check-list-integrated::-webkit-scrollbar { width: 0px; }
+.check-list-integrated::-webkit-scrollbar { width: 2px; }
+.check-list-integrated::-webkit-scrollbar-thumb { background: var(--hud-color-dim); }
 
-.check-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); animation: slideIn 0.1s forwards; }
-.status-icon.pending { color: #f59e0b; } .status-icon.ok { color: #10b981; } .status-icon.error { color: #ef4444; }
+.check-item { 
+    display: flex; justify-content: space-between; 
+    padding: 2px 0; 
+}
+.status-icon.pending { color: #f59e0b; } 
+.status-icon.ok { color: var(--hud-color); } 
+.status-icon.error { color: #ef4444; }
 
-.progress-wrapper-integrated { height: 2px; background: rgba(255,255,255,0.05); width: 100%; margin-top: 5px; }
-.progress-fill-integrated { height: 100%; background: #38bdf8; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+/* Progress Bar - İnce Çizgi */
+.progress-wrapper-integrated { 
+    height: 4px; 
+    background: rgba(255,255,255,0.05); 
+    width: 100%; 
+    margin-top: 10px;
+    border: 1px solid var(--hud-color-dim);
+}
+.progress-fill-integrated { 
+    height: 100%; 
+    background: var(--hud-color); 
+    width: 0%; 
+    transition: width 0.1s linear; 
+    box-shadow: 0 0 10px var(--hud-color); 
+}
 
-/* --- MENÜ KONTROLLERİ --- */
+/* --- MENÜ KONTROLLERİ VE TUŞ ŞEMASI --- */
 .menu-controls-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); position: absolute; }
 .menu-controls-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: opacity 0.8s ease, transform 0.8s ease; display: flex; flex-direction: column; align-items: center; width: 100%; }
 
-/* --- KLASİK GRID TUŞ TAKIMI --- */
+/* --- KLASİK GRID TUŞ TAKIMI (TEKNİK ŞEMA) --- */
 .controls-grid-classic {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px 40px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 25px 40px;
-    margin-top: 40px; /* Buton ile Grid arasındaki boşluk */
-    backdrop-filter: blur(5px);
+    gap: 15px 30px;
+    
+    background: rgba(10, 12, 14, 0.8);
+    border: 1px solid var(--hud-color-dim);
+    
+    /* Izgara Arka Planı */
+    background-image: linear-gradient(rgba(148, 216, 195, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 216, 195, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+
+    padding: 30px 50px;
+    margin-top: 40px;
+    position: relative;
+}
+
+/* Şema Başlığı */
+.controls-grid-classic::before {
+    content: "FLIGHT_CONTROLS_SCHEMATIC";
+    position: absolute; top: -10px; left: 20px;
+    background: #020204;
+    padding: 0 10px;
+    color: var(--hud-text-dim);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
 }
 
 .key-col {
@@ -98,48 +131,34 @@
 .key-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.75rem;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-}
-
-.key-cap {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 4px 8px;
-    border-radius: 4px;
-    color: white;
-    font-weight: 600;
+    gap: 12px;
     font-size: 0.7rem;
-    min-width: 24px;
-    text-align: center;
-    font-family: 'Outfit', sans-serif;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
-}
-
-/* BUTONLAR */
-.menu-btn-primary {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 18px 60px;
-    border-radius: 4px;
-    font-size: 1rem;
-    letter-spacing: 6px;
+    color: var(--hud-text-dim);
+    letter-spacing: 1px;
+    white-space: nowrap;
     text-transform: uppercase;
-    color: #e2e8f0;
-    cursor: pointer;
-    transition: all 0.3s;
-    backdrop-filter: blur(10px);
-}
-.menu-btn-primary:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #38bdf8;
-    color: #fff;
-    box-shadow: 0 0 40px rgba(56, 189, 248, 0.15);
-    transform: translateY(-2px);
-    letter-spacing: 8px;
 }
 
-@keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+/* Tuş Görünümü - Kare ve Teknik */
+.key-cap {
+    background: transparent;
+    border: 1px solid var(--hud-color-dim);
+    padding: 6px 10px;
+    border-radius: 2px;
+    color: var(--hud-color);
+    font-weight: bold;
+    font-size: 0.75rem;
+    min-width: 30px;
+    text-align: center;
+    font-family: monospace;
+    transition: 0.2s;
+}
+
+/* Space Tuşu */
+.key-cap[style*="width"] { border-bottom: 2px solid var(--hud-color-dim); }
+
+.key-row:hover .key-cap {
+    border-color: var(--hud-color);
+    box-shadow: 0 0 10px var(--hud-color-dim);
+    text-shadow: 0 0 5px var(--hud-color);
+}
