@@ -38,6 +38,28 @@ function moveTooltip(e) {
 
 window.hideTooltip = function() { globalTooltip.style.display = 'none'; };
 
+// --- OLAY DİNLEYİCİLERİ (EVENT LISTENERS) ---
+window.initUIListeners = function() {
+    console.log("UI Olay Dinleyicileri başlatılıyor...");
+    
+    if (typeof eventBus === 'undefined') {
+        console.error("EventBus bulunamadı!");
+        return;
+    }
+
+    // 1. OYUNCU SEVİYE ATLAMA
+    eventBus.on('player:levelup', (data) => {
+        showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${data.level}`, type: {color: '#fff'}}, "");
+        
+        // Efekt veya ses de buradan tetiklenebilir (UI sorumluluğundaysa)
+        if(typeof audio !== 'undefined' && audio) audio.playEvolve();
+    });
+
+    // İleride eklenebilecek diğer olaylar:
+    // eventBus.on('inventory:full', () => { ... });
+    // eventBus.on('game:over', () => { ... });
+};
+
 // --- GENEL YARDIMCI FONKSİYONLAR ---
 
 window.toggleHUD = function() {

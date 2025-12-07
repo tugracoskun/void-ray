@@ -14,6 +14,7 @@ css:
   - boot.css
 
 js:
+  - EventBus.js # YENİ: Sistem çekirdeğinden biri
   - data.js
   - game-rules.js
   - utils.js

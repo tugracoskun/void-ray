@@ -41,6 +41,9 @@
             if (typeof initChatSystem === 'function') initChatSystem();
             if (typeof initSettings === 'function') initSettings();
             if (typeof checkMobile === 'function') checkMobile();
+            
+            // YENİ: UI Event Listeners (EventBus sonrası)
+            if (typeof initUIListeners === 'function') initUIListeners();
 
             // 2. Ana Menü Mantığını (Save Kontrolü) Başlat
             if (typeof initMainMenu === 'function') initMainMenu();
@@ -63,6 +66,9 @@
     </script>
     
     <!-- SCRIPTS -->
+    <!-- YENİ: EventBus (Diğer scriptlerden önce yüklenmeli) -->
+    <script src="js/EventBus.js"></script>
+    
     <script src="js/boot.js"></script>
     <script src="js/loader.js"></script>
 
@@ -73,7 +79,7 @@
     <script src="js/utils.js"></script> 
     
     <!-- PERFORMANS VE YÖNETİCİLER -->
-    <script src="js/ObjectPool.js"></script> <!-- YENİ: Havuz Sistemi -->
+    <script src="js/ObjectPool.js"></script> 
     <script src="js/managers/save_manager.js"></script>
     <script src="js/managers/achievement_manager.js"></script>
     

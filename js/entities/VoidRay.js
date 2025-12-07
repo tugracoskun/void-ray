@@ -62,9 +62,16 @@ class VoidRay {
         this.maxHealth += 20; // Seviye atlayınca can artışı
         this.health = this.maxHealth; // Canı fulle
         
-        // Global fonksiyonlar
-        if(typeof audio !== 'undefined' && audio) audio.playEvolve(); 
-        showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
+        // --- EVENT SYSTEM ENTEGRASYONU ---
+        // Artık doğrudan UI çağırmak yerine olay fırlatıyoruz.
+        // ui.js'deki dinleyici bunu yakalayıp bildirimi gösterecek.
+        if (typeof eventBus !== 'undefined') {
+            eventBus.emit('player:levelup', { level: this.level });
+        } else {
+            // Fallback (EventBus yoksa eski yöntem)
+            if(typeof audio !== 'undefined' && audio) audio.playEvolve(); 
+            showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
+        }
         
         // Global değişkenler
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
