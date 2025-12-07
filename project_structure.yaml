@@ -8,6 +8,7 @@ css:
   - menus.css
   - hud.css
   - panels.css
+  - inventory.css
   - chat.css
   - profile.css
   - world.css
