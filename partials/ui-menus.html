@@ -10,7 +10,7 @@
         
         <!-- 1. SİSTEM KONTROL (Boot - Vatoz Yok) -->
         <div id="integrated-boot-container" class="boot-container-integrated">
-            <div class="boot-status-text">SİSTEMLER BAŞLATILIYOR...</div>
+            <div class="boot-status-text">SYSTEM_INIT...</div>
             <div class="check-list-integrated"></div>
             <div class="progress-wrapper-integrated">
                 <div class="progress-fill-integrated"></div>
@@ -21,23 +21,21 @@
         <div id="menu-controls-wrapper" class="menu-controls-hidden">
             
             <!-- VATOZ SİMGESİ (Ortalanmış ve Dengeli) -->
-            <svg class="void-symbol-center" viewBox="0 0 100 100" fill="none" stroke="rgba(56, 189, 248, 0.9)" stroke-width="2">
-                <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" fill="rgba(56, 189, 248, 0.05)"/>
-                <circle cx="50" cy="40" r="3" fill="#e0f2fe" />
+            <svg class="void-symbol-center" viewBox="0 0 100 100" fill="none">
+                <!-- Renkler CSS'den kontrol ediliyor -->
+                <path d="M50 20 C 65 30, 90 45, 80 75 C 65 65, 55 85, 50 95 C 45 85, 35 65, 20 75 C 10 45, 35 30, 50 20 Z" stroke-width="2" />
+                <circle cx="50" cy="40" r="3" />
             </svg>
 
             <!-- BUTON GRUBU -->
             <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; margin-bottom: 30px;">
                 
-                <!-- DEVAM ET BUTONU (Başlangıçta gizli) -->
-                <!-- border-emerald-500 text-emerald-100 -->
-                <button id="btn-continue" class="menu-btn-primary" style="display: none; border-color: #10b981; color: #d1fae5;">
-                    KAYITLI OYUNDAN DEVAM ET
+                <button id="btn-continue" class="menu-btn-primary" style="display: none; border-color: #10b981; color: #10b981;">
+                    [ DEVAM ET ]
                 </button>
 
-                <!-- YENİ OYUN BUTONU -->
                 <button id="btn-start" class="menu-btn-primary">
-                    YAŞAM DÖNGÜSÜNÜ BAŞLAT
+                    [ BAŞLAT ]
                 </button>
             </div>
 
@@ -45,28 +43,28 @@
             <div class="controls-grid-classic">
                 <!-- Sol Sütun -->
                 <div class="key-col">
-                    <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Hareket</span></div>
-                    <div class="key-row"><span class="key-cap" style="width: 50px;">SPACE</span> <span>Hızlan</span></div>
+                    <div class="key-row"><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> <span>Navigasyon</span></div>
+                    <div class="key-row"><span class="key-cap" style="width: 50px;">SPACE</span> <span>İtici Güç</span></div>
                 </div>
                 
                 <!-- Orta Sütun -->
                 <div class="key-col">
                     <div class="key-row"><span class="key-cap">E</span> <span>Etkileşim</span></div>
-                    <div class="key-row"><span class="key-cap">F</span> <span>Yankı</span></div>
+                    <div class="key-row"><span class="key-cap">F</span> <span>Yankı Link</span></div>
                     <div class="key-row"><span class="key-cap">Q</span> <span>Oto-Pilot</span></div>
                     <div class="key-row"><span class="key-cap">C</span> <span>Kamera</span></div>
                 </div>
 
                 <!-- Sağ Sütun -->
                 <div class="key-col">
-                    <div class="key-row"><span class="key-cap">I</span> <span>Envanter</span></div>
-                    <div class="key-row"><span class="key-cap">M</span> <span>Harita</span></div>
-                    <div class="key-row"><span class="key-cap">H</span> <span>Arayüz</span></div>
+                    <div class="key-row"><span class="key-cap">I</span> <span>Kargo</span></div>
+                    <div class="key-row"><span class="key-cap">M</span> <span>Radar</span></div>
+                    <div class="key-row"><span class="key-cap">H</span> <span>HUD</span></div>
                 </div>
                 
                 <!-- Alt Sütun -->
-                <div class="key-col" style="grid-column: span 3; justify-content: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 5px;">
-                    <div class="key-row"><span class="key-cap">ESC</span> <span>Durdur / Menü</span></div>
+                <div class="key-col" style="grid-column: span 3; justify-content: center; border-top: 1px dashed rgba(148, 216, 195, 0.3); padding-top: 15px; margin-top: 5px;">
+                    <div class="key-row"><span class="key-cap">ESC</span> <span>Sistem Menüsü</span></div>
                 </div>
             </div>
         </div>
@@ -75,18 +73,23 @@
 
     <!-- GELİŞTİRİCİ ALT BİLGİSİ -->
     <div class="dev-footer">
-        <a href="https://github.com/tugracoskun" target="_blank" class="dev-info-item link-hover" title="Geliştirici Profilini Görüntüle">
-            <span class="dev-label">GELİŞTİRİCİ</span>
+        <a href="https://github.com/tugracoskun" target="_blank" class="dev-info-item link-hover" title="Geliştirici Profilini Görüntüle" style="text-decoration: none; display: flex; flex-direction: column;">
+            <span class="dev-label">DEVELOPER</span>
             <span class="dev-name">@tugracoskun</span>
         </a>
-        <div class="dev-separator"></div>
-        <a href="https://github.com/tugracoskun/void-ray" target="_blank" class="github-link-btn" title="GitHub Deposu">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-            <span>KAYNAK</span>
+        
+        <div style="width: 1px; height: 25px; background: var(--hud-color-dim);"></div>
+        
+        <a href="https://github.com/tugracoskun/void-ray" target="_blank" class="github-link-btn" title="GitHub Deposu" style="text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; letter-spacing: 1.5px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            <span>SOURCE</span>
         </a>
-        <div class="dev-separator"></div>
-        <a href="https://github.com/tugracoskun/void-ray/issues" target="_blank" class="github-link-btn issue-btn" title="Sorun Bildir veya İstek Gönder">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+
+        <!-- YENİ: DESTEK BUTONU EKLENDİ -->
+        <div style="width: 1px; height: 25px; background: var(--hud-color-dim);"></div>
+        
+        <a href="https://github.com/tugracoskun/void-ray/issues" target="_blank" class="github-link-btn" title="Sorun Bildir / İletişim" style="text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; letter-spacing: 1.5px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             <span>DESTEK</span>
         </a>
     </div>
@@ -94,20 +97,40 @@
 
 <!-- DİĞER MODALLER -->
 <div id="mobile-warning" class="mobile-warning-overlay" style="display: none;">
-    <div class="mobile-warning-box">
-        <div class="warning-icon">⚠</div>
-        <h2>MOBİL CİHAZ ALGILANDI</h2>
-        <p>Bu oyun mobil cihazlar için optimize edilmemiştir.</p>
-        <button class="menu-btn small-btn" onclick="closeMobileWarning()">DEVAM ET</button>
+    <div class="system-modal warning">
+        <div class="modal-header warning">!!! SİSTEM UYARISI !!!</div>
+        <div class="modal-content">
+            <div class="warning-icon">⚠</div>
+            <h2>MOBİL CİHAZ ALGILANDI</h2>
+            <p>Bu simülasyon klavye kontrolleri için tasarlanmıştır.</p>
+            <button class="menu-btn small-btn" onclick="closeMobileWarning()">[ YİNE DE DEVAM ET ]</button>
+        </div>
     </div>
 </div>
+
+<!-- ÖLÜM EKRANI -->
 <div id="death-screen">
-    <div class="death-title">SİNYAL KAYBEDİLDİ</div>
-    <div class="death-sub">GEMİ GÖVDE BÜTÜNLÜĞÜNÜ YİTİRDİ</div>
-    <div class="death-info">Tamir İstasyonunda yeniden yapılandırılıyor...</div>
+    <div class="system-modal danger">
+        <div class="modal-header danger">SİNYAL KAYBI TESPİT EDİLDİ</div>
+        <div class="modal-content">
+            <div class="death-title">BAĞLANTI KOPTU</div>
+            <div class="death-sub">GEMİ GÖVDE BÜTÜNLÜĞÜ KRİTİK SEVİYENİN ALTINDA</div>
+            <div class="death-info">> Acil durum protokolü devrede...<br>> Tamir istasyonuna veri aktarılıyor...</div>
+            <div class="loading-bar-wrapper"><div class="loading-bar-fill"></div></div>
+        </div>
+    </div>
 </div>
+
+<!-- PAUSE OVERLAY -->
 <div id="pause-overlay">
-    <div class="pause-title">DURAKLATILDI</div>
-    <button class="pause-btn" onclick="resumeGame()">DEVAM ET</button>
-    <button class="pause-btn danger" onclick="quitToMain()">ANA MENÜ</button>
+    <div class="system-modal">
+        <div class="modal-header">SİSTEM DURAKLATILDI</div>
+        <div class="modal-content">
+            <div class="pause-title">BEKLEME MODU</div>
+            <div class="pause-menu-grid">
+                <button class="pause-btn" onclick="resumeGame()">[ SİMÜLASYONA DÖN ]</button>
+                <button class="pause-btn danger" onclick="quitToMain()">[ BAĞLANTIYI KES ]</button>
+            </div>
+        </div>
+    </div>
 </div>

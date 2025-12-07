@@ -1,192 +1,166 @@
-/* * MENUS.CSS
- * Ana menü, duraklatma ve ölüm ekranları.
- */
+/* * MENUS.CSS * Wireframe Style Update */
 
-/* --- ANA MENÜ --- */
-#main-menu {
-    position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 100%, #0f172a 0%, #000000 80%);
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    z-index: 100; transition: opacity 0.5s ease;
+:root {
+    --hud-color: #94d8c3;       
+    --hud-color-dim: rgba(148, 216, 195, 0.3);
+    --hud-bg: rgba(10, 12, 14, 0.95);
+    --hud-text: #e2e8f0;
+    --hud-text-dim: #94a3b8;
+    --hud-danger: #ef4444;
 }
 
-.menu-hidden { opacity: 0; pointer-events: none; }
+/* --- ANA MENÜ (Önceki stille aynı, korundu) --- */
+#main-menu {
+    position: absolute; inset: 0;
+    background: 
+        linear-gradient(rgba(10, 12, 14, 0.9), rgba(10, 12, 14, 0.9)),
+        repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(148, 216, 195, 0.03) 1px, rgba(148, 216, 195, 0.03) 2px);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 100; transition: opacity 0.5s ease, visibility 0.5s;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.menu-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .menu-hidden * { pointer-events: none !important; }
 
 .title-main {
-    font-size: 6rem; font-weight: 100; letter-spacing: 0.3em;
-    background: linear-gradient(to bottom, #fff, var(--color-text-dim));
-    -webkit-background-clip: text; color: transparent;
-    margin-bottom: 10px; text-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
-    text-align: center;
+    font-size: 5rem; font-weight: 400; letter-spacing: 1.5rem;
+    color: var(--hud-color);
+    text-shadow: 0 0 20px rgba(148, 216, 195, 0.4);
+    margin-bottom: 20px; text-align: center;
+    border-bottom: 1px solid var(--hud-color-dim);
+    padding-bottom: 20px; width: 100%; position: relative;
+}
+.title-main::after {
+    content: "SYSTEM_READY // V.1.2"; display: block; font-size: 0.8rem; letter-spacing: 5px; color: var(--hud-text-dim); margin-top: 10px; opacity: 0.7;
 }
 
-/* Vatoz Animasyonu */
-.void-symbol {
-    width: 120px; height: 120px; margin: 20px;
-    animation: floatSymbol 6s ease-in-out infinite;
+.void-symbol-center {
+    width: 100px; height: 100px; margin-bottom: 40px;
+    filter: drop-shadow(0 0 10px var(--hud-color));
+    animation: pulseSymbol 4s ease-in-out infinite;
 }
-@keyframes floatSymbol {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
-}
+.void-symbol-center path { fill: var(--hud-color-dim) !important; stroke: var(--hud-color) !important; }
+.void-symbol-center circle { fill: var(--hud-color) !important; }
+@keyframes pulseSymbol { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } }
 
-.menu-btn {
-    background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-    padding: 20px 80px; border-radius: var(--soft-radius);
-    font-size: 1.2rem; letter-spacing: 5px; text-transform: uppercase;
-    color: var(--color-text-main); cursor: pointer; transition: all 0.4s;
-    backdrop-filter: blur(10px); margin-top: 30px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+.menu-btn, .menu-btn-primary {
+    background: transparent; border: 1px solid var(--hud-color); padding: 15px 60px;
+    border-radius: 0; font-size: 1rem; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--hud-color); cursor: pointer; transition: all 0.2s; font-family: 'Courier New', Courier, monospace;
+    position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.5); margin-top: 15px;
 }
-.menu-btn:hover {
-    background: rgba(255, 255, 255, 0.1); border-color: white;
-    box-shadow: 0 0 60px rgba(255, 255, 255, 0.1); letter-spacing: 8px;
-    color: white;
+.menu-btn:hover, .menu-btn-primary:hover {
+    background: var(--hud-color); color: #000; box-shadow: 0 0 20px var(--hud-color-dim);
+    transform: translateY(-2px); letter-spacing: 6px; font-weight: bold;
 }
+.menu-btn::before, .menu-btn-primary::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: var(--hud-color); }
+.menu-btn::after, .menu-btn-primary::after { content: ''; position: absolute; bottom: 0; right: 0; width: 4px; height: 4px; background: var(--hud-color); }
 
-/* Tips Section */
-.tips-container {
-    margin-top: 30px; margin-bottom: 10px;
-    height: 40px; width: 600px; text-align: center;
-    position: relative; display: flex; justify-content: center; align-items: center;
-}
-.tip-text {
-    font-size: 0.9rem; color: var(--color-text-dim); letter-spacing: 1px;
-    animation: fadeInTip 1s ease; position: absolute;
-    width: 100%;
-}
-@keyframes fadeInTip { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Controls Info */
-.controls-grid {
-    position: absolute; bottom: 120px;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 40px;
-    text-align: left;
-    background: rgba(255,255,255,0.02); padding: 20px 40px; 
-    border-radius: var(--soft-radius);
-    border: 1px solid rgba(255,255,255,0.05);
-}
-.key-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--color-text-dim); letter-spacing: 1px; }
-.key-cap { 
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-    padding: 4px 8px; border-radius: 4px; color: white; font-weight: 600; font-size: 0.75rem; min-width: 25px; text-align: center;
-}
-
-/* --- GELİŞTİRİCİ FOOTER --- */
 .dev-footer {
-    position: absolute; bottom: 30px;
-    display: flex; align-items: center; gap: 20px;
-    padding: 10px 30px;
-    background: rgba(2, 6, 23, 0.6);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 50px;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    position: absolute; bottom: 30px; display: flex; align-items: center; gap: 30px; padding: 10px 40px;
+    background: rgba(10, 12, 14, 0.8); border: 1px solid var(--hud-color-dim); border-radius: 0;
+    background-image: linear-gradient(to right, var(--hud-color) 2px, transparent 2px), linear-gradient(to top, var(--hud-color) 2px, transparent 2px);
+    background-size: 8px 8px; background-position: bottom left; background-repeat: no-repeat;
 }
-.dev-footer:hover {
-    border-color: rgba(56, 189, 248, 0.4);
-    box-shadow: 0 5px 30px rgba(56, 189, 248, 0.1);
-}
+.dev-footer:hover { border-color: var(--hud-color); box-shadow: 0 0 15px var(--hud-color-dim); }
+.dev-label { font-size: 0.5rem; letter-spacing: 2px; color: var(--hud-text-dim); }
+.dev-name { font-size: 0.8rem; letter-spacing: 1px; color: var(--hud-text); font-weight: bold; }
+.github-link-btn { color: var(--hud-text-dim); border: 1px solid transparent; transition: 0.2s; }
+.github-link-btn:hover { color: var(--hud-color); text-shadow: 0 0 5px var(--hud-color); }
 
-.dev-info-item { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-decoration: none; transition: all 0.2s; }
-.dev-info-item.link-hover:hover .dev-name { color: #fff; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
-.dev-label { font-size: 0.6rem; letter-spacing: 2px; color: var(--color-text-dark); text-transform: uppercase; }
-.dev-name { font-size: 0.9rem; letter-spacing: 1px; color: var(--color-text-main); font-weight: 500; transition: 0.2s; }
+/* --- YENİ: SİSTEM PENCERESİ (MODAL) STİLİ --- */
+/* Pause ve Death ekranları için ortak Wireframe kutusu */
+.system-modal {
+    width: 500px;
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color-dim);
+    
+    /* Köşe Vurguları */
+    background-image: 
+        linear-gradient(to right, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to left, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to top, var(--hud-color) 2px, transparent 2px);
+    background-size: 10px 10px;
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
 
-.dev-separator { width: 1px; height: 25px; background: rgba(255,255,255,0.1); }
-
-.github-link-btn {
-    display: flex; align-items: center; gap: 8px;
-    text-decoration: none; color: #cbd5e1;
-    font-size: 0.75rem; letter-spacing: 1.5px;
-    padding: 6px 15px; border-radius: 20px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid transparent;
-    transition: all 0.3s;
-}
-.github-link-btn:hover {
-    background: rgba(56, 189, 248, 0.1);
-    color: white; border-color: rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    display: flex; flex-direction: column;
 }
 
-.github-link-btn.issue-btn { color: #fcd34d; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.05); }
-.github-link-btn.issue-btn:hover { background: rgba(251, 191, 36, 0.15); color: #fff; border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 15px rgba(251, 191, 36, 0.1); }
-
-/* --- PAUSE OVERLAY --- */
-#pause-overlay {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-    z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
-}
-#pause-overlay.active { display: flex; }
-.pause-title { font-size: 3rem; letter-spacing: 10px; color: white; font-weight: 200; margin-bottom: 20px; }
-.pause-btn {
-    background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;
-    padding: 15px 60px; border-radius: var(--soft-radius); font-size: 1rem; letter-spacing: 3px;
-    cursor: pointer; transition: 0.3s;
-}
-.pause-btn:hover { background: white; color: black; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
-.pause-btn.danger:hover { background: var(--color-danger); border-color: var(--color-danger); color: white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
-
-/* --- DEATH SCREEN --- */
-#death-screen {
-    position: absolute; inset: 0;
-    background: #000;
-    display: none;
-    flex-direction: column;
-    justify-content: center; align-items: center;
-    z-index: 200;
-    color: var(--color-danger);
-    animation: fadeInDeath 2s ease;
-}
-#death-screen.active { display: flex; }
-
-@keyframes fadeInDeath { from { opacity: 0; } to { opacity: 1; } }
-
-.death-title { font-size: 4rem; letter-spacing: 10px; font-weight: 800; text-shadow: 0 0 30px var(--color-danger); margin-bottom: 10px; }
-.death-sub { font-size: 1.5rem; color: #fca5a5; letter-spacing: 5px; margin-bottom: 40px; opacity: 0.8; }
-.death-info { font-family: monospace; color: var(--color-text-dim); animation: pulse 2s infinite; }
-
-/* --- MOBİL UYARI EKRANI (YENİ) --- */
-.mobile-warning-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 300; /* En üstte */
-    display: flex; justify-content: center; align-items: center;
-    backdrop-filter: blur(20px);
+.system-modal.danger {
+    border-color: rgba(239, 68, 68, 0.3);
+    background-image: 
+        linear-gradient(to right, var(--hud-danger) 2px, transparent 2px),
+        linear-gradient(to bottom, var(--hud-danger) 2px, transparent 2px),
+        linear-gradient(to left, var(--hud-danger) 2px, transparent 2px),
+        linear-gradient(to top, var(--hud-danger) 2px, transparent 2px);
 }
 
-.mobile-warning-box {
-    width: 80%; max-width: 400px;
-    background: rgba(15, 23, 42, 0.95);
-    border: 1px solid rgba(239, 68, 68, 0.3); /* Kırmızımsı çerçeve */
-    border-radius: 12px;
-    padding: 30px;
+.modal-header {
+    padding: 10px 20px;
+    background: rgba(148, 216, 195, 0.05);
+    border-bottom: 1px solid var(--hud-color-dim);
+    color: var(--hud-color);
+    font-size: 0.8rem; letter-spacing: 3px; font-weight: bold;
     text-align: center;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-    animation: fadeInTip 0.5s ease;
+}
+.modal-header.danger {
+    background: rgba(239, 68, 68, 0.05);
+    border-bottom-color: rgba(239, 68, 68, 0.3);
+    color: var(--hud-danger);
 }
 
-.warning-icon {
-    font-size: 3rem; color: var(--color-danger); margin-bottom: 15px;
-    animation: pulse 2s infinite;
+.modal-content {
+    padding: 30px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
 }
 
-.mobile-warning-box h2 {
-    color: #fff; font-size: 1.5rem; letter-spacing: 2px;
-    margin-bottom: 15px; font-weight: 600;
+/* --- OVERLAY YAPILARI --- */
+#pause-overlay, #death-screen, .mobile-warning-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 200;
+    display: none;
+    justify-content: center; align-items: center;
+    font-family: 'Courier New', Courier, monospace;
+}
+#pause-overlay.active, #death-screen.active { display: flex; }
+
+/* PAUSE ÖZEL */
+.pause-title {
+    font-size: 2rem; letter-spacing: 5px; color: var(--hud-text); margin-bottom: 30px;
+    text-shadow: 0 0 10px var(--hud-color-dim);
+}
+.pause-menu-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+
+.pause-btn {
+    background: transparent; border: 1px solid var(--hud-color); color: var(--hud-color);
+    padding: 15px; font-size: 0.9rem; letter-spacing: 2px; cursor: pointer; transition: 0.2s;
+    font-family: monospace; width: 100%;
+}
+.pause-btn:hover { background: var(--hud-color); color: #000; box-shadow: 0 0 15px var(--hud-color-dim); }
+
+.pause-btn.danger { border-color: var(--hud-danger); color: var(--hud-danger); }
+.pause-btn.danger:hover { background: var(--hud-danger); color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+/* DEATH ÖZEL */
+.death-title { font-size: 2.5rem; letter-spacing: 5px; color: var(--hud-danger); margin-bottom: 10px; font-weight: bold; text-transform: uppercase; }
+.death-sub { font-size: 0.8rem; color: #fca5a5; letter-spacing: 1px; margin-bottom: 30px; }
+.death-info { 
+    font-size: 0.7rem; color: var(--hud-text-dim); text-align: left; width: 100%; 
+    border: 1px dashed rgba(239, 68, 68, 0.3); padding: 10px; margin-bottom: 20px;
+    background: rgba(0,0,0,0.3);
 }
 
-.mobile-warning-box p {
-    color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;
-    margin-bottom: 25px;
+.loading-bar-wrapper {
+    width: 100%; height: 4px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
 }
-
-.menu-btn.small-btn {
-    padding: 12px 30px;
-    font-size: 0.9rem;
-    letter-spacing: 2px;
-    margin-top: 10px;
-    background: rgba(255, 255, 255, 0.05);
+.loading-bar-fill {
+    height: 100%; width: 0%; background: var(--hud-danger);
+    animation: loadDeath 3s linear forwards;
 }
+@keyframes loadDeath { 0% { width: 0%; } 100% { width: 100%; } }
