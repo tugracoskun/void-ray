@@ -1,12 +1,17 @@
 /**
  * Void Ray - Varlık Yöneticisi (Entity Manager)
- * * Gezegenlerin ve yıldızların oluşturulması, yaşam döngüsü ve çizimini yönetir.
- * * Utils.js kullanılarak sadeleştirilmiştir.
+ * * GÜNCELLEME: Yıldızlar artık 'Canvas Layering' tekniği ile çiziliyor.
+ * * Statik arka plan ayrı bir canvas üzerinde önbelleğe alınarak performans artırıldı.
  */
 class EntityManager {
     constructor() {
         this.planets = [];
-        this.stars = [];
+        // Yıldızlar artık dizi olarak tutulmuyor, canvas'a işleniyor.
+        
+        // --- OPTİMİZASYON: Arka Plan Katmanı (Cached Canvas) ---
+        this.bgCanvas = document.createElement('canvas');
+        this.bgCtx = this.bgCanvas.getContext('2d');
+        this.bgGenerated = false;
         
         // Toxic gezegen hasar/bildirim zamanlayıcıları
         this.lastToxicNotification = 0;
@@ -14,7 +19,7 @@ class EntityManager {
     }
 
     /**
-     * Başlangıçta gezegenleri ve yıldızları oluşturur.
+     * Başlangıçta gezegenleri oluşturur.
      */
     init() {
         // 1. Gezegenleri Oluştur
@@ -31,18 +36,38 @@ class EntityManager {
             this.planets.push(new Planet(px, py));
         }
 
-        // 2. Yıldızları Oluştur
-        this.stars = [];
-        for(let i=0; i < GAME_CONFIG.WORLD_GEN.STAR_COUNT; i++) {
-            this.stars.push({
-                x: Utils.random(WORLD_SIZE), 
-                y: Utils.random(WORLD_SIZE), 
-                s: Utils.random(0, 2)
-            });
+        // Yıldız dizisi oluşturmaya gerek kalmadı, generateStarBackground() bunu halledecek.
+        window.planets = this.planets;
+    }
+
+    /**
+     * Arka plan yıldızlarını statik canvas üzerine bir kez çizer.
+     */
+    generateStarBackground(width, height) {
+        // Canvas boyutunu ayarla
+        this.bgCanvas.width = width;
+        this.bgCanvas.height = height;
+        
+        // Temizle
+        this.bgCtx.clearRect(0, 0, width, height);
+        this.bgCtx.fillStyle = "white";
+
+        // Yıldızları oluştur (Her frame yerine sadece bir kez çalışır)
+        const starCount = GAME_CONFIG.WORLD_GEN.STAR_COUNT || 1000;
+        
+        for(let i=0; i < starCount; i++) {
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const size = Math.random() * 1.5; // Biraz daha küçük ve net yıldızlar
+            const alpha = 0.2 + Math.random() * 0.6;
+            
+            this.bgCtx.globalAlpha = alpha;
+            this.bgCtx.fillRect(x, y, size, size);
         }
         
-        window.planets = this.planets;
-        window.stars = this.stars;
+        this.bgCtx.globalAlpha = 1.0;
+        this.bgGenerated = true;
+        console.log("Arka plan (Yıldızlar) önbelleğe alındı.");
     }
 
     /**
@@ -86,7 +111,6 @@ class EntityManager {
                  if(Utils.distEntity(player, p) < p.radius + 30 * player.scale) { 
                     
                     if(p.type.id === 'toxic') { 
-                        // Utils.playSound ile güvenli ses çağırma
                         Utils.playSound('playToxic'); 
 
                         if(echoRay && echoRay.attached) { 
@@ -112,7 +136,6 @@ class EntityManager {
                     } else if (p.type.id === 'lost') { 
                          if (addItemToInventory(p)) { 
                              p.collected = true; 
-                             // Parametreli ses çağırma örneği
                              Utils.playSound('playChime', {id:'legendary'}); 
                              showNotification({name: "KAYIP KARGO KURTARILDI!", type:{color:'#a855f7'}}, ""); 
                              if (p.lootContent && p.lootContent.length > 0) { 
@@ -166,19 +189,32 @@ class EntityManager {
 
     /**
      * Yıldızları çizer.
+     * OPTİMİZASYON: Tek tek çizmek yerine önbelleğe alınmış canvas'ı kullanır.
+     * Sonsuz döngü (infinite scroll) için 4 parça halinde döşenir.
      */
     drawStars(ctx, width, height, target) {
-        ctx.fillStyle="white"; 
-        this.stars.forEach(s => { 
-            let sx = (s.x - target.x * 0.9) % width; 
-            let sy = (s.y - target.y * 0.9) % height; 
-            if(sx<0) sx+=width; if(sy<0) sy+=height; 
-            
-            // Rastgelelik için Utils kullanılabilir veya performans için inline bırakılabilir
-            ctx.globalAlpha = 0.5 + Utils.random(0, 0.3); 
-            ctx.fillRect(sx, sy, s.s, s.s); 
-        }); 
-        ctx.globalAlpha = 1;
+        // Eğer ekran boyutu değiştiyse veya henüz oluşturulmadıysa yeniden oluştur
+        if(!this.bgGenerated || this.bgCanvas.width !== width || this.bgCanvas.height !== height) {
+            this.generateStarBackground(width, height);
+        }
+
+        // Paralaks Etkisi: Yıldızlar oyuncudan daha yavaş hareket etmeli (0.9 oranında takip)
+        const parallaxSpeed = 0.9;
+        
+        // Modulo operatörü ile kaydırma miktarını hesapla (0 ile width/height arasında tut)
+        // Negatif değerler için width/height ekleyerek pozitif yapıyoruz
+        let offsetX = -(target.x * parallaxSpeed) % width;
+        let offsetY = -(target.y * parallaxSpeed) % height;
+        
+        if (offsetX > 0) offsetX -= width;
+        if (offsetY > 0) offsetY -= height;
+
+        // Önbelleğe alınmış resmi 4 kez çizerek ekranı tam kapla (Tiling)
+        // Bu sayede kesintisiz sonsuz kaydırma efekti oluşur
+        ctx.drawImage(this.bgCanvas, offsetX, offsetY);
+        ctx.drawImage(this.bgCanvas, offsetX + width, offsetY);
+        ctx.drawImage(this.bgCanvas, offsetX, offsetY + height);
+        ctx.drawImage(this.bgCanvas, offsetX + width, offsetY + height);
     }
 
     /**
