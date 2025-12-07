@@ -89,13 +89,28 @@
     display: flex; gap: 5px; padding: 8px;
     border-top: 1px solid rgba(255,255,255,0.1);
     background: rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
 }
 #chat-input {
     flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 4px; color: white; padding: 4px 8px; font-size: 0.8rem; outline: none;
     font-family: 'Outfit', sans-serif;
+    transition: all 0.3s ease;
 }
 #chat-input:focus { border-color: var(--ray-color); background: rgba(255,255,255,0.1); }
+
+/* --- COMMAND MODE STYLES (YENİ) --- */
+#chat-input.command-mode {
+    border-color: #f97316; /* Turuncu-500 */
+    color: #fdba74; /* Turuncu-300 */
+    background: rgba(249, 115, 22, 0.1);
+}
+#chat-input.command-mode + #chat-send-btn {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: #f97316;
+    color: #f97316;
+}
+
 #chat-send-btn {
     background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3);
     color: var(--ray-color); border-radius: 4px; cursor: pointer; padding: 0 10px;

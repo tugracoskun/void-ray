@@ -29,6 +29,7 @@ function initSettings() {
     
     // YENİ: Gemi Durum Çubukları Toggle
     const shipBarsToggle = document.getElementById('toggle-ship-bars');
+    const consoleToggle = document.getElementById('toggle-console'); // YENİ: Konsol Toggle
     
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     const smoothCamToggle = document.getElementById('toggle-smooth-cam');
@@ -76,6 +77,16 @@ function initSettings() {
 
     if (shipBarsToggle) {
         shipBarsToggle.addEventListener('change', (e) => window.gameSettings.showShipBars = e.target.checked);
+    }
+
+    // YENİ: Konsol Toggle Listener
+    if (consoleToggle) {
+        consoleToggle.addEventListener('change', (e) => {
+            window.gameSettings.enableConsole = e.target.checked;
+            if(e.target.checked) {
+                 showNotification({name: "KONSOL AKTİF", type:{color:'#fbbf24'}}, "Komutları kullanabilirsiniz.");
+            }
+        });
     }
 
     if (adaptiveCamToggle) {

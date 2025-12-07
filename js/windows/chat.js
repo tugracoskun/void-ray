@@ -2,7 +2,7 @@
  * Void Ray - Pencere: İletişim ve Bildirimler
  * * Sohbet geçmişi, sistem bildirimleri ve kullanıcı mesajlarını yönetir.
  * * Sürüklenebilir pencere mantığını içerir.
- * * js/chat.js dosyasından taşınmıştır.
+ * * ConsoleSystem entegrasyonu yapılmıştır.
  */
 
 // İletişim Sistemi (Loglar ve Mesajlar)
@@ -200,12 +200,25 @@ function sendUserMessage() {
     
     const msg = input.value.trim();
     if(msg) {
-        addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
-        input.value = '';
-        setTimeout(() => {
-            if(audio) audio.playError(); 
-            addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
-        }, 200);
+        // --- KOMUT SİSTEMİ ENTEGRASYONU ---
+        if (msg.startsWith('/')) {
+            if (typeof ConsoleSystem !== 'undefined') {
+                ConsoleSystem.execute(msg);
+                input.value = '';
+                // Komut sonrası stili temizle
+                input.classList.remove('command-mode');
+            } else {
+                addChatMessage("HATA: Konsol sistemi yüklenemedi.", 'alert', activeChatTab);
+            }
+        } else {
+            // Normal Chat Mesajı
+            addChatMessage(`Pilot: ${msg}`, 'loot', activeChatTab);
+            input.value = '';
+            setTimeout(() => {
+                if(audio) audio.playError(); 
+                addChatMessage("Sistem: İletişim kanallarında parazit var. Mesaj iletilemedi (Bakımda).", 'alert', activeChatTab);
+            }, 200);
+        }
     }
 
     // Mesaj gönderildikten sonra: Eğer Yarım Moddan geldiysek, oraya dön
@@ -229,10 +242,24 @@ function initChatSystem() {
         sendBtn.addEventListener('click', sendUserMessage);
     }
 
+    // Input dinleyicisi: Komut modu algılama (Turuncu Renk)
+    const input = document.getElementById('chat-input');
+    if (input) {
+        input.addEventListener('input', (e) => {
+            if (input.value.startsWith('/')) {
+                if (!input.classList.contains('command-mode')) {
+                    input.classList.add('command-mode');
+                }
+            } else {
+                if (input.classList.contains('command-mode')) {
+                    input.classList.remove('command-mode');
+                }
+            }
+        });
+    }
+
     // Global Enter Listener
     window.addEventListener('keydown', (e) => {
-        const input = document.getElementById('chat-input');
-        
         if (e.key === 'Enter') {
             if (chatState === 1 && document.activeElement !== input) {
                 // Eğer yarım moddaysak ve input odaklı değilse -> AKTİF ET
@@ -256,9 +283,11 @@ function initChatSystem() {
                 chatState = 1;
                 wasSemiActive = false;
                 updateChatUI();
-                if(input) input.blur();
-                // ESC'nin menüyü açmasını engellemek için controls.js'de kontrol gerekebilir
-                // Ama buradaki logic öncelikli çalışacaktır.
+                if(input) {
+                    input.value = ''; // Yazılanı sil
+                    input.classList.remove('command-mode'); // Stili sil
+                    input.blur();
+                }
             }
         }
     });
