@@ -5,7 +5,6 @@
  */
 class VoidRay {
     constructor() {
-        // Global değişkenler game.js'den alınır.
         this.x = GameRules.LOCATIONS.PLAYER_START.x; 
         this.y = GameRules.LOCATIONS.PLAYER_START.y;
         this.vx = 0; 
@@ -18,7 +17,6 @@ class VoidRay {
         this.level = 1; 
         this.xp = 0; 
         
-        // CONFIG'DEN DEĞERLER ALINIYOR
         this.maxXp = GAME_CONFIG.PLAYER.BASE_XP; 
         this.energy = GAME_CONFIG.PLAYER.BASE_ENERGY; 
         this.maxEnergy = GAME_CONFIG.PLAYER.BASE_ENERGY;
@@ -27,21 +25,18 @@ class VoidRay {
         
         this.outOfBoundsTimer = 0; 
         
-        // Kuyruk Ayarları
         this.baseTailCount = GAME_CONFIG.PLAYER.BASE_TAIL_COUNT;
-        this.boostTailCount = GAME_CONFIG.PLAYER.BOOST_TAIL_COUNT; // Boost sırasında kuyruk uzasın
+        this.boostTailCount = GAME_CONFIG.PLAYER.BOOST_TAIL_COUNT; 
         this.tail = []; 
         for(let i=0; i<this.baseTailCount; i++) this.tail.push({x:this.x, y:this.y});
         
         this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS;
         this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS; 
         
-        // --- GHOST MODE (GÖRÜNMEZLİK) ---
         this.idleTimer = 0;
         this.isGhost = false;
-        this.currentAlpha = 1.0; // Yumuşak geçiş için mevcut opaklık
+        this.currentAlpha = 1.0; 
 
-        // DEBUG İÇİN HEDEF
         this.debugTarget = null;
     }
     
@@ -56,34 +51,22 @@ class VoidRay {
         this.xp = 0; 
         this.maxXp = GameRules.calculateNextLevelXp(this.maxXp);
         
-        // Boyut artışı kaldırıldı
-        // this.scale += 0.1; 
-        
-        this.maxHealth += 20; // Seviye atlayınca can artışı
-        this.health = this.maxHealth; // Canı fulle
+        this.maxHealth += 20; 
+        this.health = this.maxHealth; 
         
         // --- EVENT SYSTEM ENTEGRASYONU ---
-        // Artık doğrudan UI çağırmak yerine olay fırlatıyoruz.
-        // ui.js'deki dinleyici bunu yakalayıp bildirimi gösterecek.
-        if (typeof eventBus !== 'undefined') {
-            eventBus.emit('player:levelup', { level: this.level });
-        } else {
-            // Fallback (EventBus yoksa eski yöntem)
-            if(typeof audio !== 'undefined' && audio) audio.playEvolve(); 
-            showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${this.level}`, type:{color:'#fff'}}, "");
-        }
+        // Doğrudan UI veya Ses çağırmak yerine sadece olay fırlatıyoruz.
+        window.eventBus.emit('player:levelup', { level: this.level });
         
         // Global değişkenler
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
     }
     
     takeDamage(amount) {
-        // --- GOD MODE KONTROLÜ ---
         if (window.gameSettings && window.gameSettings.godMode) return;
 
         this.health = Math.max(0, this.health - amount);
         
-        // Görsel Hasar Efekti
         const dmgOverlay = document.getElementById('damage-overlay');
         if(dmgOverlay) {
             dmgOverlay.classList.add('active');
@@ -96,20 +79,16 @@ class VoidRay {
     }
 
     die() {
-        // Ölüm Ekranını Göster
         const deathScreen = document.getElementById('death-screen');
         if(deathScreen) deathScreen.classList.add('active');
-        // Global değişken
         isPaused = true; 
         
-        // 3 Saniye sonra yeniden doğ
         setTimeout(() => {
             this.respawn();
         }, 3000);
     }
 
     respawn() {
-        // Durumu Sıfırla
         this.health = this.maxHealth;
         this.energy = this.maxEnergy;
         this.vx = 0;
@@ -122,7 +101,6 @@ class VoidRay {
         this.currentAlpha = 1.0;
         this.debugTarget = null;
         
-        // Arayüzü Temizle
         const deathScreen = document.getElementById('death-screen');
         if(deathScreen) deathScreen.classList.remove('active');
         
@@ -132,14 +110,11 @@ class VoidRay {
         const radWarn = document.getElementById('radiation-warning');
         if(radWarn) radWarn.style.display = 'none';
         
-        // Oyunu Devam Ettir
-        // Global değişkenler
         isPaused = false;
         showNotification({name: "SİSTEMLER YENİDEN BAŞLATILDI", type:{color:'#10b981'}}, "");
     }
     
     updateUI() {
-        // Global değişkenler
         const lvlVal = document.getElementById('level-val');
         if(lvlVal) lvlVal.innerText = this.level;
         
@@ -151,51 +126,38 @@ class VoidRay {
     }
     
     update(dt = 16) { 
-        // Global değişkenler
         const spdMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
         const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
         const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
         
-        // Radar menzillerini yükseltmelere göre güncelle (Config'den taban değerleri alarak)
-        // Scale artık değişmediği için menziller sadece upgrade ile artacak
         this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult;
         this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS * magnetMult;
 
-        const BOOST = keys[" "] ? 0.6 : 0; // Global keys nesnesi
+        const BOOST = keys[" "] ? 0.6 : 0; 
         let ACCEL = 0.2 + BOOST;
         
         const MAX_SPEED = (keys[" "] ? 18 : 10) * spdMult; 
         const TURN_SPEED = 0.05 * turnMult; 
         
-        // --- RADYASYON VE SINIR KONTROLÜ ---
-        // Global WORLD_SIZE
         const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
         
         if (isOutOfBounds) {
             this.outOfBoundsTimer++;
-            
-            // 1. Hasar: Enerji yerine CAN azalıyor
-            const damage = 0.2 + (this.outOfBoundsTimer * 0.005); // Zamanla artan hasar
+            const damage = 0.2 + (this.outOfBoundsTimer * 0.005); 
             this.takeDamage(damage);
 
-            // 2. Geri İtme Kuvveti (Pushback)
-            // Eğer 2 saniyeden fazla (yaklaşık 120 frame) dışarıdaysa, merkeze doğru itmeye başla
             if (this.outOfBoundsTimer > 120) {
                 const centerX = WORLD_SIZE / 2;
                 const centerY = WORLD_SIZE / 2;
                 const angleToCenter = Math.atan2(centerY - this.y, centerX - this.x);
-                
-                // Geri itme kuvveti zamanla artar
                 const pushForce = 0.5 + (this.outOfBoundsTimer * 0.002); 
                 this.vx += Math.cos(angleToCenter) * pushForce;
                 this.vy += Math.sin(angleToCenter) * pushForce;
             }
 
-            // Görsel Uyarılar (God Mode değilse)
             if (!window.gameSettings || !window.gameSettings.godMode) {
                 const radOverlay = document.getElementById('radiation-overlay');
                 if(radOverlay) radOverlay.classList.add('active');
-                
                 const radWarn = document.getElementById('radiation-warning');
                 if(radWarn) radWarn.style.display = 'block';
             }
@@ -203,26 +165,20 @@ class VoidRay {
             this.outOfBoundsTimer = Math.max(0, this.outOfBoundsTimer - 5);
             const radOverlay = document.getElementById('radiation-overlay');
             if(radOverlay) radOverlay.classList.remove('active');
-            
             const radWarn = document.getElementById('radiation-warning');
             if(radWarn) radWarn.style.display = 'none';
         }
 
-        // Boost durumu kontrolü
         const isBoosting = keys[" "] && this.energy > 0 && !window.cinematicMode;
 
-        // Enerji Yönetimi
-        // Global keys ve lowEnergyWarned
         if (isBoosting) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST;
-                // God Mode kontrolü
                 if (!window.gameSettings || !window.gameSettings.godMode) {
                     this.energy = Math.max(0, this.energy - cost); 
                 }
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE;
-                // God Mode kontrolü
                 if (!window.gameSettings || !window.gameSettings.godMode) {
                     this.energy = Math.max(0, this.energy - cost);
                 }
@@ -241,7 +197,6 @@ class VoidRay {
             ACCEL = 0.2; 
         }
 
-        // UI Güncelleme (game.js'de tanımlı DOM elementleri)
         const energyBar = document.getElementById('energy-bar-fill');
         if(energyBar) {
             energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
@@ -260,8 +215,6 @@ class VoidRay {
 
         let targetRoll = 0; let targetWingState = 0;
 
-        // Uyarı Işıkları
-        // Global autopilot, keys
         if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
             const aiBtn = document.getElementById('btn-ai-toggle');
             if (aiBtn && !aiBtn.classList.contains('warn-blink')) {
@@ -274,29 +227,22 @@ class VoidRay {
             }
         }
 
-        // --- GHOST MODE & HAREKET MANTIĞI ---
         const isInputActive = keys.w || keys.a || keys.s || keys.d || keys[" "];
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
         let targetAlpha = 1.0;
 
-        // Eğer otopilot kapalıysa, girdi yoksa ve hız çok düşükse sayacı artır
         if (!autopilot && !isInputActive && currentSpeed < 0.5) {
             this.idleTimer++;
-            // 2 saniye (120 frame) bekle, sonra ghost moduna geç
             if (this.idleTimer > 120) {
                 if (!this.isGhost) {
                      this.isGhost = true;
                      if(playerData.stats) playerData.stats.timeIdle += dt;
                 }
-                
-                // Nefes alma efekti (Sine dalgası)
-                // 0.10 ile 0.25 arasında gidip gelir
-                const breath = (Math.sin(Date.now() * 0.003) + 1) * 0.5; // 0 ile 1 arası
+                const breath = (Math.sin(Date.now() * 0.003) + 1) * 0.5; 
                 targetAlpha = 0.10 + (breath * 0.15); 
             }
         } else {
-            // Hareket başladıysa veya tuşa basıldıysa
             if (this.isGhost) {
                 this.isGhost = false;
             }
@@ -304,13 +250,10 @@ class VoidRay {
             targetAlpha = 1.0;
         }
 
-        // Opaklık değerini hedefe doğru yumuşat (Yavaş geçiş için 0.02)
         this.currentAlpha += (targetAlpha - this.currentAlpha) * 0.02;
 
-        this.debugTarget = null; // Debug hedefini sıfırla
+        this.debugTarget = null; 
 
-        // Hareket Mantığı
-        // Global autopilot, aiMode, nexus, storageCenter, planets, collectedItems, manualTarget, updateAIButton, depositToStorage, showNotification, GameRules.getPlayerCapacity
         if (window.cinematicMode) {
             this.vx *= 0.95; 
             this.vy *= 0.95;
@@ -319,7 +262,6 @@ class VoidRay {
         } else if (autopilot) {
             let targetX, targetY, doThrust = true;
             
-            // --- OTOPİLOT VE DEPO MANTIĞI ---
             const cap = GameRules.getPlayerCapacity();
             
             if (collectedItems.length >= cap && aiMode !== 'deposit' && aiMode !== 'base') {
@@ -330,13 +272,11 @@ class VoidRay {
 
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
-                 // Utils güncellemesi:
                  const distToNexus = Utils.distEntity(this, nexus);
                  if(distToNexus < 400) doThrust = false;
             } 
             else if (aiMode === 'deposit') {
                 targetX = storageCenter.x; targetY = storageCenter.y;
-                // Utils güncellemesi:
                 const distToStorage = Utils.distEntity(this, storageCenter);
                 
                 if(distToStorage < 200) {
@@ -349,7 +289,6 @@ class VoidRay {
             }
             else if (aiMode === 'travel' && manualTarget) {
                 targetX = manualTarget.x; targetY = manualTarget.y;
-                // Utils güncellemesi:
                 const distToTarget = Utils.dist(this.x, this.y, targetX, targetY);
                 if(distToTarget < 200) {
                      doThrust = false; 
@@ -360,7 +299,6 @@ class VoidRay {
                      updateAIButton();
                 }
             } else {
-                // Gather Mode (Toplama Modu)
                 aiMode = 'gather';
                 let nearest = null, minDist = Infinity;
                 
@@ -368,12 +306,9 @@ class VoidRay {
                     for(let p of planets) {
                         if(!p.collected && p.type.id !== 'toxic') {
                             const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
-                            
-                            // YENİ: Çarpışma Önleme (Yankı daha yakınsa o gitsin, ben vazgeçeyim)
                             let echoIsCloser = false;
                             if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < GameRules.getEchoCapacity()) {
                                 const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
-                                // Eğer Yankı daha yakınsa, bu gezegeni hedeflemeyi bırak
                                 if (distToEcho < distToMe) echoIsCloser = true;
                             }
 
@@ -390,7 +325,6 @@ class VoidRay {
             }
 
             if(targetX !== undefined) {
-                // Debug hedefini ayarla
                 this.debugTarget = {x: targetX, y: targetY};
 
                 const targetAngle = Math.atan2(targetY - this.y, targetX - this.x);
@@ -407,7 +341,6 @@ class VoidRay {
                 this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
             }
         } else {
-            // Manuel Kontrol
             if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
             if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
             if (keys.w || isBoosting) {
@@ -417,13 +350,9 @@ class VoidRay {
             } else { this.wingPhase += 0.05; }
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
 
-            // --- MANUEL MOD İÇİN DEBUG HEDEFİ ---
-            // Otopilot kapalıyken bile, eğer manuel bir hedef varsa veya yakında gezegen varsa göster
-            // Bu, geliştiricinin rotasını kontrol etmesini sağlar
             if (typeof manualTarget !== 'undefined' && manualTarget) {
                 this.debugTarget = {x: manualTarget.x, y: manualTarget.y};
             } else {
-                // Hedef yoksa en yakın gezegeni referans al (Otopilot açılsa gidilecek yer)
                 let nearest = null, minDist = Infinity;
                 if (typeof planets !== 'undefined') {
                     for(let p of planets) {
@@ -439,14 +368,10 @@ class VoidRay {
             }
         }
 
-        // Çekim Alanı
-        planets.forEach(p => { // Global planets
+        planets.forEach(p => { 
             if(!p.collected && p.type.id !== 'toxic') {
                 const dx = p.x - this.x; const dy = p.y - this.y;
                 const distSq = dx*dx + dy*dy;
-                
-                // ORANTILI ÇEKİM FİZİĞİ
-                // Gezegenin yarıçapının 4 katı kadar bir alandan çeker
                 const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.5);
                 const gravityRadius = p.radius * 4 * magnetMult;
 
@@ -462,7 +387,6 @@ class VoidRay {
         const speedEl = document.getElementById('speed-val');
         if(speedEl) speedEl.innerText = Math.floor(speed * 10); 
         
-        // İstatistik Güncellemeleri
         if (playerData.stats) {
             if (speed > playerData.stats.maxSpeed) {
                 playerData.stats.maxSpeed = speed;
@@ -486,10 +410,7 @@ class VoidRay {
 
         this.roll += (targetRoll - this.roll) * 0.05; this.wingState += (targetWingState - this.wingState) * 0.1;
         
-        // Kuyruk Efekti - Dinamik Uzama/Kısalma
         const targetCount = isBoosting ? this.boostTailCount : this.baseTailCount;
-        
-        // Hedef uzunluğa yumuşak geçiş (Her karede 2 parça ekle/çıkar)
         const transitionSpeed = 2;
         
         if (this.tail.length < targetCount) {
@@ -511,7 +432,6 @@ class VoidRay {
         for (let i = 1; i < this.tail.length; i++) {
             let prev = this.tail[i-1]; let curr = this.tail[i];
             let dx = prev.x - curr.x; let dy = prev.y - curr.y;
-            // Utils güncellemesi:
             let d = Utils.dist(prev.x, prev.y, curr.x, curr.y); let a = Math.atan2(dy, dx);
             if(d > 5 * this.scale) { curr.x = prev.x - Math.cos(a) * 5 * this.scale; curr.y = prev.y - Math.sin(a) * 5 * this.scale; }
         }
@@ -520,32 +440,24 @@ class VoidRay {
     }
     
     draw(ctx) {
-        // --- GHOST MODE (GÖRÜNMEZLİK EFEKTİ) ---
         ctx.save();
-        // Opaklık artık yumuşak geçişli currentAlpha değerinden alınıyor
         ctx.globalAlpha = this.currentAlpha;
 
-        // --- ENERJİYE GÖRE DOYGUNLUK HESAPLAMA ---
-        // Enerji %0 ise doygunluk 0 (gri), %100 ise doygunluk 100 (canlı mavi)
         const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
-        const saturation = Math.floor(energyRatio * 90); // 0 ile 90 arasında değişir (çok canlıdan griye)
-        const lightness = 60; // Sabit parlaklık
+        const saturation = Math.floor(energyRatio * 90); 
+        const lightness = 60; 
         const alpha = 0.9;
         
-        // Dinamik Renkler (HSL: Hue 199 = Sky Blue)
         const dynamicStroke = `hsla(199, ${saturation}%, ${lightness}%, ${alpha})`;
         const dynamicShadow = `hsla(199, ${saturation}%, ${lightness}%, 0.8)`;
-        const dynamicLight = `hsla(199, ${saturation}%, 50%, 1)`; // Merkez ışık biraz daha koyu/doygun olabilir
+        const dynamicLight = `hsla(199, ${saturation}%, 50%, 1)`; 
 
-        // --- GÖRSEL KISIM: KUYRUK VE GÖVDE (Ayar kontrolü ile) ---
-        // Sadece gizleme ayarı KAPALI ise gemi ve kuyruğu çiz
         const isHidden = window.gameSettings && window.gameSettings.hidePlayer;
 
         if (!isHidden) {
             ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
             for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
             
-            // Kuyruk rengi de enerjiye bağlı solmalı
             let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
             grad.addColorStop(0, dynamicStroke); 
             grad.addColorStop(1, "transparent");
@@ -555,41 +467,27 @@ class VoidRay {
         
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2); ctx.scale(this.scale, this.scale); 
         
-        // --- GÖRSEL DEBUG: HİTBOX VE VEKTÖRLER ---
         if (window.gameSettings && window.gameSettings.developerMode) {
-            // 1. HITBOX (Çarpışma Sınırı)
             if (window.gameSettings.showHitboxes) {
-                // NOT: Gerçek çarpışma yarıçapı scale ile çarpılmalı mı? 
-                // VoidRay.js'de collision genellikle 'radius + 30*scale' gibi hesaplanıyor.
-                // Burada görselleştirme için yaklaşık bir değer kullanıyoruz.
-                const collisionRadius = 30; // Yaklaşık gövde yarıçapı
-                
+                const collisionRadius = 30; 
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(0, 0, collisionRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; // Kırmızı
+                ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; 
                 ctx.lineWidth = 2;
                 ctx.stroke();
-
-                // Hitbox değeri (Dönmemesi için rotasyonu ters çeviriyoruz)
-                // Mevcut rotasyon: this.angle + Math.PI/2
-                // Tersini uyguluyoruz: -(this.angle + Math.PI/2)
                 ctx.rotate(-(this.angle + Math.PI/2));
-                
                 ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
                 ctx.font = "10px monospace";
                 ctx.textAlign = "center";
-                // Rotasyon sıfırlandığı için x,y koordinatları geminin merkezine göre ve düzdür
                 ctx.fillText(`R: ${collisionRadius}`, 0, collisionRadius + 15);
-
                 ctx.restore();
             }
         }
 
         if (!isHidden) {
             if (!window.cinematicMode) {
-                const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; // Pulse şiddeti de enerjiye bağlı
-                // Gölge de opaklığa göre azalsın ama tamamen yok olmasın
+                const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; 
                 const shadowIntensity = Math.max(0.3, this.currentAlpha); 
                 ctx.shadowBlur = (30 + pulse) * shadowIntensity; 
                 ctx.shadowColor = dynamicShadow; 
@@ -600,17 +498,15 @@ class VoidRay {
 
             let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
             
-            // Gövde dolgusu (Çok hafif enerjiye tepki verebilir ama genelde koyu kalmalı)
             ctx.fillStyle = `hsla(220, ${saturation * 0.3}%, 10%, 0.95)`; 
             
             ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
             
             ctx.strokeStyle = dynamicLight; ctx.lineWidth = 2; ctx.stroke(); 
             
-            ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; // Merkez nokta sabit kalabilir veya hafif renk değiştirebilir
+            ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; 
             
             if (!window.cinematicMode) {
-                // Gölge opaklığa göre
                 ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); 
                 ctx.shadowColor = dynamicShadow; 
             }
@@ -620,46 +516,32 @@ class VoidRay {
 
         ctx.restore();
 
-        // --- GEMİ ÜSTÜ BARLAR (CAN VE ENERJİ) ---
-        // DarkOrbit tarzı: Geminin hemen üzerinde, dönmeyen (yatay) barlar
         if (window.gameSettings && window.gameSettings.showShipBars && !isHidden) {
             ctx.save();
             ctx.translate(this.x, this.y);
-            
-            // Dönmemesi için sadece translate yapıyoruz, rotate yok.
-            // Barların konumu: Geminin biraz yukarısı (-60px offset)
             const barW = 60;
             const barH = 6;
             const offset = -60;
 
-            // Arka Plan (Konteyner)
             ctx.fillStyle = "rgba(0,0,0,0.6)";
-            ctx.fillRect(-barW/2, offset, barW, barH * 2 + 2); // İki bar + boşluk
+            ctx.fillRect(-barW/2, offset, barW, barH * 2 + 2); 
 
-            // 1. CAN BARI (Üstte)
             const hpPct = this.health / this.maxHealth;
-            // Renk: %50+ Yeşil, %20-%50 Turuncu, <%20 Kırmızı
             ctx.fillStyle = hpPct > 0.5 ? "#10b981" : (hpPct > 0.2 ? "#f59e0b" : "#ef4444");
-            // Kenarlık boşluğu (1px) bırakarak çiz
             ctx.fillRect(-barW/2 + 1, offset + 1, (barW - 2) * hpPct, barH);
 
-            // 2. ENERJİ BARI (Altta)
             const epPct = this.energy / this.maxEnergy;
-            ctx.fillStyle = "#38bdf8"; // Mavi
+            ctx.fillStyle = "#38bdf8"; 
             ctx.fillRect(-barW/2 + 1, offset + barH + 1, (barW - 2) * epPct, barH);
 
             ctx.restore();
         }
 
-        // --- GÖRSEL DEBUG: VEKTÖRLER ---
         if (window.gameSettings && window.gameSettings.developerMode) {
             ctx.save();
-            ctx.translate(this.x, this.y); // Gemi merkezine git
+            ctx.translate(this.x, this.y); 
 
-            // A) VEKTÖRLER (Hız ve Yönelim)
             if (window.gameSettings.showVectors) {
-                // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
-                // Hız eşiği kontrolü
                 const speed = Math.hypot(this.vx, this.vy);
                 if (speed > 0.1) {
                     const speedScale = 20; 
@@ -670,7 +552,6 @@ class VoidRay {
                     ctx.lineWidth = 2;
                     ctx.stroke();
 
-                    // Sarı Ok Ucu
                     const tipX = this.vx * speedScale;
                     const tipY = this.vy * speedScale;
                     ctx.beginPath();
@@ -678,39 +559,32 @@ class VoidRay {
                     ctx.fillStyle = "yellow";
                     ctx.fill();
                     
-                    // Etiket (Hız)
                     ctx.fillStyle = "yellow";
                     ctx.font = "10px monospace";
                     ctx.fillText("V", tipX + 5, tipY + 5);
                 }
 
-                // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
-                // Eğer W tuşuna basılıyorsa veya otopilot hareket ediyorsa
-                // Mevcut açı (this.angle) yönünde bir ok çiz
                 if (typeof keys !== 'undefined' && (keys.w || keys[" "] || autopilot)) {
-                    const thrustLen = 40; // Sabit uzunluk çünkü itme kuvveti genelde sabittir
+                    const thrustLen = 40; 
                     const tx = Math.cos(this.angle) * thrustLen;
                     const ty = Math.sin(this.angle) * thrustLen;
                     
                     ctx.beginPath();
                     ctx.moveTo(0, 0);
                     ctx.lineTo(tx, ty);
-                    ctx.strokeStyle = "#4ade80"; // Yeşil
+                    ctx.strokeStyle = "#4ade80"; 
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     
-                    // Yeşil Ok Ucu
                     ctx.beginPath();
                     ctx.arc(tx, ty, 3, 0, Math.PI*2);
                     ctx.fillStyle = "#4ade80";
                     ctx.fill();
                     
-                    // Etiket (Thrust)
                     ctx.fillStyle = "#4ade80";
                     ctx.fillText("T", tx + 5, ty + 5);
                 }
 
-                // 3. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
                 const headLen = 60;
                 const hx = Math.cos(this.angle) * headLen;
                 const hy = Math.sin(this.angle) * headLen;
@@ -720,55 +594,44 @@ class VoidRay {
                 ctx.lineTo(hx, hy);
                 ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
                 ctx.lineWidth = 1;
-                ctx.setLineDash([2, 4]); // Kesikli çizgi
+                ctx.setLineDash([2, 4]); 
                 ctx.stroke();
-                ctx.setLineDash([]); // Normale dön
+                ctx.setLineDash([]); 
             }
 
-            // B) HEDEF VEKTÖRÜ VE AÇI HESABI
-            // 'autopilot' şartını kaldırdık, böylece manuel modda da debugTarget varsa çizilir
             if (window.gameSettings.showTargetVectors && this.debugTarget) {
                  const relTx = this.debugTarget.x - this.x;
                  const relTy = this.debugTarget.y - this.y;
                  const targetAngle = Math.atan2(relTy, relTx);
                  
-                 // 1. Hedef Çizgisi
                  ctx.beginPath();
                  ctx.moveTo(0, 0);
                  ctx.lineTo(relTx, relTy);
-                 ctx.strokeStyle = "rgba(56, 189, 248, 0.4)"; // Mavi
+                 ctx.strokeStyle = "rgba(56, 189, 248, 0.4)"; 
                  ctx.lineWidth = 1;
                  ctx.setLineDash([5, 5]);
                  ctx.stroke();
                  ctx.setLineDash([]);
                  
-                 // Hedef noktası
                  ctx.beginPath();
                  ctx.arc(relTx, relTy, 5, 0, Math.PI*2);
                  ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
                  ctx.fill();
                  
-                 // Hedef Etiketi
                  ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
                  ctx.font = "10px monospace";
                  ctx.fillText("AI TARGET", relTx + 8, relTy);
 
-                 // --- 2. AÇI HESAPLAMALARI ---
-
-                 // A) BURUN AÇISI FARKI (HEADING DELTA - ΔH)
-                 // Geminin baktığı yön ile hedef arasındaki fark (Dönüş için kritik)
                  let hDiff = targetAngle - this.angle;
                  while (hDiff < -Math.PI) hDiff += Math.PI * 2;
                  while (hDiff > Math.PI) hDiff -= Math.PI * 2;
                  
                  const hDeg = (hDiff * 180 / Math.PI).toFixed(1);
                  
-                 // Heading Yayı (Dış Halka - Kalın)
                  const arcRadius = 40;
                  ctx.beginPath();
                  ctx.arc(0, 0, arcRadius, this.angle, this.angle + hDiff, hDiff < 0);
                  
-                 // Renk: Kırmızı (Ters), Sarı (Dönüyor), Yeşil (Hizalı)
                  const absHDeg = Math.abs(parseFloat(hDeg));
                  let hColor;
                  if (absHDeg < 5) hColor = "rgba(74, 222, 128, 0.8)"; 
@@ -779,14 +642,10 @@ class VoidRay {
                  ctx.lineWidth = 3;
                  ctx.stroke();
 
-                 // Metin ΔH - Renkli ve Konumlu
                  ctx.fillStyle = hColor;
                  ctx.font = "bold 12px monospace";
-                 ctx.fillText(`HEAD: ${hDeg}°`, 45, -20); // Biraz daha uzağa ve yukarı
+                 ctx.fillText(`HEAD: ${hDeg}°`, 45, -20); 
 
-                 // B) HIZ VEKTÖRÜ FARKI (VELOCITY DELTA - ΔV)
-                 // Geminin gittiği yön ile hedef arasındaki fark (Drift için kritik)
-                 // Sadece belli bir hızın üzerindeyken anlamlıdır
                  const speed = Math.hypot(this.vx, this.vy);
                  if (speed > 1.0) {
                      const vAngle = Math.atan2(this.vy, this.vx);
@@ -796,27 +655,24 @@ class VoidRay {
                      
                      const vDeg = (vDiff * 180 / Math.PI).toFixed(1);
                      
-                     // Velocity Yayı (İç Halka - İnce/Kesikli)
                      const vRadius = 25;
                      ctx.beginPath();
                      ctx.arc(0, 0, vRadius, vAngle, vAngle + vDiff, vDiff < 0);
                      
-                     // Renk: Mavi (Rota dışı), Yeşil (Rota hizalı)
                      const absVDeg = Math.abs(parseFloat(vDeg));
                      let vColor;
-                     if (absVDeg < 10) vColor = "rgba(56, 189, 248, 0.9)"; // Mavi/Cyan (İyi rota)
-                     else vColor = "rgba(251, 146, 60, 0.8)"; // Turuncu (Drift var)
+                     if (absVDeg < 10) vColor = "rgba(56, 189, 248, 0.9)"; 
+                     else vColor = "rgba(251, 146, 60, 0.8)"; 
                      
                      ctx.strokeStyle = vColor;
                      ctx.lineWidth = 2;
-                     ctx.setLineDash([2, 2]); // Kesikli çizgi ile ayrıştır
+                     ctx.setLineDash([2, 2]); 
                      ctx.stroke();
                      ctx.setLineDash([]);
                      
-                     // Metin ΔV (Daha küçük font) - Renkli ve Konumlu
                      ctx.fillStyle = vColor;
                      ctx.font = "11px monospace";
-                     ctx.fillText(`VEL : ${vDeg}°`, 45, -5); // H'nin altına hizalı
+                     ctx.fillText(`VEL : ${vDeg}°`, 45, -5); 
                  }
             }
 

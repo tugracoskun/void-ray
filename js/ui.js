@@ -42,22 +42,13 @@ window.hideTooltip = function() { globalTooltip.style.display = 'none'; };
 window.initUIListeners = function() {
     console.log("UI Olay Dinleyicileri başlatılıyor...");
     
-    if (typeof eventBus === 'undefined') {
-        console.error("EventBus bulunamadı!");
-        return;
-    }
-
-    // 1. OYUNCU SEVİYE ATLAMA
-    eventBus.on('player:levelup', (data) => {
+    // OYUNCU SEVİYE ATLAMA
+    window.eventBus.on('player:levelup', (data) => {
         showNotification({name: `EVRİM GEÇİRİLDİ: SEVİYE ${data.level}`, type: {color: '#fff'}}, "");
         
-        // Efekt veya ses de buradan tetiklenebilir (UI sorumluluğundaysa)
+        // Ses efekti UI tepkisi olarak çalınır
         if(typeof audio !== 'undefined' && audio) audio.playEvolve();
     });
-
-    // İleride eklenebilecek diğer olaylar:
-    // eventBus.on('inventory:full', () => { ... });
-    // eventBus.on('game:over', () => { ... });
 };
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
@@ -161,11 +152,9 @@ window.closeMobileWarning = function() {
 // --- ANA MENÜ VE BAŞLATMA YÖNETİMİ ---
 
 window.initMainMenu = function() {
-    console.log("Init Main Menu called");
     const btnContinue = document.getElementById('btn-continue');
     const btnStart = document.getElementById('btn-start');
     
-    // Eski listener'ları temizlemek için klonluyoruz (Basit yöntem)
     if (btnContinue) {
         const newBtn = btnContinue.cloneNode(true);
         btnContinue.parentNode.replaceChild(newBtn, btnContinue);
@@ -175,17 +164,13 @@ window.initMainMenu = function() {
         btnStart.parentNode.replaceChild(newBtn, btnStart);
     }
 
-    // Yeni referansları al
     const cleanBtnContinue = document.getElementById('btn-continue');
     const cleanBtnStart = document.getElementById('btn-start');
 
-    // Kayıt kontrolü
     if (typeof SaveManager !== 'undefined' && SaveManager.hasSave()) {
-        console.log("Kayıt bulundu, butonlar ayarlanıyor.");
         if (cleanBtnContinue) {
             cleanBtnContinue.style.display = 'block';
             cleanBtnContinue.addEventListener('click', () => {
-                console.log("Devam et tıklandı");
                 startGameSession(true);
             });
         }
@@ -200,7 +185,6 @@ window.initMainMenu = function() {
             });
         }
     } else {
-        console.log("Kayıt bulunamadı.");
         if (cleanBtnContinue) cleanBtnContinue.style.display = 'none';
         if (cleanBtnStart) {
             cleanBtnStart.innerText = "YAŞAM DÖNGÜSÜNÜ BAŞLAT";
@@ -211,7 +195,6 @@ window.initMainMenu = function() {
     }
 }
 
-// Oyunu Başlatan Ana Fonksiyon
 window.startGameSession = function(loadSave) {
     const mainMenu = document.getElementById('main-menu');
     if(mainMenu) mainMenu.classList.add('menu-hidden'); 
@@ -222,15 +205,13 @@ window.startGameSession = function(loadSave) {
         controlsWrapper.classList.add('menu-controls-hidden');
     }
 
-    // Oyunu başlat (init her zaman çağrılır)
     if(typeof init === 'function') init(); 
     
-    // Eğer kayıt yüklenecekse
     if (loadSave && typeof SaveManager !== 'undefined') {
         SaveManager.load();
-        SaveManager.init(); // Oto-kaydı başlat
+        SaveManager.init();
     } else if (typeof SaveManager !== 'undefined') {
-        SaveManager.init(); // Sadece oto-kaydı başlat
+        SaveManager.init();
     }
 
     if(audio) audio.init(); 
