@@ -1,6 +1,6 @@
 /* * PANELS.CSS
- * Nexus, Depo, İstatistik ve Bağlam Analizi.
- * GÜNCELLEME: Kapatma butonuna Z-Index eklendi.
+ * Nexus, Depo ve Bağlam Analizi.
+ * (İstatistikler stats.css dosyasına taşındı)
  */
 
 /* WINDOWS GENEL YAPISI */
@@ -19,130 +19,6 @@
     border-radius: 0;
     font-family: 'Courier New', Courier, monospace;
 }
-
-/* --- İSTATİSTİK PENCERESİ (KOMPAKT & OTO-YÜKSEKLİK) --- */
-.stats-window {
-    width: 340px; 
-    height: auto; 
-    min-height: 150px; 
-    max-height: 80vh;
-    
-    /* Core Teması */
-    background: var(--hud-bg);
-    border: 1px solid var(--hud-color-dim);
-    
-    /* Wireframe Deseni */
-    background-image: var(--wireframe-gradient);
-    background-size: 10px 10px;
-    background-position: top left, top left, bottom right, bottom right;
-    background-repeat: no-repeat;
-
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
-    backdrop-filter: blur(10px);
-    
-    display: flex; flex-direction: column;
-    border-radius: 0;
-    font-family: 'Courier New', Courier, monospace;
-    transition: opacity 0.3s;
-}
-
-/* Header Tasarımı - Daha İnce */
-.stats-wireframe-header {
-    height: 45px;
-    display: flex; align-items: center; 
-    padding: 0 12px; gap: 10px;
-    flex-shrink: 0; 
-    border-bottom: 1px dashed var(--hud-color-dim);
-    background: rgba(148, 216, 195, 0.02);
-    position: relative; /* Z-index için */
-}
-
-.stats-icon-box {
-    width: 24px; height: 24px;
-    border: 1px solid var(--hud-color);
-    display: flex; justify-content: center; align-items: center;
-    color: var(--hud-color);
-    background: rgba(148, 216, 195, 0.1);
-    font-size: 0.9rem;
-}
-
-.stats-title-group {
-    flex: 1; display: flex; flex-direction: column; justify-content: center;
-}
-
-.stats-main-title {
-    font-size: 0.8rem; color: var(--hud-text); 
-    font-weight: bold; letter-spacing: 3px;
-    text-shadow: 0 0 5px var(--hud-color-dim);
-    line-height: 1;
-}
-
-.stats-sub-title {
-    font-size: 0.5rem; color: var(--hud-text-dim); 
-    letter-spacing: 1px; margin-top: 3px;
-    line-height: 1;
-}
-
-/* Kapatma Butonu: Z-Index ve Pointer Events Garantisi */
-.stats-close-btn {
-    color: var(--hud-color); 
-    opacity: 0.7; 
-    font-size: 1rem; 
-    cursor: pointer;
-    transition: 0.2s; 
-    padding: 8px; /* Tıklama alanı artırıldı */
-    z-index: 50; /* Üstte kalmasını garantile */
-    position: relative;
-    user-select: none;
-}
-.stats-close-btn:hover { opacity: 1; text-shadow: 0 0 8px var(--hud-color); transform: scale(1.1); }
-
-/* İçerik Alanı */
-.stats-wireframe-content {
-    flex: 1; 
-    padding: 10px;
-    overflow-y: auto; 
-    display: flex; flex-direction: column; gap: 8px;
-    pointer-events: auto;
-}
-
-/* Veri Grupları */
-.stats-group {
-    border: 1px solid rgba(255,255,255,0.05);
-    background: rgba(0,0,0,0.2);
-    padding: 8px; 
-}
-
-.stats-group-title {
-    font-size: 0.6rem; color: var(--hud-color); 
-    letter-spacing: 2px; font-weight: bold;
-    margin-bottom: 4px;
-    border-bottom: 1px solid var(--hud-color-dim);
-    padding-bottom: 2px; display: inline-block;
-    width: 100%;
-}
-
-.stats-row {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 3px; padding-bottom: 3px;
-    border-bottom: 1px dotted rgba(255,255,255,0.05);
-}
-.stats-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-
-.stats-label {
-    font-size: 0.6rem; color: var(--hud-text-dim);
-    font-family: monospace;
-}
-
-.stats-value {
-    font-size: 0.7rem; color: var(--hud-text);
-    font-family: monospace; font-weight: bold;
-}
-.stats-value.highlight { color: var(--ray-color); }
-.stats-value.gold { color: var(--color-gold); }
-
-/* Eski stilleri temizle */
-.stats-table { display: none; } 
 
 /* --- BAĞLAM ANALİZİ (CONTEXT) --- */
 .context-window.compact {
