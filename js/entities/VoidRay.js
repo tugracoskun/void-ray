@@ -1,7 +1,6 @@
 /**
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
- * * Bu sınıfın güncellenmesi, game.js'deki global değişkenlere (keys, collectedItems, autopilot vb.)
- * * erişimi sürdürmek zorundadır.
+ * * GÜNCELLEME: Yerçekimi (Gravity) hesaplamaları Spatial Hash kullanacak şekilde optimize edildi.
  */
 class VoidRay {
     constructor() {
@@ -50,63 +49,43 @@ class VoidRay {
         this.level++; 
         this.xp = 0; 
         this.maxXp = GameRules.calculateNextLevelXp(this.maxXp);
-        
         this.maxHealth += 20; 
         this.health = this.maxHealth; 
-        
-        // --- EVENT SYSTEM ENTEGRASYONU ---
-        // Doğrudan UI veya Ses çağırmak yerine sadece olay fırlatıyoruz.
         window.eventBus.emit('player:levelup', { level: this.level });
-        
-        // Global değişkenler
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
     }
     
     takeDamage(amount) {
         if (window.gameSettings && window.gameSettings.godMode) return;
-
         this.health = Math.max(0, this.health - amount);
-        
         const dmgOverlay = document.getElementById('damage-overlay');
         if(dmgOverlay) {
             dmgOverlay.classList.add('active');
             setTimeout(() => dmgOverlay.classList.remove('active'), 200);
         }
-
-        if (this.health <= 0) {
-            this.die();
-        }
+        if (this.health <= 0) this.die();
     }
 
     die() {
         const deathScreen = document.getElementById('death-screen');
         if(deathScreen) deathScreen.classList.add('active');
         isPaused = true; 
-        
-        setTimeout(() => {
-            this.respawn();
-        }, 3000);
+        setTimeout(() => this.respawn(), 3000);
     }
 
     respawn() {
         this.health = this.maxHealth;
         this.energy = this.maxEnergy;
-        this.vx = 0;
-        this.vy = 0;
+        this.vx = 0; this.vy = 0;
         this.outOfBoundsTimer = 0;
         this.x = GameRules.LOCATIONS.PLAYER_RESPAWN.x; 
         this.y = GameRules.LOCATIONS.PLAYER_RESPAWN.y;
-        this.isGhost = false;
-        this.idleTimer = 0;
-        this.currentAlpha = 1.0;
-        this.debugTarget = null;
+        this.isGhost = false; this.idleTimer = 0; this.currentAlpha = 1.0; this.debugTarget = null;
         
         const deathScreen = document.getElementById('death-screen');
         if(deathScreen) deathScreen.classList.remove('active');
-        
         const radOverlay = document.getElementById('radiation-overlay');
         if(radOverlay) radOverlay.classList.remove('active');
-        
         const radWarn = document.getElementById('radiation-warning');
         if(radWarn) radWarn.style.display = 'none';
         
@@ -117,10 +96,8 @@ class VoidRay {
     updateUI() {
         const lvlVal = document.getElementById('level-val');
         if(lvlVal) lvlVal.innerText = this.level;
-        
         const xpFill = document.getElementById('xp-fill');
         if(xpFill) xpFill.style.width = `${(this.xp/this.maxXp)*100}%`;
-        
         const dustAmt = document.getElementById('stardust-amount');
         if(dustAmt) dustAmt.innerText = playerData.stardust;
     }
@@ -173,29 +150,20 @@ class VoidRay {
 
         if (isBoosting) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST;
-                if (!window.gameSettings || !window.gameSettings.godMode) {
-                    this.energy = Math.max(0, this.energy - cost); 
-                }
+                if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost); 
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
                 const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE;
-                if (!window.gameSettings || !window.gameSettings.godMode) {
-                    this.energy = Math.max(0, this.energy - cost);
-                }
+                if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost);
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
                 if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + GAME_CONFIG.PLAYER.ENERGY_COST.REGEN);
         }
         
-        if (this.energy < 10 && !lowEnergyWarned) {
-            lowEnergyWarned = true;
-        } else if (this.energy > 15) {
-            lowEnergyWarned = false;
-        }
+        if (this.energy < 10 && !lowEnergyWarned) lowEnergyWarned = true;
+        else if (this.energy > 15) lowEnergyWarned = false;
 
-        if (this.energy <= 0 && keys[" "]) {
-            ACCEL = 0.2; 
-        }
+        if (this.energy <= 0 && keys[" "]) ACCEL = 0.2; 
 
         const energyBar = document.getElementById('energy-bar-fill');
         if(energyBar) {
@@ -217,14 +185,10 @@ class VoidRay {
 
         if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
             const aiBtn = document.getElementById('btn-ai-toggle');
-            if (aiBtn && !aiBtn.classList.contains('warn-blink')) {
-                aiBtn.classList.add('warn-blink');
-            }
+            if (aiBtn && !aiBtn.classList.contains('warn-blink')) aiBtn.classList.add('warn-blink');
         } else {
             const aiBtn = document.getElementById('btn-ai-toggle');
-            if (aiBtn && aiBtn.classList.contains('warn-blink')) {
-                aiBtn.classList.remove('warn-blink');
-            }
+            if (aiBtn && aiBtn.classList.contains('warn-blink')) aiBtn.classList.remove('warn-blink');
         }
 
         const isInputActive = keys.w || keys.a || keys.s || keys.d || keys[" "];
@@ -243,25 +207,19 @@ class VoidRay {
                 targetAlpha = 0.10 + (breath * 0.15); 
             }
         } else {
-            if (this.isGhost) {
-                this.isGhost = false;
-            }
+            if (this.isGhost) this.isGhost = false;
             this.idleTimer = 0;
             targetAlpha = 1.0;
         }
 
         this.currentAlpha += (targetAlpha - this.currentAlpha) * 0.02;
-
         this.debugTarget = null; 
 
         if (window.cinematicMode) {
-            this.vx *= 0.95; 
-            this.vy *= 0.95;
-            this.wingPhase += 0.02; 
-            targetWingState = 0; 
+            this.vx *= 0.95; this.vy *= 0.95;
+            this.wingPhase += 0.02; targetWingState = 0; 
         } else if (autopilot) {
             let targetX, targetY, doThrust = true;
-            
             const cap = GameRules.getPlayerCapacity();
             
             if (collectedItems.length >= cap && aiMode !== 'deposit' && aiMode !== 'base') {
@@ -272,14 +230,11 @@ class VoidRay {
 
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
-                 const distToNexus = Utils.distEntity(this, nexus);
-                 if(distToNexus < 400) doThrust = false;
+                 if(Utils.distEntity(this, nexus) < 400) doThrust = false;
             } 
             else if (aiMode === 'deposit') {
                 targetX = storageCenter.x; targetY = storageCenter.y;
-                const distToStorage = Utils.distEntity(this, storageCenter);
-                
-                if(distToStorage < 200) {
+                if(Utils.distEntity(this, storageCenter) < 200) {
                     doThrust = false;
                     depositToStorage(collectedItems, "VATOZ");
                     aiMode = 'gather';
@@ -289,10 +244,8 @@ class VoidRay {
             }
             else if (aiMode === 'travel' && manualTarget) {
                 targetX = manualTarget.x; targetY = manualTarget.y;
-                const distToTarget = Utils.dist(this.x, this.y, targetX, targetY);
-                if(distToTarget < 200) {
-                     doThrust = false; 
-                     autopilot = false; manualTarget = null; 
+                if(Utils.dist(this.x, this.y, targetX, targetY) < 200) {
+                     doThrust = false; autopilot = false; manualTarget = null; 
                      showNotification({name: "HEDEFE ULAŞILDI", type:{color:'#fff'}}, "");
                      const aiToggle = document.getElementById('btn-ai-toggle');
                      if(aiToggle) aiToggle.classList.remove('active');
@@ -303,7 +256,12 @@ class VoidRay {
                 let nearest = null, minDist = Infinity;
                 
                 if (collectedItems.length < cap) {
-                    for(let p of planets) {
+                    // --- OPTİMİZASYON: Spatial Hash ---
+                    // Sadece yakındaki gezegenleri sorgula
+                    const queryRange = 5000; 
+                    const candidates = entityManager ? entityManager.grid.query(this.x, this.y, queryRange) : planets;
+
+                    for(let p of candidates) {
                         if(!p.collected && p.type.id !== 'toxic') {
                             const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
                             let echoIsCloser = false;
@@ -311,32 +269,24 @@ class VoidRay {
                                 const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
                                 if (distToEcho < distToMe) echoIsCloser = true;
                             }
-
-                            if(!echoIsCloser && distToMe < minDist) { 
-                                minDist = distToMe; 
-                                nearest = p; 
-                            }
+                            if(!echoIsCloser && distToMe < minDist) { minDist = distToMe; nearest = p; }
                         }
                     }
                 }
-                
                 if(nearest) { targetX = nearest.x; targetY = nearest.y; } 
                 else { targetX = this.x + Math.cos(this.angle)*1000; targetY = this.y + Math.sin(this.angle)*1000; }
             }
 
             if(targetX !== undefined) {
                 this.debugTarget = {x: targetX, y: targetY};
-
                 const targetAngle = Math.atan2(targetY - this.y, targetX - this.x);
                 let diff = targetAngle - this.angle;
                 while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
                 this.angle += diff * 0.1;
                 
                 if(doThrust) {
-                    if(Math.abs(diff) < 1.0) {
-                        this.vx += Math.cos(this.angle) * ACCEL;
-                        this.vy += Math.sin(this.angle) * ACCEL;
-                    } else { this.vx *= 0.95; this.vy *= 0.95; }
+                    if(Math.abs(diff) < 1.0) { this.vx += Math.cos(this.angle) * ACCEL; this.vy += Math.sin(this.angle) * ACCEL; } 
+                    else { this.vx *= 0.95; this.vy *= 0.95; }
                 } else { this.vx *= 0.9; this.vy *= 0.9; }
                 this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
             }
@@ -344,8 +294,7 @@ class VoidRay {
             if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
             if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
             if (keys.w || isBoosting) {
-                this.vx += Math.cos(this.angle) * ACCEL;
-                this.vy += Math.sin(this.angle) * ACCEL;
+                this.vx += Math.cos(this.angle) * ACCEL; this.vy += Math.sin(this.angle) * ACCEL;
                 targetWingState = -0.8; this.wingPhase += 0.2;
             } else { this.wingPhase += 0.05; }
             if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
@@ -354,56 +303,55 @@ class VoidRay {
                 this.debugTarget = {x: manualTarget.x, y: manualTarget.y};
             } else {
                 let nearest = null, minDist = Infinity;
-                if (typeof planets !== 'undefined') {
-                    for(let p of planets) {
+                // --- OPTİMİZASYON: Spatial Hash (Rehber hedefi için) ---
+                if (typeof entityManager !== 'undefined' && entityManager.grid) {
+                    const candidates = entityManager.grid.query(this.x, this.y, 5000);
+                    for(let p of candidates) {
                         if(!p.collected && p.type.id !== 'toxic') {
                             const d = (p.x-this.x)**2 + (p.y-this.y)**2;
                             if(d < minDist) { minDist = d; nearest = p; }
                         }
                     }
                 }
-                if(nearest) {
-                    this.debugTarget = {x: nearest.x, y: nearest.y};
-                }
+                if(nearest) this.debugTarget = {x: nearest.x, y: nearest.y};
             }
         }
 
-        planets.forEach(p => { 
-            if(!p.collected && p.type.id !== 'toxic') {
-                const dx = p.x - this.x; const dy = p.y - this.y;
-                const distSq = dx*dx + dy*dy;
-                const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.5);
-                const gravityRadius = p.radius * 4 * magnetMult;
+        // --- OPTİMİZASYON: Yerçekimi (Gravity) ---
+        // Tüm gezegenleri gezmek yerine sadece yakındakileri (Gravity Range) sorgula
+        if (entityManager && entityManager.grid) {
+            // Maksimum yerçekimi etki alanı yaklaşık 2000-3000 birim olabilir
+            const gravityQueryRange = 3000;
+            const nearbyPlanets = entityManager.grid.query(this.x, this.y, gravityQueryRange);
 
-                if(distSq < gravityRadius**2 && distSq > p.radius**2) {
-                    const force = (p.radius * 5) / distSq; 
-                    this.vx += (dx / Math.sqrt(distSq)) * force;
-                    this.vy += (dy / Math.sqrt(distSq)) * force;
+            nearbyPlanets.forEach(p => { 
+                if(!p.collected && p.type.id !== 'toxic') {
+                    const dx = p.x - this.x; const dy = p.y - this.y;
+                    const distSq = dx*dx + dy*dy;
+                    const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.5);
+                    const gravityRadius = p.radius * 4 * magnetMult;
+
+                    if(distSq < gravityRadius**2 && distSq > p.radius**2) {
+                        const force = (p.radius * 5) / distSq; 
+                        this.vx += (dx / Math.sqrt(distSq)) * force;
+                        this.vy += (dy / Math.sqrt(distSq)) * force;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         const speed = Math.hypot(this.vx, this.vy);
         const speedEl = document.getElementById('speed-val');
         if(speedEl) speedEl.innerText = Math.floor(speed * 10); 
         
         if (playerData.stats) {
-            if (speed > playerData.stats.maxSpeed) {
-                playerData.stats.maxSpeed = speed;
-            }
+            if (speed > playerData.stats.maxSpeed) playerData.stats.maxSpeed = speed;
             playerData.stats.distance += speed;
-
-            if (speed > 0.1) {
-                playerData.stats.timeMoving += dt;
-            } else {
-                playerData.stats.timeIdle += dt;
-            }
+            if (speed > 0.1) playerData.stats.timeMoving += dt;
+            else playerData.stats.timeIdle += dt;
         }
         
-        if (speed > MAX_SPEED) { 
-            this.vx = (this.vx/speed)*MAX_SPEED; 
-            this.vy = (this.vy/speed)*MAX_SPEED; 
-        }
+        if (speed > MAX_SPEED) { this.vx = (this.vx/speed)*MAX_SPEED; this.vy = (this.vy/speed)*MAX_SPEED; }
         
         this.vx *= 0.98; this.vy *= 0.98; 
         this.x += this.vx; this.y += this.vy;
@@ -426,9 +374,9 @@ class VoidRay {
              }
         }
 
-        let targetX = this.x - Math.cos(this.angle) * 20 * this.scale;
-        let targetY = this.y - Math.sin(this.angle) * 20 * this.scale;
-        this.tail[0].x += (targetX - this.tail[0].x) * 0.5; this.tail[0].y += (targetY - this.tail[0].y) * 0.5;
+        let tX = this.x - Math.cos(this.angle) * 20 * this.scale;
+        let tY = this.y - Math.sin(this.angle) * 20 * this.scale;
+        this.tail[0].x += (tX - this.tail[0].x) * 0.5; this.tail[0].y += (tY - this.tail[0].y) * 0.5;
         for (let i = 1; i < this.tail.length; i++) {
             let prev = this.tail[i-1]; let curr = this.tail[i];
             let dx = prev.x - curr.x; let dy = prev.y - curr.y;
@@ -473,13 +421,9 @@ class VoidRay {
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(0, 0, collisionRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; 
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; ctx.lineWidth = 2; ctx.stroke();
                 ctx.rotate(-(this.angle + Math.PI/2));
-                ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
-                ctx.font = "10px monospace";
-                ctx.textAlign = "center";
+                ctx.fillStyle = "rgba(255, 0, 0, 0.8)"; ctx.font = "10px monospace"; ctx.textAlign = "center";
                 ctx.fillText(`R: ${collisionRadius}`, 0, collisionRadius + 15);
                 ctx.restore();
             }
@@ -489,11 +433,9 @@ class VoidRay {
             if (!window.cinematicMode) {
                 const pulse = 20 + Math.sin(Date.now() * 0.01) * 10 * energyRatio; 
                 const shadowIntensity = Math.max(0.3, this.currentAlpha); 
-                ctx.shadowBlur = (30 + pulse) * shadowIntensity; 
-                ctx.shadowColor = dynamicShadow; 
+                ctx.shadowBlur = (30 + pulse) * shadowIntensity; ctx.shadowColor = dynamicShadow; 
             } else {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = `hsla(199, ${saturation}%, ${lightness}%, 0.2)`;
+                ctx.shadowBlur = 10; ctx.shadowColor = `hsla(199, ${saturation}%, ${lightness}%, 0.2)`;
             }
 
             let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
@@ -507,8 +449,7 @@ class VoidRay {
             ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; 
             
             if (!window.cinematicMode) {
-                ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); 
-                ctx.shadowColor = dynamicShadow; 
+                ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); ctx.shadowColor = dynamicShadow; 
             }
             
             ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
@@ -517,168 +458,54 @@ class VoidRay {
         ctx.restore();
 
         if (window.gameSettings && window.gameSettings.showShipBars && !isHidden) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            const barW = 60;
-            const barH = 6;
-            const offset = -60;
-
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
-            ctx.fillRect(-barW/2, offset, barW, barH * 2 + 2); 
-
+            ctx.save(); ctx.translate(this.x, this.y);
+            const barW = 60; const barH = 6; const offset = -60;
+            ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(-barW/2, offset, barW, barH * 2 + 2); 
             const hpPct = this.health / this.maxHealth;
             ctx.fillStyle = hpPct > 0.5 ? "#10b981" : (hpPct > 0.2 ? "#f59e0b" : "#ef4444");
             ctx.fillRect(-barW/2 + 1, offset + 1, (barW - 2) * hpPct, barH);
-
             const epPct = this.energy / this.maxEnergy;
             ctx.fillStyle = "#38bdf8"; 
             ctx.fillRect(-barW/2 + 1, offset + barH + 1, (barW - 2) * epPct, barH);
-
             ctx.restore();
         }
 
         if (window.gameSettings && window.gameSettings.developerMode) {
-            ctx.save();
-            ctx.translate(this.x, this.y); 
-
+            ctx.save(); ctx.translate(this.x, this.y); 
             if (window.gameSettings.showVectors) {
                 const speed = Math.hypot(this.vx, this.vy);
                 if (speed > 0.1) {
                     const speedScale = 20; 
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
-                    ctx.strokeStyle = "yellow";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-
-                    const tipX = this.vx * speedScale;
-                    const tipY = this.vy * speedScale;
-                    ctx.beginPath();
-                    ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
-                    ctx.fillStyle = "yellow";
-                    ctx.fill();
-                    
-                    ctx.fillStyle = "yellow";
-                    ctx.font = "10px monospace";
-                    ctx.fillText("V", tipX + 5, tipY + 5);
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+                    ctx.strokeStyle = "yellow"; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(this.vx * speedScale, this.vy * speedScale, 3, 0, Math.PI*2); ctx.fillStyle = "yellow"; ctx.fill();
+                    ctx.fillStyle = "yellow"; ctx.font = "10px monospace"; ctx.fillText("V", this.vx * speedScale + 5, this.vy * speedScale + 5);
                 }
-
                 if (typeof keys !== 'undefined' && (keys.w || keys[" "] || autopilot)) {
-                    const thrustLen = 40; 
-                    const tx = Math.cos(this.angle) * thrustLen;
-                    const ty = Math.sin(this.angle) * thrustLen;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(tx, ty);
-                    ctx.strokeStyle = "#4ade80"; 
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.arc(tx, ty, 3, 0, Math.PI*2);
-                    ctx.fillStyle = "#4ade80";
-                    ctx.fill();
-                    
-                    ctx.fillStyle = "#4ade80";
-                    ctx.fillText("T", tx + 5, ty + 5);
+                    const thrustLen = 40; const tx = Math.cos(this.angle) * thrustLen; const ty = Math.sin(this.angle) * thrustLen;
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(tx, ty); ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(tx, ty, 3, 0, Math.PI*2); ctx.fillStyle = "#4ade80"; ctx.fill();
+                    ctx.fillStyle = "#4ade80"; ctx.fillText("T", tx + 5, ty + 5);
                 }
-
-                const headLen = 60;
-                const hx = Math.cos(this.angle) * headLen;
-                const hy = Math.sin(this.angle) * headLen;
-                
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(hx, hy);
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-                ctx.lineWidth = 1;
-                ctx.setLineDash([2, 4]); 
-                ctx.stroke();
-                ctx.setLineDash([]); 
+                const headLen = 60; const hx = Math.cos(this.angle) * headLen; const hy = Math.sin(this.angle) * headLen;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(hx, hy); ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; ctx.lineWidth = 1; ctx.setLineDash([2, 4]); ctx.stroke(); ctx.setLineDash([]); 
             }
-
             if (window.gameSettings.showTargetVectors && this.debugTarget) {
-                 const relTx = this.debugTarget.x - this.x;
-                 const relTy = this.debugTarget.y - this.y;
+                 const relTx = this.debugTarget.x - this.x; const relTy = this.debugTarget.y - this.y;
                  const targetAngle = Math.atan2(relTy, relTx);
-                 
-                 ctx.beginPath();
-                 ctx.moveTo(0, 0);
-                 ctx.lineTo(relTx, relTy);
-                 ctx.strokeStyle = "rgba(56, 189, 248, 0.4)"; 
-                 ctx.lineWidth = 1;
-                 ctx.setLineDash([5, 5]);
-                 ctx.stroke();
-                 ctx.setLineDash([]);
-                 
-                 ctx.beginPath();
-                 ctx.arc(relTx, relTy, 5, 0, Math.PI*2);
-                 ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
-                 ctx.fill();
-                 
-                 ctx.fillStyle = "rgba(56, 189, 248, 0.8)";
-                 ctx.font = "10px monospace";
-                 ctx.fillText("AI TARGET", relTx + 8, relTy);
-
-                 let hDiff = targetAngle - this.angle;
-                 while (hDiff < -Math.PI) hDiff += Math.PI * 2;
-                 while (hDiff > Math.PI) hDiff -= Math.PI * 2;
-                 
+                 ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(relTx, relTy); ctx.strokeStyle = "rgba(56, 189, 248, 0.4)"; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                 ctx.beginPath(); ctx.arc(relTx, relTy, 5, 0, Math.PI*2); ctx.fillStyle = "rgba(56, 189, 248, 0.8)"; ctx.fill();
+                 ctx.fillStyle = "rgba(56, 189, 248, 0.8)"; ctx.font = "10px monospace"; ctx.fillText("AI TARGET", relTx + 8, relTy);
+                 let hDiff = targetAngle - this.angle; while (hDiff < -Math.PI) hDiff += Math.PI * 2; while (hDiff > Math.PI) hDiff -= Math.PI * 2;
                  const hDeg = (hDiff * 180 / Math.PI).toFixed(1);
-                 
-                 const arcRadius = 40;
-                 ctx.beginPath();
-                 ctx.arc(0, 0, arcRadius, this.angle, this.angle + hDiff, hDiff < 0);
-                 
+                 const arcRadius = 40; ctx.beginPath(); ctx.arc(0, 0, arcRadius, this.angle, this.angle + hDiff, hDiff < 0);
                  const absHDeg = Math.abs(parseFloat(hDeg));
-                 let hColor;
-                 if (absHDeg < 5) hColor = "rgba(74, 222, 128, 0.8)"; 
-                 else if (absHDeg < 45) hColor = "rgba(250, 204, 21, 0.8)"; 
-                 else hColor = "rgba(248, 113, 113, 0.8)"; 
-                 
-                 ctx.strokeStyle = hColor;
-                 ctx.lineWidth = 3;
-                 ctx.stroke();
-
-                 ctx.fillStyle = hColor;
-                 ctx.font = "bold 12px monospace";
-                 ctx.fillText(`HEAD: ${hDeg}°`, 45, -20); 
-
-                 const speed = Math.hypot(this.vx, this.vy);
-                 if (speed > 1.0) {
-                     const vAngle = Math.atan2(this.vy, this.vx);
-                     let vDiff = targetAngle - vAngle;
-                     while (vDiff < -Math.PI) vDiff += Math.PI * 2;
-                     while (vDiff > Math.PI) vDiff -= Math.PI * 2;
-                     
-                     const vDeg = (vDiff * 180 / Math.PI).toFixed(1);
-                     
-                     const vRadius = 25;
-                     ctx.beginPath();
-                     ctx.arc(0, 0, vRadius, vAngle, vAngle + vDiff, vDiff < 0);
-                     
-                     const absVDeg = Math.abs(parseFloat(vDeg));
-                     let vColor;
-                     if (absVDeg < 10) vColor = "rgba(56, 189, 248, 0.9)"; 
-                     else vColor = "rgba(251, 146, 60, 0.8)"; 
-                     
-                     ctx.strokeStyle = vColor;
-                     ctx.lineWidth = 2;
-                     ctx.setLineDash([2, 2]); 
-                     ctx.stroke();
-                     ctx.setLineDash([]);
-                     
-                     ctx.fillStyle = vColor;
-                     ctx.font = "11px monospace";
-                     ctx.fillText(`VEL : ${vDeg}°`, 45, -5); 
-                 }
+                 let hColor; if (absHDeg < 5) hColor = "rgba(74, 222, 128, 0.8)"; else if (absHDeg < 45) hColor = "rgba(250, 204, 21, 0.8)"; else hColor = "rgba(248, 113, 113, 0.8)"; 
+                 ctx.strokeStyle = hColor; ctx.lineWidth = 3; ctx.stroke();
+                 ctx.fillStyle = hColor; ctx.font = "bold 12px monospace"; ctx.fillText(`HEAD: ${hDeg}°`, 45, -20); 
             }
-
             ctx.restore();
         }
-        
         ctx.restore();
     }
 }

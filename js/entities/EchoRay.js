@@ -1,7 +1,6 @@
 /**
  * Void Ray - Varlık Sınıfı: ECHO RAY (YANKI)
- * * Bu sınıfın güncellenmesi, game.js'deki global değişkenlere (player, nexus, storageCenter, planets vb.)
- * * erişimi sürdürmek zorundadır.
+ * * GÜNCELLEME: Hedef arama mantığı Spatial Hash ile optimize edildi.
  */
 class EchoRay {
     constructor(x, y) { 
@@ -13,96 +12,65 @@ class EchoRay {
         this.lootBag = []; 
         this.attached = false; 
         this.mode = 'roam'; 
-        // CONFIG'DEN DEĞER AL
         this.energy = GAME_CONFIG.ECHO.BASE_ENERGY;
-        this.maxEnergy = GAME_CONFIG.ECHO.BASE_ENERGY; // Maksimum enerji referansı
+        this.maxEnergy = GAME_CONFIG.ECHO.BASE_ENERGY;
         this.energyDisplayTimer = 0; 
         this.fullNotified = false;
         
         this.wingPhase = 0; 
         this.pendingMerge = false;
         
-        // CONFIG'DEN DEĞER AL
         this.scanRadius = GAME_CONFIG.ECHO.SCAN_RADIUS;
         this.radarRadius = GAME_CONFIG.ECHO.RADAR_RADIUS;
 
-        // --- RENK YÖNETİMİ ---
-        this.colorLerp = 0; // 0: Normal, 1: Tamamen Oyuncu Rengi
-        
-        // Varsayılan Yankı Rengi (Açık Gri / Metalik - #cbd5e1)
+        this.colorLerp = 0; 
         this.baseColor = { r: 203, g: 213, b: 225 }; 
-        
-        // Hedef Renk (Oyuncu Mavisi - #38bdf8)
-        // İleride oyuncu rengi değişirse burası güncellenebilir veya parametrik yapılabilir.
         this.targetColor = { r: 56, g: 189, b: 248 }; 
-        
-        // Debug için hedef takibi
         this.debugTarget = null;
     }
     
     update() {
-        // Global değişkenler ve fonksiyonlar
         const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
-        
         this.scanRadius = GAME_CONFIG.ECHO.SCAN_RADIUS * rangeMult;
         this.radarRadius = GAME_CONFIG.ECHO.RADAR_RADIUS * rangeMult;
 
         const durabilityMult = 1 + (playerData.upgrades.echoDurability * 0.5);
         let drain = GAME_CONFIG.ECHO.DRAIN_RATE / durabilityMult; 
 
-        // --- RENK GEÇİŞ MANTIĞI ---
-        // Eğer bağlıysa oyuncu rengine yaklaş (ama tam aynısı olma, örn: 0.7)
-        // Değilse kendi rengine dön (0.0)
         const targetLerp = this.attached ? 0.7 : 0.0;
-        const lerpSpeed = 0.05; // Renk değişim hızı (daha düşük = daha yumuşak)
-
+        const lerpSpeed = 0.05; 
         this.colorLerp += (targetLerp - this.colorLerp) * lerpSpeed;
 
-        // --- YANKI SINIR KONTROLÜ ---
-        // Global WORLD_SIZE
         const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
-        if (isOutOfBounds) {
-            drain = GAME_CONFIG.ECHO.OUT_OF_BOUNDS_DRAIN; // Radyasyon altında pil çok hızlı biter
-        }
+        if (isOutOfBounds) drain = GAME_CONFIG.ECHO.OUT_OF_BOUNDS_DRAIN; 
         
-        if (this.mode !== 'recharge') {
-            this.energy = Math.max(0, this.energy - drain);
-        }
-
+        if (this.mode !== 'recharge') this.energy = Math.max(0, this.energy - drain);
         if (this.energyDisplayTimer > 0) this.energyDisplayTimer--;
 
-        // Enerji kontrolü
         if (this.energy < 10 && this.mode !== 'recharge' && !this.attached) {
             const fuelIndex = this.lootBag.findIndex(i => i.name === 'Nebula Özü');
             if (fuelIndex !== -1) {
                 this.lootBag.splice(fuelIndex, 1);
                 this.energy = 100;
-                // Global fonksiyonlar
                 showNotification({name: "YANKI: NEBULA ÖZÜ TÜKETTİ (+%100 ENERJİ)", type:{color:'#c084fc'}}, "");
                 if(echoInvOpen) renderEchoInventory();
             } else {
                 this.mode = 'recharge';
-                if(isOutOfBounds) {
-                    showNotification({name: "YANKI: RADYASYON HASARI ALIYOR! ÜSSE DÖNÜYOR", type:{color:'#ef4444'}}, "");
-                } else {
-                    showNotification({name: "YANKI: ENERJİ BİTTİ, ÜSSE DÖNÜYOR", type:{color:'#fbbf24'}}, "");
-                }
+                if(isOutOfBounds) showNotification({name: "YANKI: RADYASYON HASARI ALIYOR! ÜSSE DÖNÜYOR", type:{color:'#ef4444'}}, "");
+                else showNotification({name: "YANKI: ENERJİ BİTTİ, ÜSSE DÖNÜYOR", type:{color:'#fbbf24'}}, "");
                 updateEchoDropdownUI();
             }
         }
 
-        // Global DOM elementleri
         const badge = document.getElementById('echo-total-badge'); 
         const count = this.lootBag.length; 
         badge.innerText = count; 
         badge.style.display = count > 0 ? 'flex' : 'none';
         
-        // Kapasite Kontrolü
         const echoCap = GameRules.getEchoCapacity();
         
         if (count >= echoCap) {
-             badge.style.background = '#ef4444'; // Dolu ise kırmızı
-             
+             badge.style.background = '#ef4444'; 
              if (this.mode !== 'deposit_storage' && this.mode !== 'recharge' && this.mode !== 'return') {
                  this.mode = 'deposit_storage';
                  showNotification({name: "YANKI DEPOSU DOLU: BOŞALTMAYA GİDİYOR", type:{color:'#a855f7'}}, "");
@@ -113,15 +81,11 @@ class EchoRay {
         }
 
         let targetX, targetY;
-        this.debugTarget = null; // Her frame sıfırla
+        this.debugTarget = null; 
 
-        // --- HEDEF BELİRLEME MANTIĞI ---
-        // Global nexus, storageCenter, player, planets
         if (this.mode === 'recharge') {
             targetX = nexus.x; targetY = nexus.y;
             this.debugTarget = {x: nexus.x, y: nexus.y};
-            
-            // Utils güncellemesi:
             const d = Utils.distEntity(this, nexus);
             if (d < 100) { 
                 this.vx *= 0.5; this.vy *= 0.5; 
@@ -135,13 +99,10 @@ class EchoRay {
         } else if (this.mode === 'deposit_storage') {
             targetX = storageCenter.x; targetY = storageCenter.y;
             this.debugTarget = {x: storageCenter.x, y: storageCenter.y};
-
-            // Utils güncellemesi:
             const d = Utils.distEntity(this, storageCenter);
             if (d < 150) {
-                // Global fonksiyon
                 depositToStorage(this.lootBag, "YANKI");
-                this.mode = 'roam'; // Göreve dön
+                this.mode = 'roam'; 
                 showNotification({name: "YANKI DEPOYU BOŞALTTI", type:{color:'#67e8f9'}}, "");
                 updateEchoDropdownUI();
             }
@@ -153,21 +114,22 @@ class EchoRay {
             // Roam (Toplama) Modu
             if (this.lootBag.length < echoCap) {
                 let nearest = null, minDist = Infinity;
-                for(let p of planets) {
+                
+                // --- OPTİMİZASYON: Spatial Hash ---
+                // Sadece yakındaki (5000 birim) gezegenleri tara
+                const queryRange = 5000;
+                const candidates = (entityManager && entityManager.grid) ? entityManager.grid.query(this.x, this.y, queryRange) : planets;
+
+                for(let p of candidates) {
                     if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
                         const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
                         
-                        // YENİ: Çarpışma Önleme (Vatoz otopilotta ve daha yakınsa o gitsin, ben vazgeçeyim)
                         let playerIsCloser = false;
-                        // player ve autopilot globaldir, güvenli erişim
                         if (typeof player !== 'undefined' && typeof autopilot !== 'undefined' && autopilot && typeof aiMode !== 'undefined' && aiMode === 'gather' && collectedItems.length < GameRules.getPlayerCapacity()) {
-                            // Utils güncellemesi:
                             const distToPlayer = Utils.distEntity(p, player) ** 2;
-                            // Eşitlik durumunda önceliği oyuncuya verelim (<=)
                             if (distToPlayer <= distToMe) playerIsCloser = true;
                         }
 
-                        // Eğer oyuncu daha yakın değilse, bu benim için potansiyel hedeftir
                         if(!playerIsCloser && distToMe < minDist) { 
                             minDist = distToMe; 
                             nearest = p; 
@@ -179,7 +141,6 @@ class EchoRay {
                     targetX = nearest.x; targetY = nearest.y; 
                     this.debugTarget = {x: nearest.x, y: nearest.y};
                 } else {
-                    // Hedef yoksa oyuncunun etrafında gezin (Yumuşak vazgeçiş davranışı)
                     targetX = player.x + Math.cos(Date.now() * 0.001) * 300;
                     targetY = player.y + Math.sin(Date.now() * 0.001) * 300;
                     this.debugTarget = {x: targetX, y: targetY};
@@ -199,7 +160,6 @@ class EchoRay {
                 let diff = targetA - this.angle; while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
                 this.angle += diff * 0.1;
                 
-                // Utils güncellemesi:
                 const dist = Utils.dist(targetX, targetY, this.x, this.y);
                 const stopDistance = (this.mode === 'return') ? 250 : 100;
 
@@ -214,21 +174,15 @@ class EchoRay {
              this.angle += (Math.random()-0.5)*0.1; this.vx += Math.cos(this.angle)*0.1; this.vy += Math.sin(this.angle)*0.1;
         }
 
-        // Global playerData
         const speedMult = 1 + (playerData.upgrades.echoSpeed * 0.15);
         const MAX_ECHO_SPEED = 8 * speedMult; 
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
-        if (currentSpeed > 0.5) {
-            this.wingPhase += 0.2;
-        } else {
-            this.wingPhase += 0.05;
-        }
+        if (currentSpeed > 0.5) this.wingPhase += 0.2;
+        else this.wingPhase += 0.05;
 
-        if (playerData.stats) {
-            if (currentSpeed > playerData.stats.echoMaxSpeed) {
-                playerData.stats.echoMaxSpeed = currentSpeed;
-            }
+        if (playerData.stats && currentSpeed > playerData.stats.echoMaxSpeed) {
+            playerData.stats.echoMaxSpeed = currentSpeed;
         }
 
         if(currentSpeed > MAX_ECHO_SPEED) { this.vx = (this.vx/currentSpeed) * MAX_ECHO_SPEED; this.vy = (this.vy/currentSpeed) * MAX_ECHO_SPEED; }
@@ -240,28 +194,25 @@ class EchoRay {
                 const rangeMult = 1 + (playerData.upgrades.echoRange * 0.3);
                 const pickupRange = 40 * rangeMult;
                 
-                // Toplama döngüsü, sadece kapasite varsa çalışır
                 if (this.lootBag.length < echoCap) {
-                    for(let p of planets) { // Global planets
+                    // Toplama için yine Spatial Hash kullanabiliriz veya update içinde zaten hedefe gidiyoruz
+                    // Hedef yakınındaysa topla.
+                    // Fakat Echo yoldayken başka bir şeye çarpabilir, bu yüzden burada da query yapalım.
+                    const candidates = (entityManager && entityManager.grid) ? entityManager.grid.query(this.x, this.y, pickupRange + 100) : planets;
+
+                    for(let p of candidates) { 
                         if(!p.collected && p.type.id !== 'toxic' && p.type.id !== 'lost') {
-                            // Utils güncellemesi:
                             const d = Utils.distEntity(this, p);
                             if(d < p.radius + pickupRange) { 
                                 p.collected = true; 
-                                if(p.type.id === 'tardigrade') {
-                                    this.lootBag.push(p);
-                                } else {
-                                    const count = GameRules.calculateLootCount(); // Global GameRules
-                                    // Kapasiteye sığacak kadar al
+                                if(p.type.id === 'tardigrade') this.lootBag.push(p);
+                                else {
+                                    const count = GameRules.calculateLootCount();
                                     const availableSpace = echoCap - this.lootBag.length;
                                     const takeAmount = Math.min(count, availableSpace);
-                                    
                                     for(let i=0; i<takeAmount; i++) this.lootBag.push(p); 
                                 }
-                                // Global echoInvOpen, renderEchoInventory
                                 if(echoInvOpen) renderEchoInventory(); 
-                                
-                                // Döngü içinde kapasite dolarsa çık
                                 if (this.lootBag.length >= echoCap) break;
                             }
                         }
@@ -277,232 +228,101 @@ class EchoRay {
         ctx.rotate(this.angle + Math.PI/2); 
         ctx.scale(0.6, 0.6); 
         
-        // --- DİNAMİK RENK HESAPLAMA ---
-        // 1. Mod'a göre temel RGB rengini hesapla (Orijinal Kod)
         const baseR = Math.round(this.baseColor.r + (this.targetColor.r - this.baseColor.r) * this.colorLerp);
         const baseG = Math.round(this.baseColor.g + (this.targetColor.g - this.baseColor.g) * this.colorLerp);
         const baseB = Math.round(this.baseColor.b + (this.targetColor.b - this.baseColor.b) * this.colorLerp);
 
-        // 2. Enerjiye göre doygunluk (Saturation) hesapla
-        // Gri tonlamalı değer (Luminance)
         const gray = baseR * 0.3 + baseG * 0.59 + baseB * 0.11;
-        
-        // Enerji oranı (0.0 ile 1.0 arası)
         const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
 
-        // Gri ile Renk arasında enerjiye göre geçiş yap
-        // Enerji 0 ise tamamen gri, 100 ise tamamen canlı renk
         const finalR = Math.floor(gray + (baseR - gray) * energyRatio);
         const finalG = Math.floor(gray + (baseG - gray) * energyRatio);
         const finalB = Math.floor(gray + (baseB - gray) * energyRatio);
 
         const dynamicColor = `rgb(${finalR},${finalG},${finalB})`;
 
-        // Global nexus
-        // Utils güncellemesi:
         if (this.mode === 'recharge' && Utils.distEntity(this, nexus) < 150) {
              const pulse = 0.5 + Math.sin(Date.now() * 0.005) * 0.5; 
              ctx.shadowBlur = 30 + pulse * 30; 
-             ctx.shadowColor = "#cbd5e1"; // Gri parıltı (Şarj olurken nötr renk)
+             ctx.shadowColor = "#cbd5e1"; 
              ctx.fillStyle = `rgba(203, 213, 225, ${0.5 + pulse * 0.5})`; 
         } else {
-             ctx.shadowBlur = 20 * energyRatio; // Enerji azsa gölge de azalsın
+             ctx.shadowBlur = 20 * energyRatio; 
              ctx.shadowColor = dynamicColor;
         }
 
-        // --- GÖRSEL DEBUG: HİTBOX ---
         if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showHitboxes) {
             const collisionRadius = 25;
             ctx.save();
             ctx.beginPath();
             ctx.arc(0, 0, collisionRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; 
-            ctx.lineWidth = 3; // Scale 0.6 olduğu için kalın çizdik
-            ctx.stroke();
-
-            // Hitbox değeri (Dönmemesi için rotasyonu ters çeviriyoruz)
-            // Mevcut rotasyon: this.angle + Math.PI/2
-            // Tersini uyguluyoruz: -(this.angle + Math.PI/2)
+            ctx.strokeStyle = "rgba(255, 0, 0, 0.7)"; ctx.lineWidth = 3; ctx.stroke();
             ctx.rotate(-(this.angle + Math.PI/2));
-            
-            ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
-            ctx.font = "14px monospace"; // Küçük scale için fontu büyüttük
-            ctx.textAlign = "center";
+            ctx.fillStyle = "rgba(255, 0, 0, 0.8)"; ctx.font = "14px monospace"; ctx.textAlign = "center";
             ctx.fillText(`R: ${collisionRadius}`, 0, collisionRadius + 20);
-
             ctx.restore();
         }
         
-        // Kanat animasyonu değerleri
-        let wingTipY = 20; 
-        let wingTipX = 60; 
-        let wingFlap = Math.sin(this.wingPhase) * 5; 
+        let wingTipY = 20; let wingTipX = 60; let wingFlap = Math.sin(this.wingPhase) * 5; 
         
-        // Gövde (Koyu Uzay Grisi - Hafifçe renk tonu alabilir ama şimdilik sabit tutuyoruz)
-        // Gövde de biraz enerjiye göre tepki verebilir
         ctx.fillStyle = `rgba(${30 * (0.5 + energyRatio * 0.5)}, ${41 * (0.5 + energyRatio * 0.5)}, ${59 * (0.5 + energyRatio * 0.5)}, 0.95)`; 
-        
-        ctx.beginPath(); 
-        ctx.moveTo(0, -30); 
-        // Sağ Kanat Eğrisi
+        ctx.beginPath(); ctx.moveTo(0, -30); 
         ctx.bezierCurveTo(15, -10, wingTipX, wingTipY+wingFlap, 40, 40); 
         ctx.bezierCurveTo(20, 30, 10, 40, 0, 50); 
-        // Sol Kanat Eğrisi (Simetrik)
         ctx.bezierCurveTo(-10, 40, -20, 30, -40, 40); 
         ctx.bezierCurveTo(-wingTipX, wingTipY+wingFlap, -15, -10, 0, -30); 
         ctx.fill();
         
-        // Kenar Çizgileri (DİNAMİK RENK)
-        ctx.strokeStyle = dynamicColor; 
-        ctx.lineWidth = 2; 
-        ctx.stroke(); 
+        ctx.strokeStyle = dynamicColor; ctx.lineWidth = 2; ctx.stroke(); 
         
-        // Lamba / Göz (Daha parlak beyaz/gri)
         ctx.fillStyle = "#f1f5f9"; 
-        
-        if (this.mode !== 'recharge') {
-             ctx.shadowBlur = 40 * energyRatio; 
-             ctx.shadowColor = dynamicColor; // Göz parlaması da dinamik
-        }
-        
+        if (this.mode !== 'recharge') { ctx.shadowBlur = 40 * energyRatio; ctx.shadowColor = dynamicColor; }
         ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill(); 
 
-        // Enerji Barı
         if (this.energyDisplayTimer > 0) {
             ctx.globalAlpha = Math.min(1, this.energyDisplayTimer / 30); 
             ctx.fillStyle = "#334155"; ctx.fillRect(-20, -40, 40, 4);
-            ctx.fillStyle = dynamicColor; // Bar rengi de dinamik
+            ctx.fillStyle = dynamicColor; 
             ctx.fillRect(-20, -40, 40 * (this.energy/100), 4);
             ctx.globalAlpha = 1;
         }
         
         ctx.restore();
 
-        // --- GÖRSEL DEBUG: VEKTÖRLER VE HEDEF ---
         if (window.gameSettings && window.gameSettings.developerMode) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-
-            // A) VEKTÖRLER (Hız ve Yönelim)
+            ctx.save(); ctx.translate(this.x, this.y);
             if (window.gameSettings.showVectors) {
-                // 1. HIZ VEKTÖRÜ (VELOCITY) - SARI
                 const speed = Math.hypot(this.vx, this.vy);
                 if (speed > 0.1) {
                     const speedScale = 20;
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
-                    ctx.strokeStyle = "yellow";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    // Sarı Ok Ucu
-                    const tipX = this.vx * speedScale;
-                    const tipY = this.vy * speedScale;
-                    ctx.beginPath();
-                    ctx.arc(tipX, tipY, 3, 0, Math.PI*2);
-                    ctx.fillStyle = "yellow";
-                    ctx.fill();
-                    
-                    // Etiket (Hız)
-                    ctx.fillStyle = "yellow";
-                    ctx.font = "10px monospace";
-                    ctx.fillText("V", tipX + 5, tipY + 5);
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(this.vx * speedScale, this.vy * speedScale);
+                    ctx.strokeStyle = "yellow"; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(this.vx * speedScale, this.vy * speedScale, 3, 0, Math.PI*2); ctx.fillStyle = "yellow"; ctx.fill();
+                    ctx.fillStyle = "yellow"; ctx.font = "10px monospace"; ctx.fillText("V", this.vx * speedScale + 5, this.vy * speedScale + 5);
                 }
-
-                // 2. İTME VEKTÖRÜ (THRUST) - YEŞİL
                 if (speed > 0.1) {
-                    const thrustLen = 30; // Sabit uzunluk
-                    const tx = Math.cos(this.angle) * thrustLen;
-                    const ty = Math.sin(this.angle) * thrustLen;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(tx, ty);
-                    ctx.strokeStyle = "#4ade80"; // Yeşil
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    // Yeşil Ok Ucu
-                    ctx.beginPath();
-                    ctx.arc(tx, ty, 3, 0, Math.PI*2);
-                    ctx.fillStyle = "#4ade80";
-                    ctx.fill();
-                    
-                    // Etiket (Thrust)
-                    ctx.fillStyle = "#4ade80";
-                    ctx.fillText("T", tx + 5, ty + 5);
+                    const thrustLen = 30; const tx = Math.cos(this.angle) * thrustLen; const ty = Math.sin(this.angle) * thrustLen;
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(tx, ty); ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(tx, ty, 3, 0, Math.PI*2); ctx.fillStyle = "#4ade80"; ctx.fill();
+                    ctx.fillStyle = "#4ade80"; ctx.fillText("T", tx + 5, ty + 5);
                 }
-
-                // 3. YÖNELİM ÇİZGİSİ (HEADING) - MAVİ/BEYAZ KESİKLİ
-                const headLen = 40;
-                const hx = Math.cos(this.angle) * headLen;
-                const hy = Math.sin(this.angle) * headLen;
-                
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(hx, hy);
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-                ctx.lineWidth = 1;
-                ctx.setLineDash([2, 4]); // Kesikli çizgi
-                ctx.stroke();
-                ctx.setLineDash([]); // Normale dön
+                const headLen = 40; const hx = Math.cos(this.angle) * headLen; const hy = Math.sin(this.angle) * headLen;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(hx, hy); ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; ctx.lineWidth = 1; ctx.setLineDash([2, 4]); ctx.stroke(); ctx.setLineDash([]); 
             }
-
-            // B) HEDEF VEKTÖRÜ VE AÇI HESABI
             if (window.gameSettings.showTargetVectors && this.debugTarget) {
-                const relTx = this.debugTarget.x - this.x;
-                const relTy = this.debugTarget.y - this.y;
-                
-                // 1. Hedef Çizgisi
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(relTx, relTy);
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                // Hedef noktası
-                ctx.beginPath();
-                ctx.arc(relTx, relTy, 5, 0, Math.PI*2);
-                ctx.fillStyle = "white";
-                ctx.fill();
-                
-                // Hedef Etiketi
-                ctx.fillStyle = "rgba(255,255,255,0.7)";
-                ctx.font = "10px monospace";
-                ctx.fillText("TARGET", relTx + 8, relTy);
-
-                // 2. AÇI HESABI VE GÖRSELLEŞTİRME
+                const relTx = this.debugTarget.x - this.x; const relTy = this.debugTarget.y - this.y;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(relTx, relTy); ctx.strokeStyle = "rgba(255, 255, 255, 0.4)"; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                ctx.beginPath(); ctx.arc(relTx, relTy, 5, 0, Math.PI*2); ctx.fillStyle = "white"; ctx.fill();
+                ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "10px monospace"; ctx.fillText("TARGET", relTx + 8, relTy);
                 const targetAngle = Math.atan2(relTy, relTx);
-                let angleDiff = targetAngle - this.angle;
-                // Açıyı -PI ile PI arasına normalle
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                
+                let angleDiff = targetAngle - this.angle; while (angleDiff < -Math.PI) angleDiff += Math.PI * 2; while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                 const angleDeg = (angleDiff * 180 / Math.PI).toFixed(1);
-                
-                // Dönüş Yönü ve Açı Yayı
-                const arcRadius = 30;
-                ctx.beginPath();
-                ctx.arc(0, 0, arcRadius, this.angle, this.angle + angleDiff, angleDiff < 0);
-                
-                // Renk Kodlaması: Büyük açı = Kırmızı, Küçük açı = Yeşil
+                const arcRadius = 30; ctx.beginPath(); ctx.arc(0, 0, arcRadius, this.angle, this.angle + angleDiff, angleDiff < 0);
                 const absDeg = Math.abs(parseFloat(angleDeg));
-                if (absDeg < 5) ctx.strokeStyle = "rgba(74, 222, 128, 0.8)"; // Yeşil
-                else if (absDeg < 45) ctx.strokeStyle = "rgba(250, 204, 21, 0.8)"; // Sarı
-                else ctx.strokeStyle = "rgba(248, 113, 113, 0.8)"; // Kırmızı
-                
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Açı Metni
-                ctx.fillStyle = "#fff";
-                ctx.fillText(`Δ: ${angleDeg}°`, 10, -10);
+                if (absDeg < 5) ctx.strokeStyle = "rgba(74, 222, 128, 0.8)"; else if (absDeg < 45) ctx.strokeStyle = "rgba(250, 204, 21, 0.8)"; else ctx.strokeStyle = "rgba(248, 113, 113, 0.8)"; 
+                ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = "#fff"; ctx.fillText(`Δ: ${angleDeg}°`, 10, -10);
             }
-
             ctx.restore();
         }
     }

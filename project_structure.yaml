@@ -19,6 +19,7 @@ js:
   - game-rules.js
   - utils.js
   - ObjectPool.js
+  - SpatialHash.js
   - loader.js
   - game.js
   - ui.js
