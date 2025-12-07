@@ -374,7 +374,7 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     // Gezegenler
     entities.planets.forEach(p => {
         if(!p.collected) {
-            const visibility = getPlanetVisibility(p, entities.player, entities.echoRay);
+            const visibility = GameRules.getPlanetVisibility(p, entities.player, entities.echoRay);
             if (visibility === 0) return;
 
             ctx.beginPath(); 
