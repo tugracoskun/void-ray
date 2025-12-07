@@ -17,6 +17,7 @@ js:
   - data.js
   - game-rules.js
   - utils.js
+  - ObjectPool.js
   - loader.js
   - game.js
   - ui.js
