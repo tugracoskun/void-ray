@@ -62,6 +62,13 @@ function renderProfile() {
         if(xpCurr) xpCurr.innerText = Math.floor(player.xp);
         if(xpMax) xpMax.innerText = Math.floor(player.maxXp);
 
+        // YENİ: XP BAR GÜNCELLEMESİ
+        const xpBar = document.getElementById('profile-xp-fill');
+        if (xpBar) {
+            const percentage = Math.min(100, Math.max(0, (player.xp / player.maxXp) * 100));
+            xpBar.style.width = `${percentage}%`;
+        }
+
         // 2. Statü (Upgrades)
         // playerData.upgrades -> { playerSpeed, playerTurn, playerMagnet, playerCapacity }
         if(playerData && playerData.upgrades) {
