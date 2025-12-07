@@ -83,7 +83,6 @@
                     <div class="p-rpg-name">VOID RAY</div>
                     <div id="profile-rank-text" class="p-rpg-rank">ACEMİ PİLOT</div>
                 </div>
-                <!-- DÜZELTME: Absolute pozisyon kaldırıldı, flex ile sağa yaslanacak -->
                 <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeProfile()">✕</div>
             </div>
 
@@ -190,7 +189,6 @@
                         <span class="text-xs text-[#94a3b8] tracking-widest font-mono">GÖREV DURUMU</span>
                         <span id="ach-progress-text" class="text-xs text-[#94d8c3] font-mono">0 / 0</span>
                     </div>
-                    <!-- DÜZELTME: İç kaydırma çubuğu kaldırıldı (max-h ve overflow silindi) -->
                     <div id="profile-achievements-list" class="space-y-2">
                         <!-- JS ile doldurulacak -->
                     </div>
@@ -205,7 +203,7 @@
         </div>
     </div>
 
-    <!-- AYARLAR BUTONU VE PANELİ (GÜNCELLENDİ) -->
+    <!-- AYARLAR BUTONU VE PANELİ -->
     <div id="btn-settings" title="Ayarlar">⚙</div>
     <div id="settings-panel">
         <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
@@ -223,7 +221,8 @@
 
         <!-- SEKME 1: OYUN (NAVİGASYON) -->
         <div id="set-tab-game" class="settings-content active">
-            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">NAVİGASYON OKLARI</div>
+            <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+            <div class="mb-2 text-xs text-[#94d8c3] font-bold tracking-widest opacity-80 mt-2">NAVİGASYON OKLARI</div>
             <div class="mb-4">
                 <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'ÜS OKU: Nexus ana üssünün yönünü gösteren oku açar.')" onmouseleave="hideTooltip()">
                     <span>ÜS (NEXUS)</span>
@@ -255,8 +254,8 @@
                 </div>
             </div>
 
-            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">SİSTEM</div>
-            <!-- YENİ: KONSOL TOGGLE -->
+            <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+            <div class="mb-2 text-xs text-[#94d8c3] font-bold tracking-widest opacity-80 mt-4">SİSTEM</div>
             <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'KONSOL: Sohbet penceresinden kod yazmayı (/komut) aktif eder.')" onmouseleave="hideTooltip()">
                 <span>KONSOLU AKTİF ET</span>
                 <label class="toggle-switch">
@@ -276,8 +275,8 @@
 
         <!-- SEKME 2: GÖRÜNÜM -->
         <div id="set-tab-view" class="settings-content">
-            <!-- HUD -->
-            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">ARAYÜZ (HUD)</div>
+            <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+            <div class="mb-2 text-xs text-[#94d8c3] font-bold tracking-widest opacity-80 mt-2">ARAYÜZ (HUD)</div>
             <div class="mb-4">
                 <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'OPAKLIK: Arayüz elementlerinin şeffaflığını ayarlar.')" onmouseleave="hideTooltip()"><span>OPAKLIK</span><span id="val-hud-opacity">100%</span></div>
                 <input type="range" id="vol-hud-opacity" class="smart-slider" data-default="100" min="20" max="100" value="100" onmouseenter="showInfoTooltip(event, 'Varsayılan (%100) için çift tıklayın.')" onmouseleave="hideTooltip()">
@@ -290,7 +289,6 @@
                     </label>
                 </div>
 
-                <!-- YENİ: GEMİ DURUM ÇUBUKLARI TOGGLE -->
                 <div class="toggle-row mt-3" onmouseenter="showInfoTooltip(event, 'DURUM ÇUBUKLARI: Geminin üzerinde can ve enerji barlarını gösterir.')" onmouseleave="hideTooltip()">
                     <span>GEMİ DURUM ÇUBUKLARI</span>
                     <label class="toggle-switch">
@@ -300,8 +298,8 @@
                 </div>
             </div>
 
-            <!-- KAMERA -->
-            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
+            <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+            <div class="mb-2 text-xs text-[#94d8c3] font-bold tracking-widest opacity-80 mt-4">KAMERA KONUMU</div>
             
             <div class="toggle-row mb-3" onmouseenter="showInfoTooltip(event, 'ADAPTİF MOD: Kamerayı geminin hızına göre otomatik kaydırır.')" onmouseleave="hideTooltip()">
                 <span>ADAPTİF MOD</span>
@@ -334,13 +332,15 @@
                 VARSAYILAN DEĞER İÇİN ÇİFT TIKLAYIN
             </div>
             <div class="mt-1 text-[10px] text-gray-500 font-mono border-t border-white/5 pt-2 text-center">
-                <span class="text-sky-400 font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASINIZ.
+                <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+                <span class="text-[#94d8c3] font-bold">İPUCU:</span> SİNEMATİK MOD İÇİN <span class="text-white border border-white/20 px-1 rounded mx-1">H</span> TUŞUNA BASINIZ.
             </div>
         </div>
 
         <!-- SEKME 3: SES -->
         <div id="set-tab-audio" class="settings-content">
-            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">SES DÜZEYİ</div>
+            <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+            <div class="mb-2 text-xs text-[#94d8c3] font-bold tracking-widest opacity-80 mt-2">SES DÜZEYİ</div>
             <div class="mb-4" onmouseenter="showInfoTooltip(event, 'MÜZİK: Arka plan müziklerinin ses şiddetini ayarlar.')" onmouseleave="hideTooltip()">
                 <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>MÜZİK</span><span id="val-m">20%</span></div>
                 <input type="range" id="vol-music" class="smart-slider" data-default="20" min="0" max="100" value="20">
@@ -357,11 +357,13 @@
 
         <!-- SEKME 4: KAYIT YÖNETİMİ -->
         <div id="set-tab-save" class="settings-content">
-            <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-2">KAYIT İŞLEMLERİ</div>
+            <!-- MAVİ RENK DÜZELTİLDİ: text-[#94d8c3] -->
+            <div class="mb-2 text-xs text-[#94d8c3] font-bold tracking-widest opacity-80 mt-2">KAYIT İŞLEMLERİ</div>
             <p class="text-xs text-gray-400 mb-4">Oyun her 30 saniyede bir otomatik kaydedilir. Kaydınızı yedekleyebilir veya başka bir cihaza taşıyabilirsiniz.</p>
             
             <div class="flex flex-col gap-3">
-                <button onclick="actionExportSave()" class="bg-white/5 hover:bg-white/10 text-sky-300 border border-sky-300/30 py-2 px-4 rounded text-xs tracking-widest transition flex items-center justify-center gap-2">
+                <!-- BUTON RENGİ DÜZELTİLDİ: text-[#94d8c3] border-[#94d8c3]/30 -->
+                <button onclick="actionExportSave()" class="bg-white/5 hover:bg-white/10 text-[#94d8c3] border border-[#94d8c3]/30 py-2 px-4 rounded text-xs tracking-widest transition flex items-center justify-center gap-2">
                     <span>DIŞA AKTAR (KOPYALA)</span>
                 </button>
                 

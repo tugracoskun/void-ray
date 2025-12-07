@@ -287,13 +287,19 @@
     border-color: var(--hud-color); opacity: 0.8;
 }
 
-/* Ayarlar Paneli */
+/* Ayarlar Paneli (GÜNCELLENDİ - OKUNABİLİRLİK İÇİN) */
 #settings-panel { 
     position: absolute; top: 70px; right: 20px; width: 280px; 
-    background: var(--hud-bg); 
+    
+    /* Okunabilirlik için koyu arka plan */
+    background-color: #0b0d10;
     border: 1px solid var(--hud-color-dim);
-    background-image: var(--wireframe-gradient);
-    background-size: 10px 10px;
+    
+    /* Daha seyrek ve silik ızgara deseni */
+    background-image: 
+        linear-gradient(rgba(148, 216, 195, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 216, 195, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
     
     padding: 15px; 
     pointer-events: none; opacity: 0; 
