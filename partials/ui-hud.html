@@ -244,6 +244,15 @@
             </div>
 
             <div class="mb-2 text-xs text-sky-300 font-bold tracking-widest opacity-80 mt-4">SİSTEM</div>
+            <!-- YENİ: KONSOL TOGGLE -->
+            <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'KONSOL: Sohbet penceresinden kod yazmayı (/komut) aktif eder.')" onmouseleave="hideTooltip()">
+                <span>KONSOLU AKTİF ET</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-console">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
             <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'GELİŞTİRİCİ MODU: Gelişmiş hata ayıklama seçeneklerini açar.')" onmouseleave="hideTooltip()">
                 <span>GELİŞTİRİCİ MODU</span>
                 <label class="toggle-switch">

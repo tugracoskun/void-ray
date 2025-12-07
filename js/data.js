@@ -254,6 +254,7 @@ const DEFAULT_GAME_SETTINGS = {
     adaptiveCamera: false,
     smoothCameraTransitions: true,
     developerMode: false,
+    enableConsole: false, // YENİ: Varsayılan olarak konsol kapalı
     showGravityFields: false,
     showHitboxes: false,
     showVectors: false,
