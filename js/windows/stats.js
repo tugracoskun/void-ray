@@ -1,7 +1,7 @@
 /**
  * Void Ray - Pencere: İstatistikler
  * * Oyun verilerini, sayaçları ve performans metriklerini gösteren pencere.
- * * ui.js dosyasındaki formatTime fonksiyonunu kullanır.
+ * * GÜNCELLEME: Performans optimizasyonu yapıldı. DOM her karede yeniden oluşturulmuyor (Kapanmama sorunu çözüldü).
  */
 
 // Pencere Durumu
@@ -12,7 +12,8 @@ let statsOpen = false;
  */
 function openStats() {
     statsOpen = true;
-    document.getElementById('stats-overlay').classList.add('open');
+    const overlay = document.getElementById('stats-overlay');
+    if(overlay) overlay.classList.add('open');
     renderStats();
 }
 
@@ -21,36 +22,87 @@ function openStats() {
  */
 function closeStats() {
     statsOpen = false;
-    document.getElementById('stats-overlay').classList.remove('open');
+    const overlay = document.getElementById('stats-overlay');
+    if(overlay) overlay.classList.remove('open');
 }
 
 /**
- * İstatistik tablosunu anlık verilerle doldurur.
+ * İstatistik verilerini günceller.
+ * ÖNEMLİ: HTML yapısını sadece bir kez oluşturur, sonra sadece ID'li alanları günceller.
  */
 function renderStats() {
     if(!statsOpen) return;
-    const table = document.getElementById('stats-table-content');
-    if(!table) return;
     
-    // gameStartTime ve playerData global değişkenlerdir (game.js)
-    const now = Date.now();
-    const gameTime = now - gameStartTime;
-    const distStr = Math.floor(playerData.stats.distance / 100) + " km";
+    const windowEl = document.querySelector('#stats-overlay .stats-window');
+    if(!windowEl) return;
+    
+    // 1. YAPI KONTROLÜ (Eğer içerik henüz oluşturulmadıysa oluştur)
+    if (!windowEl.querySelector('.stats-wireframe-header')) {
+        windowEl.innerHTML = `
+            <div class="stats-wireframe-header">
+                <div class="stats-icon-box">≣</div>
+                <div class="stats-title-group">
+                    <div class="stats-main-title">VERİ GÜNLÜĞÜ</div>
+                    <div class="stats-sub-title">UÇUŞ KAYITLARI VE METRİKLER</div>
+                </div>
+                <div class="stats-close-btn" onclick="closeStats()">✕</div>
+            </div>
+            
+            <div class="stats-wireframe-content">
+                <!-- GRUP 1: ZAMAN VE KEŞİF -->
+                <div class="stats-group">
+                    <div class="stats-group-title">ZAMAN & KEŞİF</div>
+                    <div class="stats-row"><span class="stats-label">EVREN SÜRESİ</span><span id="stat-game-time" class="stats-value">00:00:00</span></div>
+                    <div class="stats-row"><span class="stats-label">HAREKET HALİNDE</span><span id="stat-move-time" class="stats-value">00:00:00</span></div>
+                    <div class="stats-row"><span class="stats-label">BEKLEME SÜRESİ</span><span id="stat-idle-time" class="stats-value">00:00:00</span></div>
+                    <div class="stats-row"><span class="stats-label">TOPLAM MESAFE</span><span id="stat-distance" class="stats-value highlight">0 km</span></div>
+                </div>
 
-    // formatTime fonksiyonu ui.js içinden gelir
-    table.innerHTML = `
-        <tr><th>EVREN SÜRESİ</th><td>${formatTime(gameTime)}</td></tr>
-        <tr><th>HAREKET SÜRESİ</th><td>${formatTime(playerData.stats.timeMoving)}</td></tr>
-        <tr><th>BEKLEME SÜRESİ</th><td>${formatTime(playerData.stats.timeIdle)}</td></tr>
-        <tr><th>AI (OTOPİLOT) SÜRESİ</th><td>${formatTime(playerData.stats.timeAI)}</td></tr>
-        <tr><th>VATOZ MAX HIZ</th><td>${Math.floor(playerData.stats.maxSpeed * 10)} KM/S</td></tr>
-        <tr><th>YANKI MAX HIZ</th><td>${Math.floor(playerData.stats.echoMaxSpeed * 10)} KM/S</td></tr>
-        <tr><th>TOPLAM MESAFE</th><td>${distStr}</td></tr>
-        <tr><th>TOPLANAN KAYNAK</th><td>${playerData.stats.totalResources} ADET</td></tr>
-        <tr><th>KAZANILAN KRİSTAL</th><td>${playerData.stats.totalStardust} ◆</td></tr>
-        <tr><th>HARCANAN KRİSTAL</th><td>${playerData.stats.totalSpentStardust} ◆</td></tr>
-        <tr><th>HARCANAN ENERJİ</th><td>${Math.floor(playerData.stats.totalEnergySpent)} BİRİM</td></tr>
-        <tr><th>ENVANTER KAPASİTESİ</th><td>${collectedItems.length} / ${GameRules.getPlayerCapacity()}</td></tr>
-        <tr><th>DEPO (MERKEZ)</th><td>${centralStorage.length} EŞYA</td></tr>
-    `;
+                <!-- GRUP 2: EKONOMİ VE DEPO -->
+                <div class="stats-group">
+                    <div class="stats-group-title">ENVANTER & EKONOMİ</div>
+                    <div class="stats-row"><span class="stats-label">TOPLANAN KAYNAK</span><span id="stat-resources" class="stats-value">0 ADET</span></div>
+                    <div class="stats-row"><span class="stats-label">KAZANILAN KRİSTAL</span><span id="stat-stardust" class="stats-value gold">0 ◆</span></div>
+                    <div class="stats-row"><span class="stats-label">HARCANAN KRİSTAL</span><span id="stat-spent" class="stats-value" style="opacity:0.7;">0 ◆</span></div>
+                    <div class="stats-row"><span class="stats-label">GEMİ DEPOSU</span><span id="stat-inventory" class="stats-value">0 / 0</span></div>
+                    <div class="stats-row"><span class="stats-label">MERKEZ DEPO</span><span id="stat-storage" class="stats-value">0 EŞYA</span></div>
+                </div>
+
+                <!-- GRUP 3: PERFORMANS -->
+                <div class="stats-group">
+                    <div class="stats-group-title">MOTOR PERFORMANSI</div>
+                    <div class="stats-row"><span class="stats-label">VATOZ MAX HIZ</span><span id="stat-speed-player" class="stats-value highlight">0 KM/S</span></div>
+                    <div class="stats-row"><span class="stats-label">YANKI MAX HIZ</span><span id="stat-speed-echo" class="stats-value highlight">0 KM/S</span></div>
+                    <div class="stats-row"><span class="stats-label">TOPLAM ENERJİ TÜKETİMİ</span><span id="stat-energy" class="stats-value">0 BİRİM</span></div>
+                    <div class="stats-row"><span class="stats-label">OTOPİLOT KULLANIMI</span><span id="stat-ai-time" class="stats-value">00:00:00</span></div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 2. VERİ HESAPLAMA VE GÜNCELLEME (Loop içinde sadece burası çalışır)
+    const now = Date.now();
+    const gameTime = now - (window.gameStartTime || now);
+    
+    setVal('stat-game-time', formatTime(gameTime));
+    setVal('stat-move-time', formatTime(playerData.stats.timeMoving));
+    setVal('stat-idle-time', formatTime(playerData.stats.timeIdle));
+    setVal('stat-distance', Math.floor(playerData.stats.distance / 100) + " km");
+    
+    setVal('stat-resources', playerData.stats.totalResources + " ADET");
+    setVal('stat-stardust', playerData.stats.totalStardust + " ◆");
+    setVal('stat-spent', playerData.stats.totalSpentStardust + " ◆");
+    setVal('stat-inventory', `${collectedItems.length} / ${GameRules.getPlayerCapacity()}`);
+    setVal('stat-storage', centralStorage.length + " EŞYA");
+    
+    setVal('stat-speed-player', Math.floor(playerData.stats.maxSpeed * 10) + " KM/S");
+    setVal('stat-speed-echo', Math.floor(playerData.stats.echoMaxSpeed * 10) + " KM/S");
+    setVal('stat-energy', Math.floor(playerData.stats.totalEnergySpent) + " BİRİM");
+    setVal('stat-ai-time', formatTime(playerData.stats.timeAI));
+}
+
+// Yardımcı Fonksiyon: Güvenli metin güncelleme
+function setVal(id, val) {
+    const el = document.getElementById(id);
+    if(el) el.innerText = val;
 }
