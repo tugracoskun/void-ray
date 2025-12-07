@@ -1,145 +1,243 @@
 /* * PROFILE.CSS
- * Profil penceresi, karakter istatistikleri ve başarım listesi stilleri.
+ * Wireframe / Minimalist Terminal Stili
+ * Referans: Mat yeşil, ince hatlar, köşe vurguları.
  */
 
-/* --- PROFİL PENCERESİ (RPG STYLE) --- */
+:root {
+    /* Resimdeki mat, pastel yeşil tonu */
+    --hud-color: #94d8c3;       
+    --hud-color-dim: rgba(148, 216, 195, 0.3);
+    --hud-bg: rgba(10, 12, 14, 0.95);
+    
+    /* Vurgu ve Metin */
+    --hud-text: #e2e8f0;
+    --hud-text-dim: #94a3b8;
+}
+
+/* --- PROFİL PENCERESİ (WIREFRAME STYLE) --- */
 .profile-window.rpg-style {
-    width: 400px; /* Daha dar, referans gibi */
-    height: auto; /* İçerik odaklı yükseklik */
-    max-height: 85vh; /* Ekran taşmasını önle */
-    background: rgba(10, 12, 16, 0.95); /* Biraz daha opak arka plan */
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    border-radius: 8px; /* Köşeler biraz daha keskin */
+    width: 400px;
+    height: auto;
+    max-height: 85vh;
+    
+    /* Arka Plan ve Ana Çerçeve */
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color-dim); /* Çok ince, silik çerçeve */
+    
+    /* Köşe Vurguları (Gradients ile L Şekilleri) */
+    background-image: 
+        linear-gradient(to right, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to left, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to top, var(--hud-color) 2px, transparent 2px);
+    
+    background-size: 10px 10px; /* Köşe büyüklüğü */
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
+
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+    
     display: flex; flex-direction: column;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
-    backdrop-filter: blur(15px);
     overflow: hidden;
     position: relative;
-    transition: height 0.3s ease; /* Yumuşak geçiş */
+    border-radius: 0; /* Keskin köşeler */
+    font-family: 'Courier New', Courier, monospace; /* Terminal hissi */
 }
 
 /* ÜST BAŞLIK */
 .profile-rpg-header {
-    height: 80px;
-    background: rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    height: 50px;
     display: flex; align-items: center; padding: 0 15px; gap: 15px;
-    flex-shrink: 0; /* Başlık küçülmesin */
+    flex-shrink: 0;
+    border-bottom: 1px dashed var(--hud-color-dim); /* Kesikli çizgi */
 }
+
 .p-rpg-avatar {
-    width: 50px; height: 50px; border: 1px solid var(--ray-color);
-    background: rgba(0,0,0,0.3);
+    width: 32px; height: 32px; 
+    border: 1px solid var(--hud-color);
     display: flex; justify-content: center; align-items: center;
+    background: rgba(148, 216, 195, 0.05);
 }
-.p-rpg-img { font-size: 1.5rem; color: var(--ray-color); }
-.p-rpg-info { display: flex; flex-direction: column; }
-.p-rpg-title { font-size: 0.6rem; color: var(--color-text-dim); letter-spacing: 1px; }
-.p-rpg-name { font-size: 1.1rem; color: white; font-weight: bold; letter-spacing: 1px; }
-.p-rpg-rank { font-size: 0.7rem; color: var(--color-warning); margin-top: 2px; }
+
+.p-rpg-img { font-size: 1rem; color: var(--hud-color); }
+
+.p-rpg-info { flex: 1; display: flex; align-items: baseline; gap: 10px; }
+.p-rpg-title { font-size: 0.6rem; color: var(--hud-text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.p-rpg-name { font-size: 0.9rem; color: var(--hud-color); font-weight: bold; letter-spacing: 2px; }
+.p-rpg-rank { font-size: 0.6rem; color: var(--hud-text-dim); margin-left: auto; }
+
+/* Kapatma Butonu (Custom Minimalist) */
+.profile-rpg-header .cursor-pointer {
+    color: var(--hud-color);
+    opacity: 0.7;
+    font-size: 1rem;
+    font-family: sans-serif;
+}
+.profile-rpg-header .cursor-pointer:hover { opacity: 1; text-shadow: 0 0 5px var(--hud-color); }
+
 
 /* İÇERİK */
 .profile-content {
-    overflow-y: auto; /* İçerik taşarsa kaydır */
+    overflow-y: auto;
     min-height: 0;
+    padding: 15px;
 }
 .profile-content.no-padding { padding: 0; }
 
-/* LEVEL ŞERİDİ */
+/* LEVEL ŞERİDİ (Minimalist Bar) */
 .p-rpg-level-strip {
     display: flex;
-    background: rgba(0,0,0,0.3);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: 10px 0;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid var(--hud-color-dim);
+    margin-bottom: 0;
+    font-family: monospace;
 }
-.p-rpg-lvl-box {
-    flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.05);
+
+.p-rpg-lvl-box { text-align: left; }
+.p-rpg-lvl-box:nth-child(2) { text-align: center; }
+.p-rpg-lvl-box:last-child { text-align: right; }
+
+.p-rpg-lvl-box .lbl { 
+    font-size: 0.6rem; color: var(--hud-text-dim); display: block; margin-bottom: 2px;
 }
-.p-rpg-lvl-box:last-child { border-right: none; }
-.p-rpg-lvl-box .lbl { display: block; font-size: 0.6rem; color: var(--color-danger); font-weight: bold; margin-bottom: 2px; }
-.p-rpg-lvl-box .val { font-size: 0.9rem; color: white; font-family: monospace; }
+.p-rpg-lvl-box .val { 
+    font-size: 0.9rem; color: var(--hud-text); font-weight: bold;
+}
 
 /* ANA IZGARA (STATÜLER) */
 .p-rpg-main-grid {
     display: flex;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--hud-color-dim);
 }
 .p-rpg-col {
-    flex: 1; padding: 10px;
-    border-right: 1px solid rgba(255,255,255,0.1);
+    flex: 1; 
+    padding: 15px;
+    border-right: 1px solid var(--hud-color-dim);
 }
 .p-rpg-col:last-child { border-right: none; }
 
 .p-rpg-section-title {
-    font-size: 0.7rem; color: var(--color-gold); font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px;
+    font-size: 0.65rem; color: var(--hud-color); font-weight: bold; 
+    margin-bottom: 12px; 
+    letter-spacing: 2px;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--hud-color-dim);
 }
 
-.p-rpg-stat-row, .p-rpg-val-row {
+/* Stat Rows */
+.p-rpg-stat-row {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 4px; font-size: 0.75rem;
+    margin-bottom: 8px; font-size: 0.75rem;
+    font-family: monospace;
 }
-.stat-name { color: white; font-weight: bold; }
-.stat-val-group { display: flex; align-items: center; gap: 5px; }
-.stat-plus {
-    width: 12px; height: 12px; background: #d97706; color: black; font-weight: bold;
-    display: flex; justify-content: center; align-items: center; border-radius: 2px; cursor: pointer;
-    font-size: 10px; line-height: 1;
-}
-.stat-plus:hover { background: var(--color-gold); }
-.stat-num { font-family: monospace; color: var(--color-text-main); width: 25px; text-align: right; }
 
-.val-icon { font-size: 0.8rem; width: 15px; text-align: center; margin-right: 5px; }
-.val-name { color: #cbd5e1; flex: 1; }
-.val-num { color: white; font-family: monospace; font-weight: bold; }
+.stat-name { color: var(--hud-text-dim); }
+.stat-val-group { display: flex; align-items: center; gap: 8px; }
+
+.stat-plus {
+    color: var(--hud-color);
+    font-weight: bold; cursor: pointer;
+    font-size: 12px;
+    opacity: 0.7;
+}
+.stat-plus:hover { opacity: 1; text-shadow: 0 0 5px var(--hud-color); }
+
+.stat-num { color: var(--hud-text); font-weight: bold; }
+
+/* Val Rows (Sağ Taraf) */
+.p-rpg-val-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; font-size: 0.75rem;
+    font-family: monospace;
+}
+.val-icon { display: none; } /* İkonları kaldırdık, daha teknik dursun */
+.val-name { color: var(--hud-text-dim); }
+.val-num { color: var(--hud-text); }
 
 /* ATTRIBUTES (Alt Liste) */
 .p-rpg-attributes { 
-    padding: 10px; 
-    background: rgba(0,0,0,0.1); 
+    padding: 15px; 
 }
-.p-attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
-.p-attr-item { display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 2px; }
-.p-attr-item span:first-child { color: var(--color-text-dim); }
-.p-attr-item span:last-child { color: var(--color-text-main); font-family: monospace; }
+.p-attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 30px; }
+.p-attr-item { 
+    display: flex; justify-content: space-between; 
+    font-size: 0.7rem; font-family: monospace;
+    border-bottom: 1px dotted var(--hud-color-dim);
+}
+.p-attr-item span:first-child { color: var(--hud-text-dim); }
+.p-attr-item span:last-child { color: var(--hud-color); }
 
-/* ALT SEKMELER */
+/* ALT SEKMELER (Minimal Text Buttons) */
 .profile-tabs-bottom {
     display: flex;
-    background: rgba(0,0,0,0.5);
-    border-top: 1px solid rgba(255,255,255,0.1);
+    border-top: 1px solid var(--hud-color-dim);
     height: 40px;
-    flex-shrink: 0; /* Alt bar küçülmesin */
+    flex-shrink: 0;
 }
+
 .profile-tab-btn {
     flex: 1; display: flex; justify-content: center; align-items: center;
-    font-size: 0.75rem; font-weight: bold; color: var(--color-text-dark); cursor: pointer;
-    transition: 0.2s; border-right: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.7rem; color: var(--hud-text-dim); cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 2px;
+    border-right: 1px solid var(--hud-color-dim);
+    font-family: monospace;
 }
 .profile-tab-btn:last-child { border-right: none; }
-.profile-tab-btn:hover { background: rgba(255,255,255,0.05); color: white; }
-.profile-tab-btn.active { color: var(--color-warning); background: rgba(245, 158, 11, 0.1); }
 
-/* --- BAŞARIM LİSTESİ STİLLERİ --- */
+.profile-tab-btn:hover {
+    color: var(--hud-text);
+    background: rgba(148, 216, 195, 0.05);
+}
+
+.profile-tab-btn.active { 
+    color: var(--hud-color);
+    background: rgba(148, 216, 195, 0.1);
+    font-weight: bold;
+}
+
+/* --- BAŞARIM LİSTESİ STİLLERİ (Wireframe) --- */
 .achievement-item {
-    display: flex; gap: 10px; align-items: center;
-    padding: 8px 12px; 
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.05);
-    background: rgba(255,255,255,0.02);
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 0; 
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--hud-color-dim);
     transition: 0.2s;
-    min-height: 50px;
+    font-family: monospace;
 }
-.achievement-item.unlocked {
-    background: rgba(16, 185, 129, 0.05);
-    border-color: rgba(16, 185, 129, 0.2);
-}
-.ach-list-icon { font-size: 1.2rem; width: 30px; text-align: center; }
-.ach-list-info { flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; }
-.ach-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-.ach-list-title { font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; }
-.ach-list-desc { font-size: 0.7rem; line-height: 1.2; opacity: 0.8; margin-bottom: 6px; }
-.ach-check { color: var(--color-success); font-weight: bold; font-size: 1rem; }
+.achievement-item:last-child { border-bottom: none; }
 
-/* İlerleme Çubuğu */
-.ach-progress-text { font-family: monospace; font-size: 0.65rem; color: var(--color-text-dim); }
-.ach-progress-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.ach-progress-fill { height: 100%; transition: width 0.3s ease; }
+.achievement-item.unlocked .ach-list-title { color: var(--hud-color); text-shadow: 0 0 5px var(--hud-color-dim); }
+.achievement-item.unlocked .ach-check { opacity: 1; }
+
+.ach-list-icon { display: none; } /* İkonları kaldır */
+
+.ach-list-info { flex: 1; display: flex; flex-direction: column; }
+
+.ach-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.ach-list-title { font-weight: bold; font-size: 0.75rem; letter-spacing: 1px; color: var(--hud-text-dim); }
+
+.ach-list-desc { font-size: 0.65rem; color: #64748b; margin-bottom: 5px; }
+
+.ach-check { 
+    color: var(--hud-color); 
+    font-weight: bold; 
+    opacity: 0; /* Sadece açılınca görünsün */
+}
+
+/* İlerleme Çubuğu - İnce Çizgi */
+.ach-progress-text { font-size: 0.6rem; color: var(--hud-text-dim); }
+.ach-progress-bg { 
+    width: 100%; height: 2px; 
+    background: rgba(255,255,255,0.1); 
+    margin-top: 2px;
+}
+.ach-progress-fill { 
+    height: 100%; 
+    background: var(--hud-color);
+    transition: width 0.3s ease; 
+}
