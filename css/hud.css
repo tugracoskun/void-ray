@@ -115,48 +115,76 @@
 .ai-mode-switch.visible { display: block; }
 .ai-mode-switch:hover { border-color: var(--hud-color); color: var(--hud-color); background: rgba(0,0,0,0.9); }
 
-/* Echo Menu - Kompakt */
+/* Echo Menu - GÜNCELLENDİ (Mavi Arka Plan Kaldırıldı / Okunabilirlik Artırıldı) */
 .echo-wrapper { position: relative; display: none; flex-direction: column; }
 .echo-wrapper:hover .echo-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+
 .echo-dropdown {
     position: absolute; top: 45px; left: 0;
-    background: rgba(10, 12, 14, 0.95); 
+    /* Tamamen koyu, nötr arka plan */
+    background-color: #050505; 
     border: 1px solid var(--hud-color-dim);
-    background-image: var(--wireframe-gradient);
-    background-size: 10px 10px;
     
-    padding: 2px; width: 200px; /* Biraz daha dar */
-    display: flex; flex-direction: column; gap: 1px;
+    /* Izgara deseni GRİ tonlara çekildi (Mavimsi ton kaldırıldı) */
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    
+    padding: 0; /* Padding sıfırlandı, iç öğeler kenara yapışsın */
+    width: 210px;
+    display: flex; flex-direction: column; gap: 1px; /* Öğeler arası 1px boşluk */
     opacity: 0; visibility: hidden; transform: translateY(-5px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(5px); box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    z-index: 60;
 }
 
 .echo-profile {
-    padding: 8px; margin-bottom: 2px; border-bottom: 1px dashed var(--hud-color-dim);
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(148, 216, 195, 0.05);
+    padding: 10px 12px; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; align-items: center; gap: 12px;
+    /* Nötr koyu gri arka plan */
+    background: rgba(30, 30, 30, 0.5); 
 }
 .echo-p-icon { 
-    width: 28px; height: 28px; 
-    border: 1px solid var(--echo-color);
+    width: 32px; height: 32px; 
+    border: 1px solid var(--echo-color); /* İkon rengi korunabilir, küçük bir detay */
     display: flex; justify-content: center; align-items: center; 
-    font-size: 0.8rem; color: var(--echo-color);
-    background: rgba(0,0,0,0.3);
+    font-size: 0.9rem; color: var(--echo-color);
+    background: rgba(0,0,0,0.5);
 }
-.echo-p-stats { display: flex; flex-direction: column; }
-.echo-p-name { font-size: 0.7rem; color: var(--hud-text); font-weight: bold; font-family: monospace; }
-.echo-p-rate { font-size: 0.55rem; color: var(--hud-text-dim); font-family: monospace; }
+.echo-p-stats { display: flex; flex-direction: column; gap: 2px; }
+.echo-p-name { font-size: 0.75rem; color: #fff; font-weight: bold; font-family: monospace; letter-spacing: 1px; }
+.echo-p-rate { font-size: 0.6rem; color: #888; font-family: monospace; }
 
 .echo-menu-item {
-    padding: 6px 8px; cursor: pointer;
-    font-size: 0.7rem; letter-spacing: 1px; color: var(--hud-text-dim);
-    transition: 0.2s; border: 1px solid transparent; 
+    padding: 10px 12px; cursor: pointer;
+    font-size: 0.7rem; letter-spacing: 1px; color: #aaa; /* Gri metin */
+    transition: all 0.2s; 
+    border-left: 2px solid transparent; /* Sol kenar vurgusu için yer tutucu */
     display: flex; justify-content: space-between; align-items: center;
     font-family: monospace;
+    background: rgba(20, 20, 20, 0.8); /* Çok koyu gri */
 }
-.echo-menu-item:hover { background: rgba(148, 216, 195, 0.1); color: var(--hud-text); border-color: var(--hud-color-dim); }
-.echo-menu-item.active-mode { color: #000; background: var(--echo-color); font-weight: bold; border-color: var(--echo-color); }
+
+/* Hover: Arka planı hafif aydınlat, metni beyaz yap */
+.echo-menu-item:hover { 
+    background: rgba(40, 40, 40, 0.9); 
+    color: #fff; 
+    border-left-color: rgba(255, 255, 255, 0.3);
+    padding-left: 15px;
+}
+
+/* AKTİF MOD: Mavi arka plan YERİNE Sol Kenar Vurgusu ve Renkli Metin */
+.echo-menu-item.active-mode { 
+    color: var(--echo-color); /* Metin rengi turkuaz/mavi kalsın, okunabilir */
+    background: rgba(20, 20, 20, 1); /* Arka plan koyu kalsın */
+    font-weight: bold; 
+    border-left: 3px solid var(--echo-color); /* Sadece sol çizgi renkli */
+    box-shadow: inset 10px 0 20px -10px rgba(103, 232, 249, 0.1); /* Çok hafif iç parlama */
+}
 
 /* --- REHBER / TUTORIAL KUTUSU --- */
 #tutorial-box {
