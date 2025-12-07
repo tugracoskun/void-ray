@@ -55,8 +55,11 @@ const SaveManager = {
                 y: Math.round(echoRay.y)
             } : { active: false },
             
-            // BAŞARIMLARI KAYDET (YENİ)
-            achievements: (typeof AchievementManager !== 'undefined') ? AchievementManager.getUnlockedIds() : []
+            // BAŞARIMLARI KAYDET
+            achievements: (typeof AchievementManager !== 'undefined') ? AchievementManager.getUnlockedIds() : [],
+            
+            // REHBER KAYDI (YENİ)
+            tutorial: (typeof TutorialManager !== 'undefined') ? TutorialManager.getExportData() : []
         };
 
         try {
@@ -140,9 +143,14 @@ const SaveManager = {
                 }
             }
 
-            // BAŞARIMLARI YÜKLE (YENİ)
+            // BAŞARIMLARI YÜKLE
             if (data.achievements && typeof AchievementManager !== 'undefined') {
                 AchievementManager.loadUnlockedIds(data.achievements);
+            }
+            
+            // REHBER YÜKLE (YENİ)
+            if (data.tutorial && typeof TutorialManager !== 'undefined') {
+                TutorialManager.loadProgress(data.tutorial);
             }
 
             player.updateUI();
@@ -161,6 +169,8 @@ const SaveManager = {
 
     resetSave: function() {
         localStorage.removeItem(this.SAVE_KEY);
+        // localStorage.removeItem('void_ray_tutorial'); // Eski varsa sil
+        if (typeof TutorialManager !== 'undefined') TutorialManager.reset();
         console.log("Kayıt silindi.");
     },
 

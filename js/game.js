@@ -188,6 +188,10 @@ function init() {
         AchievementManager.init();
     }
 
+    if (typeof TutorialManager !== 'undefined') {
+        TutorialManager.init();
+    }
+
     if (typeof SaveManager !== 'undefined') {
         SaveManager.init();
         updateInventoryCount();
@@ -348,6 +352,7 @@ function loop() {
 
         if(typeof statsOpen !== 'undefined' && statsOpen) renderStats();
         if(typeof contextOpen !== 'undefined' && contextOpen) renderContext();
+        if(typeof TutorialManager !== 'undefined') TutorialManager.update(dt); // TUTORIAL UPDATE
 
         if (entityManager) {
             entityManager.update(dt);
