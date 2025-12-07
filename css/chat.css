@@ -1,52 +1,67 @@
 /* * CHAT.CSS
  * İletişim paneli, mesajlar ve giriş alanı stilleri.
+ * WIREFRAME / RPG STİLİ (Core Entegrasyonu)
  */
 
 /* --- CHAT PANELİ --- */
 #chat-panel {
     position: absolute; bottom: 30px; left: 30px;
-    width: 350px; height: 260px;
-    background: rgba(5, 5, 8, 0.85);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--soft-radius);
+    width: 380px; height: 280px;
+    
+    /* Core.css'den gelen ortak stiller */
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color-dim);
+    background-image: var(--wireframe-gradient);
+    background-size: 10px 10px;
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
+    
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+
     display: flex; flex-direction: column;
     pointer-events: auto;
-    backdrop-filter: blur(10px);
     overflow: hidden;
     z-index: 65;
     transition: opacity 0.3s ease;
+    
+    border-radius: 0;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 /* YARIM AKTİF MOD (SEMI-ACTIVE) */
 #chat-panel.chat-mode-semi {
     background: transparent !important;
     border: none !important;
+    box-shadow: none !important;
+    background-image: none !important;
     backdrop-filter: none !important;
-    pointer-events: none; /* Tıklamalar geçsin */
+    pointer-events: none;
 }
 
-/* Gizlenen elemanlar (Yarım mod) - !important EKLENDİ */
+/* Gizlenen elemanlar (Yarım mod) */
 #chat-panel.chat-mode-semi .chat-header,
 #chat-panel.chat-mode-semi .chat-input-area {
     display: none !important;
 }
 
 #chat-panel.chat-mode-semi .chat-content {
-    overflow: visible; /* Kaydırma çubuğu gizlensin */
-    justify-content: flex-end; /* Mesajları alta daya */
+    overflow: visible;
+    justify-content: flex-end;
+    padding-left: 0; padding-bottom: 0;
 }
 
-/* Mesajın silinme animasyonu (Yarım mod) 
-   Toplam süre 6s: 5s bekle, 1s sol
-*/
+/* Mesajın silinme animasyonu */
 .fading-msg {
     animation: messageLifeCycle 6s forwards;
+    text-shadow: 0 0 2px black, 0 0 5px black;
 }
 
 @keyframes messageLifeCycle {
-    0% { opacity: 1; }
-    85% { opacity: 1; } /* İlk 5 saniye görünür kalır */
-    100% { opacity: 0; transform: translateY(-5px); } /* Son 1 saniye solarak gider */
+    0% { opacity: 0; transform: translateY(5px); }
+    10% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; } 
+    100% { opacity: 0; transform: translateY(-5px); } 
 }
 
 /* DEAKTİF MOD */
@@ -56,70 +71,115 @@
     display: none;
 }
 
+/* --- HEADER / SEKMELER --- */
 .chat-header {
-    display: flex; border-bottom: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.02);
+    display: flex; 
+    border-bottom: 1px dashed var(--hud-color-dim);
+    background: rgba(148, 216, 195, 0.05); /* --hud-color'ın transparan hali */
+    height: 35px;
+    flex-shrink: 0;
     cursor: move;
     user-select: none;
 }
 
 .chat-tab {
-    flex: 1; padding: 10px 0; text-align: center;
-    font-size: 0.75rem; letter-spacing: 1px; color: var(--color-text-dim);
-    cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent;
+    flex: 1; 
+    display: flex; justify-content: center; align-items: center;
+    font-size: 0.65rem; letter-spacing: 2px; color: var(--hud-text-dim);
+    cursor: pointer; transition: all 0.2s; 
+    border-right: 1px solid var(--hud-color-dim);
+    font-weight: bold;
 }
-.chat-tab:hover:not(.disabled) { background: rgba(255,255,255,0.05); color: white; }
-.chat-tab.active { color: var(--ray-color); border-bottom-color: var(--ray-color); background: rgba(56, 189, 248, 0.05); }
-.chat-tab.disabled { opacity: 0.5; cursor: not-allowed; }
+.chat-tab:last-child { border-right: none; }
 
+.chat-tab:hover:not(.disabled) { 
+    background: rgba(148, 216, 195, 0.1); 
+    color: var(--hud-text); 
+}
+
+.chat-tab.active { 
+    color: #000;
+    background: var(--hud-color);
+    box-shadow: 0 0 10px var(--hud-color-dim);
+}
+
+/* --- İÇERİK ALANI --- */
 .chat-content {
-    flex: 1; padding: 10px; overflow-y: auto;
-    display: flex; flex-direction: column; gap: 4px;
-    font-size: 0.85rem;
+    flex: 1; padding: 10px 15px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 0.75rem;
 }
-.chat-message { line-height: 1.4; word-break: break-word; text-shadow: 0 1px 2px black; animation: fadeInMsg 0.2s ease; }
-.chat-message.system { color: var(--color-text-dim); font-style: italic; }
-.chat-message.loot { color: var(--color-text-main); }
-.chat-message.alert { color: var(--color-danger); font-weight: 500; }
-.chat-message.info { color: var(--ray-color); }
+
+.chat-message { 
+    line-height: 1.4; word-break: break-word; 
+    animation: fadeInMsg 0.2s ease; 
+    font-family: monospace;
+}
+
+.chat-message.system { color: var(--hud-text-dim); font-style: italic; border-left: 2px solid var(--hud-text-dim); padding-left: 5px; }
+.chat-message.loot { color: var(--hud-text); }
+.chat-message.alert { color: var(--hud-danger); border-left: 2px solid var(--hud-danger); padding-left: 5px; background: rgba(239, 68, 68, 0.05); }
+.chat-message.info { color: var(--hud-color); }
+
 @keyframes fadeInMsg { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
-
-/* Chat Input Area */
-.chat-input-area {
-    display: flex; gap: 5px; padding: 8px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    background: rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
-}
-#chat-input {
-    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 4px; color: white; padding: 4px 8px; font-size: 0.8rem; outline: none;
-    font-family: 'Outfit', sans-serif;
-    transition: all 0.3s ease;
-}
-#chat-input:focus { border-color: var(--ray-color); background: rgba(255,255,255,0.1); }
-
-/* --- COMMAND MODE STYLES (YENİ) --- */
-#chat-input.command-mode {
-    border-color: #f97316; /* Turuncu-500 */
-    color: #fdba74; /* Turuncu-300 */
-    background: rgba(249, 115, 22, 0.1);
-}
-#chat-input.command-mode + #chat-send-btn {
-    background: rgba(249, 115, 22, 0.2);
-    border-color: #f97316;
-    color: #f97316;
-}
-
-#chat-send-btn {
-    background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3);
-    color: var(--ray-color); border-radius: 4px; cursor: pointer; padding: 0 10px;
-    transition: 0.2s;
-}
-#chat-send-btn:hover { background: var(--ray-color); color: black; }
 
 /* Chat Timestamp */
 .chat-timestamp {
-    color: var(--color-text-dark); font-size: 0.7rem; margin-right: 6px; font-family: monospace;
-    opacity: 0.8;
+    color: var(--color-text-dark); font-size: 0.65rem; margin-right: 6px; 
+    opacity: 0.8; letter-spacing: 0;
+}
+
+/* --- INPUT ALANI --- */
+.chat-input-area {
+    display: flex; gap: 0; 
+    border-top: 1px solid var(--hud-color-dim);
+    background: rgba(0,0,0,0.5);
+    padding: 5px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+#chat-input {
+    flex: 1; 
+    background: transparent; 
+    border: 1px solid var(--hud-color-dim);
+    color: var(--hud-text); 
+    padding: 4px 8px; 
+    font-size: 0.75rem; 
+    outline: none;
+    font-family: monospace;
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+#chat-input:focus { 
+    border-color: var(--hud-color); 
+    background: rgba(148, 216, 195, 0.05); 
+    box-shadow: inset 0 0 10px rgba(148, 216, 195, 0.1);
+}
+
+/* Command Mode (Turuncu Stil) */
+#chat-input.command-mode {
+    border-color: #f97316; 
+    color: #fdba74; 
+    background: rgba(249, 115, 22, 0.05);
+}
+#chat-input.command-mode + #chat-send-btn {
+    border-color: #f97316;
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+#chat-send-btn {
+    background: transparent; 
+    border: 1px solid var(--hud-color-dim);
+    border-left: none;
+    color: var(--hud-color); 
+    cursor: pointer; padding: 0 15px;
+    transition: 0.2s;
+    border-radius: 0;
+    font-weight: bold;
+}
+#chat-send-btn:hover { 
+    background: var(--hud-color); 
+    color: #000; 
 }

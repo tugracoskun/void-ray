@@ -1,27 +1,20 @@
-/* PROFILE.CSS - Wireframe Style */
+/* PROFILE.CSS - Wireframe Style
+ * Core.css ile entegre edildi.
+ */
 
-:root {
-    --hud-color: #94d8c3;       
-    --hud-color-dim: rgba(148, 216, 195, 0.3);
-    --hud-bg: rgba(10, 12, 14, 0.95);
-    --hud-text: #e2e8f0;
-    --hud-text-dim: #94a3b8;
-}
+/* :root bloğu kaldırıldı. Değişkenler Core.css'den geliyor. */
 
 .profile-window.rpg-style {
     width: 400px;
     height: 480px; 
     max-height: 85vh;
     
+    /* Core.css'den gelen ortak arka plan ve yapı */
     background: var(--hud-bg);
     border: 1px solid var(--hud-color-dim); 
     
-    background-image: 
-        linear-gradient(to right, var(--hud-color) 2px, transparent 2px),
-        linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px),
-        linear-gradient(to left, var(--hud-color) 2px, transparent 2px),
-        linear-gradient(to top, var(--hud-color) 2px, transparent 2px);
-    
+    /* Ortak Izgara Deseni */
+    background-image: var(--wireframe-gradient);
     background-size: 10px 10px;
     background-position: top left, top left, bottom right, bottom right;
     background-repeat: no-repeat;
@@ -33,6 +26,8 @@
     overflow: hidden;
     position: relative;
     border-radius: 0;
+    
+    /* Font ailesi */
     font-family: 'Courier New', Courier, monospace;
     transition: none;
 }
@@ -48,7 +43,7 @@
     width: 32px; height: 32px; 
     border: 1px solid var(--hud-color);
     display: flex; justify-content: center; align-items: center;
-    background: rgba(148, 216, 195, 0.05);
+    background: rgba(148, 216, 195, 0.05); /* --hud-color'ın transparan hali */
 }
 
 .p-rpg-img { font-size: 1rem; color: var(--hud-color); }
@@ -75,10 +70,7 @@
 }
 .profile-content.no-padding { padding: 0; }
 
-.profile-content::-webkit-scrollbar { width: 4px; }
-.profile-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-.profile-content::-webkit-scrollbar-thumb { background: var(--hud-color-dim); border-radius: 2px; }
-.profile-content::-webkit-scrollbar-thumb:hover { background: var(--hud-color); }
+/* Scrollbar stilleri kaldırıldı (Core.css global stilini kullanacak) */
 
 .p-rpg-level-strip {
     display: flex;
