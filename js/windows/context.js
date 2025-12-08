@@ -37,17 +37,21 @@ function initContextSystem() {
 window.toggleContext = function() { 
     if (!ctxEl.overlay) initContextSystem();
     contextOpen = !contextOpen;
+    
     if(contextOpen) { 
         ctxEl.overlay.classList.add('open'); 
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-context-icon', true);
         renderContext(); 
     } else { 
         ctxEl.overlay.classList.remove('open'); 
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-context-icon', false);
     }
 };
 
 window.closeContext = function() {
     contextOpen = false;
     if(ctxEl.overlay) ctxEl.overlay.classList.remove('open');
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-context-icon', false);
 };
 
 /**

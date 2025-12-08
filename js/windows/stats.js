@@ -21,6 +21,9 @@ function openStats() {
     const overlay = document.getElementById('stats-overlay');
     if(overlay) overlay.classList.add('open');
     
+    // Butonu aktif yap
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-stats-icon', true);
+    
     // İlk render çağrısı (Yapıyı kurmak için)
     renderStats();
 }
@@ -32,6 +35,9 @@ function closeStats() {
     statsOpen = false;
     const overlay = document.getElementById('stats-overlay');
     if(overlay) overlay.classList.remove('open');
+    
+    // Buton aktifliğini kaldır
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-stats-icon', false);
 }
 
 /**
