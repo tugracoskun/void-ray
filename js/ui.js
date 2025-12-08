@@ -53,6 +53,19 @@ window.initUIListeners = function() {
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
 
+/**
+ * HUD üzerindeki bir butonun aktiflik durumunu (parlaklık) değiştirir.
+ * @param {string} id - Buton elementinin ID'si
+ * @param {boolean} isActive - Aktif mi pasif mi
+ */
+window.setHudButtonActive = function(id, isActive) {
+    const btn = document.getElementById(id);
+    if (btn) {
+        if (isActive) btn.classList.add('active');
+        else btn.classList.remove('active');
+    }
+};
+
 window.toggleHUD = function() {
     isHudVisible = !isHudVisible;
     const hudContainer = document.getElementById('ui-hud');

@@ -46,6 +46,9 @@ function updateChatUI() {
         btn.innerText = "✉"; 
         btn.style.color = "white";
         
+        // Butonu aktif olarak işaretle
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-chat-mode', true);
+        
         // Input alanını görünür yap (Tab durumuna göre switchChatTab yönetecek)
         if(inputArea) inputArea.style.removeProperty('display');
         
@@ -57,6 +60,9 @@ function updateChatUI() {
         btn.innerText = "⋯"; 
         btn.style.color = "#94a3b8"; 
         panel.classList.add('chat-mode-semi');
+        
+        // Buton aktifliğini kaldır
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-chat-mode', false);
         
         // Input alanını ZORLA gizle
         if(inputArea) inputArea.style.display = 'none';
@@ -70,6 +76,9 @@ function updateChatUI() {
         btn.innerText = "⊘"; 
         btn.style.color = "#ef4444"; 
         panel.classList.add('chat-mode-off');
+        
+        // Buton aktifliğini kaldır
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-chat-mode', false);
         
         // Input alanını ZORLA gizle
         if(inputArea) inputArea.style.display = 'none';

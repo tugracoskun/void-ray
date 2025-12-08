@@ -16,6 +16,9 @@ function openProfile(tab = 'summary') {
     const overlay = document.getElementById('profile-overlay');
     if (overlay) overlay.classList.add('open');
     
+    // Butonu aktif yap
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-profile-icon', true);
+    
     // İstenen sekmeye geç
     switchProfileTab(tab);
     
@@ -26,6 +29,10 @@ function closeProfile() {
     profileOpen = false;
     const overlay = document.getElementById('profile-overlay');
     if (overlay) overlay.classList.remove('open');
+    
+    // Buton aktifliğini kaldır
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-profile-icon', false);
+    
     hideTooltip();
 }
 

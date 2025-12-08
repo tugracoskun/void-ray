@@ -48,6 +48,10 @@ window.switchInventoryPage = function(pageNum) {
  * Envanter penceresini ekrana çizer.
  */
 function renderInventory() {
+    // Pencere açık değilse bile dışarıdan renderInventory çağrılırsa butonu aktif yapalım
+    // (Böylece klavye kısayolu ile açıldığında da çalışır)
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-inv-icon', true);
+
     const gridContainer = document.getElementById('inv-grid-content');
     if(!gridContainer) return;
     
@@ -137,5 +141,9 @@ function renderInventory() {
 function closeInventory() { 
     inventoryOpen = false; 
     document.getElementById('inventory-overlay').classList.remove('open'); 
+    
+    // Buton aktifliğini kaldır
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-inv-icon', false);
+    
     hideTooltip(); 
 }

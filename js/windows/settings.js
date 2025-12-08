@@ -255,21 +255,29 @@ function toggleSettings() {
     settingsOpen = !settingsOpen;
     if (settingsOpen) {
         panel.classList.add('open');
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-settings', true);
     } else {
         panel.classList.remove('open');
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-settings', false);
     }
 }
 
 function openSettings() {
     settingsOpen = true;
     const panel = document.getElementById('settings-panel');
-    if(panel) panel.classList.add('open');
+    if(panel) {
+        panel.classList.add('open');
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-settings', true);
+    }
 }
 
 function closeSettings() {
     settingsOpen = false;
     const panel = document.getElementById('settings-panel');
-    if(panel) panel.classList.remove('open');
+    if(panel) {
+        panel.classList.remove('open');
+        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-settings', false);
+    }
 }
 
 function switchSettingsTab(tabName) {
