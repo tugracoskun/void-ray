@@ -1,0 +1,151 @@
+/* * TABS.CSS
+ * Tüm panellerdeki sekme ve sayfa navigasyon stilleri.
+ * (Nexus, Ayarlar, Profil, Chat, Envanter)
+ */
+
+/* --- NEXUS TABS --- */
+.nexus-tabs { 
+    display: flex; 
+    gap: 0; 
+    border: 1px solid var(--hud-color-dim); 
+}
+
+.nexus-tab { 
+    padding: 8px 25px; 
+    cursor: pointer; 
+    color: var(--hud-text-dim); 
+    letter-spacing: 2px; 
+    transition: 0.3s; 
+    font-size: 0.8rem;
+    border-right: 1px solid var(--hud-color-dim);
+    background: rgba(0,0,0,0.5);
+}
+.nexus-tab:last-child { border-right: none; }
+
+.nexus-tab:hover { 
+    color: var(--hud-text); 
+    background: rgba(255,255,255,0.05); 
+}
+
+.nexus-tab.active { 
+    color: #000; 
+    background: var(--hud-color); 
+    font-weight: bold; 
+}
+
+/* --- SETTINGS TABS (HUD) --- */
+.settings-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    border: 1px solid var(--hud-color-dim);
+    background: rgba(0,0,0,0.3);
+}
+
+.settings-tab {
+    flex: 1;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 0.6rem;
+    color: var(--hud-text-dim);
+    cursor: pointer;
+    border-right: 1px solid var(--hud-color-dim);
+    transition: 0.2s;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+.settings-tab:last-child { border-right: none; }
+
+.settings-tab:hover { 
+    color: var(--hud-text); 
+    background: rgba(148, 216, 195, 0.05); 
+}
+
+.settings-tab.active { 
+    color: #000; 
+    background: var(--hud-color); 
+}
+
+/* --- PROFILE BOTTOM TABS --- */
+.profile-tabs-bottom {
+    display: flex;
+    border-top: 1px solid var(--hud-color-dim);
+    height: 40px;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+.profile-tab-btn {
+    flex: 1; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    font-size: 0.7rem; 
+    color: var(--hud-text-dim); 
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 2px;
+    border-right: 1px solid var(--hud-color-dim);
+    font-family: monospace;
+}
+.profile-tab-btn:last-child { border-right: none; }
+
+.profile-tab-btn:hover {
+    color: var(--hud-text);
+    background: rgba(148, 216, 195, 0.05);
+}
+
+.profile-tab-btn.active { 
+    color: var(--hud-color);
+    background: rgba(148, 216, 195, 0.1);
+    font-weight: bold;
+}
+
+/* --- CHAT TABS --- */
+.chat-tab {
+    flex: 1; 
+    display: flex; justify-content: center; align-items: center;
+    font-size: 0.65rem; letter-spacing: 2px; color: var(--hud-text-dim);
+    cursor: pointer; transition: all 0.2s; 
+    border-right: 1px solid var(--hud-color-dim);
+    font-weight: bold;
+}
+.chat-tab:last-child { border-right: none; }
+
+.chat-tab:hover:not(.disabled) { 
+    background: rgba(148, 216, 195, 0.1); 
+    color: var(--hud-text); 
+}
+
+.chat-tab.active { 
+    color: #000;
+    background: var(--hud-color);
+    box-shadow: 0 0 10px var(--hud-color-dim);
+}
+
+/* --- INVENTORY PAGINATION TABS --- */
+.inv-page-btn {
+    flex: 1; 
+    height: 100%;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--hud-color-dim);
+    color: var(--hud-text-dim);
+    font-family: monospace; font-size: 0.7rem;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; justify-content: center; align-items: center;
+    letter-spacing: 1px;
+}
+.inv-page-btn:last-child { border-right: none; }
+
+.inv-page-btn:hover { 
+    background: rgba(148, 216, 195, 0.05); 
+    color: var(--hud-text); 
+}
+
+.inv-page-btn.active { 
+    background: rgba(148, 216, 195, 0.1); 
+    color: var(--hud-color); 
+    font-weight: bold; 
+    box-shadow: inset 0 0 10px rgba(148, 216, 195, 0.05);
+}

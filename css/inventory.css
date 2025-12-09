@@ -168,29 +168,4 @@
     border-top: 1px solid var(--hud-color-dim);
 }
 
-/* Profil Sekmeleri (Tabs) Stili */
-.inv-page-btn {
-    flex: 1; /* Butonlar tüm alanı kaplasın */
-    height: 100%;
-    background: transparent;
-    border: none;
-    border-right: 1px solid var(--hud-color-dim);
-    color: var(--hud-text-dim);
-    font-family: monospace; font-size: 0.7rem;
-    cursor: pointer; transition: all 0.2s;
-    display: flex; justify-content: center; align-items: center;
-    letter-spacing: 1px;
-}
-.inv-page-btn:last-child { border-right: none; }
-
-.inv-page-btn:hover { 
-    background: rgba(148, 216, 195, 0.05); 
-    color: var(--hud-text); 
-}
-
-.inv-page-btn.active { 
-    background: rgba(148, 216, 195, 0.1); 
-    color: var(--hud-color); 
-    font-weight: bold; 
-    box-shadow: inset 0 0 10px rgba(148, 216, 195, 0.05);
-}
+/* .inv-page-btn -> css/tabs.css dosyasına taşındı */

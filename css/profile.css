@@ -170,34 +170,7 @@
 .p-attr-item span:first-child { color: var(--hud-text-dim); }
 .p-attr-item span:last-child { color: var(--hud-color); }
 
-.profile-tabs-bottom {
-    display: flex;
-    border-top: 1px solid var(--hud-color-dim);
-    height: 40px;
-    flex-shrink: 0;
-    margin-top: auto;
-}
-
-.profile-tab-btn {
-    flex: 1; display: flex; justify-content: center; align-items: center;
-    font-size: 0.7rem; color: var(--hud-text-dim); cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 2px;
-    border-right: 1px solid var(--hud-color-dim);
-    font-family: monospace;
-}
-.profile-tab-btn:last-child { border-right: none; }
-
-.profile-tab-btn:hover {
-    color: var(--hud-text);
-    background: rgba(148, 216, 195, 0.05);
-}
-
-.profile-tab-btn.active { 
-    color: var(--hud-color);
-    background: rgba(148, 216, 195, 0.1);
-    font-weight: bold;
-}
+/* .profile-tabs-bottom ve .profile-tab-btn -> css/tabs.css dosyasına taşındı */
 
 .achievement-item {
     display: flex; gap: 10px; align-items: flex-start;

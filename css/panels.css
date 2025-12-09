@@ -53,17 +53,8 @@
     font-family: 'Courier New', Courier, monospace;
     text-shadow: 0 0 10px var(--hud-color-dim);
 }
-.nexus-tabs { display: flex; gap: 0; border: 1px solid var(--hud-color-dim); }
-.nexus-tab { 
-    padding: 8px 25px; cursor: pointer; color: var(--hud-text-dim); 
-    letter-spacing: 2px; transition: 0.3s; 
-    font-size: 0.8rem;
-    border-right: 1px solid var(--hud-color-dim);
-    background: rgba(0,0,0,0.5);
-}
-.nexus-tab:last-child { border-right: none; }
-.nexus-tab:hover { color: var(--hud-text); background: rgba(255,255,255,0.05); }
-.nexus-tab.active { color: #000; background: var(--hud-color); font-weight: bold; }
+
+/* .nexus-tabs ve .nexus-tab -> css/tabs.css dosyasına taşındı */
 
 .nexus-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
 .nexus-content.active { display: block; }
@@ -74,8 +65,6 @@
     padding: 15px; text-align: center; transition: 0.2s; display: flex; flex-direction: column; gap: 8px; 
 }
 .market-card:hover { border-color: var(--hud-color); box-shadow: 0 0 15px var(--hud-color-dim); }
-
-/* BUTTONS TAŞINDI: .sell-btn, .buy-btn */
 
 .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
 .upgrade-col-title { 
@@ -101,5 +90,3 @@
     margin-bottom: 4px; transition: all 0.2s;
 }
 .storage-item:hover { border-color: var(--hud-color-dim); background: rgba(255,255,255,0.05); }
-
-/* BUTTONS TAŞINDI: .storage-btn-s, .btn-deposit, .btn-withdraw */

@@ -82,26 +82,7 @@
     user-select: none;
 }
 
-.chat-tab {
-    flex: 1; 
-    display: flex; justify-content: center; align-items: center;
-    font-size: 0.65rem; letter-spacing: 2px; color: var(--hud-text-dim);
-    cursor: pointer; transition: all 0.2s; 
-    border-right: 1px solid var(--hud-color-dim);
-    font-weight: bold;
-}
-.chat-tab:last-child { border-right: none; }
-
-.chat-tab:hover:not(.disabled) { 
-    background: rgba(148, 216, 195, 0.1); 
-    color: var(--hud-text); 
-}
-
-.chat-tab.active { 
-    color: #000;
-    background: var(--hud-color);
-    box-shadow: 0 0 10px var(--hud-color-dim);
-}
+/* .chat-tab -> css/tabs.css dosyasına taşındı */
 
 /* --- İÇERİK ALANI --- */
 .chat-content {

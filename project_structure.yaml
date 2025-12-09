@@ -6,6 +6,7 @@
 css:
   - core.css
   - buttons.css
+  - tabs.css
   - menus.css
   - hud.css
   - panels.css

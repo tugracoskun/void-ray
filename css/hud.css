@@ -24,8 +24,6 @@
     pointer-events: auto; align-items: flex-start; 
 }
 
-/* BUTTONS TAŞINDI: .hud-btn stilleri buttons.css'e alındı */
-
 /* Minimal Rozet */
 .hud-badge {
     position: absolute; top: -4px; right: -4px;
@@ -261,31 +259,7 @@
 }
 #settings-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
-/* --- SETTINGS TABS --- */
-.settings-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 12px;
-    border: 1px solid var(--hud-color-dim);
-    background: rgba(0,0,0,0.3);
-}
-
-.settings-tab {
-    flex: 1;
-    text-align: center;
-    padding: 6px 0;
-    font-size: 0.6rem;
-    color: var(--hud-text-dim);
-    cursor: pointer;
-    border-right: 1px solid var(--hud-color-dim);
-    transition: 0.2s;
-    letter-spacing: 1px;
-    font-weight: bold;
-}
-.settings-tab:last-child { border-right: none; }
-
-.settings-tab:hover { color: var(--hud-text); background: rgba(148, 216, 195, 0.05); }
-.settings-tab.active { color: #000; background: var(--hud-color); }
+/* .settings-tabs ve .settings-tab -> css/tabs.css dosyasına taşındı */
 
 .settings-content { display: none; animation: fadeInMsg 0.2s ease; }
 .settings-content.active { display: block; }
