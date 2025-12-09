@@ -176,10 +176,34 @@ function updateAIButton() {
     aiToggle.classList.add('active'); 
     modeBtn.classList.add('visible');
 
-    if (aiMode === 'travel') { btn.innerText = 'SEYİR'; btn.style.color = '#ef4444'; btn.style.borderColor = '#ef4444'; } 
-    else if (aiMode === 'base') { btn.innerText = 'ÜS'; btn.style.color = '#fbbf24'; btn.style.borderColor = '#fbbf24'; } 
-    else if (aiMode === 'deposit') { btn.innerText = 'DEPO'; btn.style.color = '#a855f7'; btn.style.borderColor = '#a855f7'; } 
-    else { btn.innerText = 'TOPLA'; btn.style.color = 'white'; btn.style.borderColor = 'transparent'; }
+    if (aiMode === 'travel') { 
+        btn.innerText = 'SEYİR'; 
+        btn.style.color = '#ef4444'; 
+        btn.style.borderColor = '#ef4444'; 
+    } 
+    else if (aiMode === 'base') { 
+        btn.innerText = 'ÜS'; 
+        btn.style.color = '#fbbf24'; 
+        btn.style.borderColor = '#fbbf24'; 
+    } 
+    else if (aiMode === 'deposit') { 
+        btn.innerText = 'DEPO'; 
+        btn.style.color = '#a855f7'; 
+        btn.style.borderColor = '#a855f7'; 
+    } 
+    else { 
+        // Gather Mode: Keşif mi, Toplama mı?
+        // Player objesinin scoutTarget özelliği varsa keşif modundadır.
+        if (typeof player !== 'undefined' && player.scoutTarget) {
+            btn.innerText = 'KEŞİF';
+            btn.style.color = '#67e8f9'; // Echo Turkuazı (Araştırma hissi için)
+            btn.style.borderColor = '#67e8f9';
+        } else {
+            btn.innerText = 'TOPLA'; 
+            btn.style.color = 'white'; 
+            btn.style.borderColor = 'transparent';
+        }
+    }
 }
 
 window.checkMobile = function() {
