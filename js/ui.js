@@ -5,6 +5,10 @@
 // HUD Görünürlük Durumu
 let isHudVisible = true;
 
+// PENCERE KATMAN YÖNETİMİ (Z-INDEX)
+// 5000'den başlatıyoruz ki diğer tüm UI elemanlarının (HUD, butonlar vb.) üzerinde olsun.
+let windowGlobalZ = 5000; 
+
 // --- GLOBAL TOOLTIP YÖNETİMİ ---
 const globalTooltip = document.createElement('div');
 globalTooltip.id = 'global-tooltip';
@@ -49,6 +53,32 @@ window.initUIListeners = function() {
         // Ses efekti UI tepkisi olarak çalınır
         if(typeof audio !== 'undefined' && audio) audio.playEvolve();
     });
+
+    // PENCERE SÜRÜKLEME SİSTEMİNİ VE VARSAYILAN KONUMLARI BAŞLAT
+    setTimeout(initDraggableWindows, 100);
+};
+
+// --- PENCERE KATMAN YÖNETİMİ (BRING TO FRONT) ---
+/**
+ * Bir pencereye tıklandığında onu en öne getirir.
+ * Hem pencerenin kendisine hem de (varsa) kapsayıcı overlay'e z-index uygular.
+ */
+window.bringWindowToFront = function(el) {
+    // Sadece görünür pencereler için işlem yap
+    if (el.style.display === 'none' || el.offsetParent === null) return;
+
+    windowGlobalZ++;
+    
+    // Elementin kendisinin z-index'ini artır
+    el.style.zIndex = windowGlobalZ;
+
+    // Eğer element bir overlay içindeyse, overlay'in z-index'ini de artır
+    const parentOverlay = el.closest('.overlay-base');
+    
+    if (parentOverlay) {
+        // Overlay'i de aynı seviyeye getiriyoruz
+        parentOverlay.style.zIndex = windowGlobalZ;
+    }
 };
 
 // --- GENEL YARDIMCI FONKSİYONLAR ---
@@ -230,3 +260,154 @@ window.startGameSession = function(loadSave) {
     if(audio) audio.init(); 
     if(typeof startLoop === 'function') startLoop(); 
 }
+
+// ==========================================
+// PENCERE SÜRÜKLEME SİSTEMİ (DRAGGABLE WINDOWS)
+// ==========================================
+
+/**
+ * Belirtilen bir HTML elementini, bir tutamaç (handle) üzerinden sürüklenebilir yapar.
+ * Sürükleme başladığında ve tıklandığında pencereyi en öne getirir.
+ */
+window.makeElementDraggable = function(el, handle) {
+    if (!el || !handle) return;
+    
+    handle.style.cursor = 'move';
+    handle.style.userSelect = 'none'; 
+
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+
+    // Pencereye herhangi bir tıklama (mousedown) yapıldığında
+    // bunu en üst seviyeden (capture) yakala ve pencereyi en öne getir.
+    el.addEventListener('mousedown', function(e) {
+        bringWindowToFront(el);
+    }, { capture: true });
+
+    handle.addEventListener('mousedown', (e) => {
+        // Sadece sol tık ile sürükleme
+        if (e.button !== 0) return;
+        
+        // Etkileşimli elemanlara tıklanırsa sürükleme başlatma
+        const targetTag = e.target.tagName;
+        if (['INPUT', 'BUTTON', 'TEXTAREA', 'A', 'SELECT'].includes(targetTag) || e.target.closest('.no-drag') || e.target.closest('.window-close-btn') || e.target.closest('.stats-close-btn')) return;
+
+        // Sürükleme başladığında da pencereyi öne getir
+        bringWindowToFront(el);
+
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Mevcut pozisyonu al
+        const rect = el.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(el);
+        
+        // Elementi 'absolute' pozisyona geçirerek overlay'den (flex) veya varsayılan akıştan kurtar
+        if (computedStyle.position !== 'absolute' && computedStyle.position !== 'fixed') {
+            el.style.position = 'absolute';
+        }
+        
+        const offsetParent = el.offsetParent || document.body;
+        const offsetParentRect = offsetParent.getBoundingClientRect();
+        
+        // Göreceli koordinatları hesapla
+        startLeft = rect.left - offsetParentRect.left;
+        startTop = rect.top - offsetParentRect.top;
+
+        // Pozisyonu sabitle (Merkezleme iptal olur, mevcut konum korunur)
+        el.style.left = startLeft + 'px';
+        el.style.top = startTop + 'px';
+        el.style.margin = '0';
+        el.style.bottom = 'auto'; 
+        el.style.right = 'auto';
+        el.style.transform = 'none';
+
+        document.body.style.cursor = 'move';
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        const newLeft = startLeft + dx;
+        const newTop = startTop + dy;
+
+        el.style.left = newLeft + 'px';
+        el.style.top = newTop + 'px';
+    }
+
+    function onMouseUp() {
+        isDragging = false;
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+};
+
+/**
+ * Oyundaki tüm pencereleri tanımlar, sürüklenebilir yapar ve VARSAYILAN KONUMLARI uygular.
+ */
+window.initDraggableWindows = function() {
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+
+    // Her pencere için varsayılan koordinatlar (x, y)
+    const windows = [
+        // 1. CHAT PANELİ (Varsayılan olarak Sol Altta kalsın)
+        { container: '#chat-panel', handle: '.chat-header' },
+        
+        // 2. ENVANTER: Sağ Taraf (Hafif aşağıda)
+        { container: '#inventory-overlay .inv-window', handle: '.inv-header', x: screenW - 280, y: screenH - 550 },
+        
+        // 3. İSTATİSTİKLER: Sağ Üst
+        { container: '#stats-overlay .stats-window', handle: '.stats-header', x: screenW - 380, y: 100 }, 
+        
+        // 4. PROFİL: Sol Üst (Karakter Bilgisi)
+        { container: '#profile-overlay .profile-window', handle: '.profile-rpg-header', x: 60, y: 100 },
+        
+        // 5. BAĞLAMLAR: Sol Taraf (Chat'in hemen üstü)
+        { container: '#context-overlay .context-window', handle: '.context-header', x: 60, y: screenH - 450 },
+        
+        // 6. NEXUS/DEPO (Büyük Pencereler): Merkezde kalsın
+        { container: '#nexus-overlay .nexus-window', handle: '.nexus-header' },
+        { container: '#storage-overlay .nexus-window', handle: '.nexus-header' },
+        { container: '#echo-inventory-overlay .nexus-window', handle: '.nexus-header' },
+        
+        // 7. AYARLAR: Sağ Üst
+        { container: '#settings-panel', handle: '#settings-header' },
+        
+        // 8. BAŞARIMLAR: Merkez
+        { container: '#achievements-overlay .stats-window', handle: '.stats-header' }
+    ];
+
+    windows.forEach(win => {
+        const containerEl = document.querySelector(win.container);
+        const handleEl = containerEl ? (containerEl.querySelector(win.handle) || document.querySelector(win.handle)) : null;
+        
+        if (containerEl) {
+            // Varsayılan pozisyon tanımlıysa uygula
+            if (win.x !== undefined && win.y !== undefined) {
+                containerEl.style.position = 'absolute';
+                containerEl.style.left = win.x + 'px';
+                containerEl.style.top = win.y + 'px';
+                containerEl.style.margin = '0';
+                containerEl.style.transform = 'none'; // Varsa flex ortalamasını iptal et
+                containerEl.style.bottom = 'auto';
+                containerEl.style.right = 'auto';
+            }
+
+            if (handleEl) {
+                makeElementDraggable(containerEl, handleEl);
+            }
+        }
+    });
+    
+    console.log("Pencere konumlandırma ve sürükleme sistemi aktif.");
+};

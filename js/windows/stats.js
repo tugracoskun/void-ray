@@ -1,7 +1,7 @@
 /**
  * Void Ray - Pencere: İstatistikler
  * * Oyun verilerini, sayaçları ve performans metriklerini gösteren pencere.
- * * GÜNCELLEME: DOM Caching (Önbellekleme) eklendi. Elementler her karede tekrar aranmaz.
+ * * GÜNCELLEME: Sürükleme özelliği dinamik içerik oluşumuna entegre edildi.
  */
 
 // Pencere Durumu
@@ -44,8 +44,9 @@ function closeStats() {
  * İstatistik yapısını oluşturur ve elementleri önbelleğe alır.
  */
 function initStatsDOM(windowEl) {
+    // Sınıf ismini 'stats-header' olarak düzelttik (Core CSS uyumu için)
     windowEl.innerHTML = `
-        <div class="stats-wireframe-header">
+        <div class="stats-header" style="cursor: move;">
             <div class="stats-icon-box">≣</div>
             <div class="stats-title-group">
                 <div class="stats-main-title">VERİ GÜNLÜĞÜ</div>
@@ -97,6 +98,14 @@ function initStatsDOM(windowEl) {
     });
 
     statsCache.initialized = true;
+
+    // YENİ: İçerik dinamik oluşturulduğu için sürükleme özelliğini (re)attach et
+    if (typeof makeElementDraggable === 'function') {
+        const header = windowEl.querySelector('.stats-header');
+        if (header) {
+            makeElementDraggable(windowEl, header);
+        }
+    }
 }
 
 /**

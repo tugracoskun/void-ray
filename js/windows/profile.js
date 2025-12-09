@@ -8,6 +8,17 @@ let profileOpen = false;
 let activeProfileTab = 'summary';
 
 /**
+ * Profil penceresini açar/kapatır (Toggle).
+ */
+window.toggleProfile = function() {
+    if (profileOpen) {
+        closeProfile();
+    } else {
+        openProfile();
+    }
+};
+
+/**
  * Profil penceresini açar.
  * @param {string} tab - Açılacak sekme ('summary' veya 'achievements')
  */

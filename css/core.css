@@ -68,6 +68,7 @@ canvas {
 ::-webkit-scrollbar-thumb:hover { background: var(--hud-color); }
 
 /* --- GLOBAL YARDIMCILAR --- */
+/* Overlay'in varsayılan z-index değeri yükseltildi ve 1000'den küçük tutuldu */
 .overlay-base { 
     position: absolute; 
     inset: 0; 
@@ -83,7 +84,15 @@ canvas {
 
 .overlay-base.open { 
     opacity: 1; 
-    pointer-events: auto; 
+    /* YENİ: Arka planı tıklanabilir yapmak için none */
+    pointer-events: none; 
+}
+
+/* Pencere içeriğinin tıklanabilir olmasını sağla */
+/* Z-index başlangıç değeri eklendi */
+.overlay-base.open > * {
+    pointer-events: auto;
+    z-index: 80; /* Varsayılan değer */
 }
 
 /* --- ORTAK SINIFLAR (UTILITIES) --- */
