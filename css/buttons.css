@@ -3,30 +3,72 @@
  * Menüler, HUD ve Panellerden toplanmıştır.
  */
 
+:root {
+    /* --- BUTON SABİTLERİ (Tekrarı önlemek için) --- */
+    --btn-font: 'Courier New', Courier, monospace;
+    --btn-transition-std: 0.2s;
+    --btn-transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --btn-border-w: 1px;
+    --btn-spacing-wide: 4px;
+    --btn-spacing-std: 2px;
+}
+
 /* --- MENU BUTTONS (Ana Menü) --- */
 .menu-btn, .menu-btn-primary {
-    background: transparent; border: 1px solid var(--hud-color); padding: 15px 60px;
-    border-radius: 0; font-size: 1rem; letter-spacing: 4px; text-transform: uppercase;
-    color: var(--hud-color); cursor: pointer; transition: all 0.2s; font-family: 'Courier New', Courier, monospace;
-    position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.5); margin-top: 15px;
+    background: transparent; 
+    border: var(--btn-border-w) solid var(--hud-color); 
+    padding: 15px 60px;
+    border-radius: 0; 
+    font-size: 1rem; 
+    letter-spacing: var(--btn-spacing-wide); 
+    text-transform: uppercase;
+    color: var(--hud-color); 
+    cursor: pointer; 
+    transition: all var(--btn-transition-std); 
+    font-family: var(--btn-font);
+    position: relative; 
+    overflow: hidden; 
+    box-shadow: 0 0 10px rgba(0,0,0,0.5); 
+    margin-top: 15px;
 }
+
 .menu-btn:hover, .menu-btn-primary:hover {
-    background: var(--hud-color); color: #000; box-shadow: 0 0 20px var(--hud-color-dim);
-    transform: translateY(-2px); letter-spacing: 6px; font-weight: bold;
+    background: var(--hud-color); 
+    color: #000; 
+    box-shadow: 0 0 20px var(--hud-color-dim);
+    transform: translateY(-2px); 
+    letter-spacing: 6px; 
+    font-weight: bold;
 }
-.menu-btn::before, .menu-btn-primary::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: var(--hud-color); }
-.menu-btn::after, .menu-btn-primary::after { content: ''; position: absolute; bottom: 0; right: 0; width: 4px; height: 4px; background: var(--hud-color); }
+
+.menu-btn::before, .menu-btn-primary::before { 
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: var(--hud-color); 
+}
+.menu-btn::after, .menu-btn-primary::after { 
+    content: ''; position: absolute; bottom: 0; right: 0; width: 4px; height: 4px; background: var(--hud-color); 
+}
 
 .menu-btn.small-btn { padding: 10px 30px; font-size: 0.8rem; } 
 
-.github-link-btn { color: var(--hud-text-dim); border: 1px solid transparent; transition: 0.2s; }
+.github-link-btn { 
+    color: var(--hud-text-dim); 
+    border: var(--btn-border-w) solid transparent; 
+    transition: var(--btn-transition-std); 
+}
 .github-link-btn:hover { color: var(--hud-color); text-shadow: 0 0 5px var(--hud-color); }
 
 /* --- PAUSE MENU BUTTONS --- */
 .pause-btn {
-    background: transparent; border: 1px solid var(--hud-color); color: var(--hud-color);
-    padding: 15px; font-size: 0.9rem; letter-spacing: 2px; cursor: pointer; transition: 0.2s;
-    font-family: monospace; width: 100%;
+    background: transparent; 
+    border: var(--btn-border-w) solid var(--hud-color); 
+    color: var(--hud-color);
+    padding: 15px; 
+    font-size: 0.9rem; 
+    letter-spacing: var(--btn-spacing-std); 
+    cursor: pointer; 
+    transition: var(--btn-transition-std);
+    font-family: var(--btn-font); 
+    width: 100%;
 }
 .pause-btn:hover { background: var(--hud-color); color: #000; box-shadow: 0 0 15px var(--hud-color-dim); }
 
@@ -38,13 +80,13 @@
     width: 38px; height: 38px;
     border-radius: 0;
     background: rgba(10, 12, 14, 0.4);
-    border: 1px solid rgba(148, 216, 195, 0.1);
+    border: var(--btn-border-w) solid rgba(148, 216, 195, 0.1);
     display: flex; justify-content: center; align-items: center;
     cursor: pointer;
     color: var(--hud-text-dim);
     font-size: 0.9rem;
-    font-family: 'Courier New', Courier, monospace;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--btn-font);
+    transition: var(--btn-transition-smooth);
     position: relative;
     overflow: visible;
 }
@@ -54,14 +96,14 @@
     width: 6px; height: 6px; 
     border-top: 2px solid var(--hud-color-dim); 
     border-left: 2px solid var(--hud-color-dim); 
-    transition: all 0.2s;
+    transition: var(--btn-transition-std);
 }
 .hud-btn::after { 
     content: ''; position: absolute; bottom: -1px; right: -1px; 
     width: 6px; height: 6px; 
     border-bottom: 2px solid var(--hud-color-dim); 
     border-right: 2px solid var(--hud-color-dim); 
-    transition: all 0.2s;
+    transition: var(--btn-transition-std);
 }
 
 .hud-btn:hover { 
@@ -87,17 +129,30 @@
 
 /* --- PANEL & MARKET BUTTONS --- */
 .sell-btn { 
-    background: transparent; color: var(--hud-color); border: 1px solid var(--hud-color); 
-    padding: 8px; cursor: pointer; margin-top: auto; transition: 0.2s; 
-    letter-spacing: 2px; font-family: monospace; font-size: 0.8rem;
+    background: transparent; 
+    color: var(--hud-color); 
+    border: var(--btn-border-w) solid var(--hud-color); 
+    padding: 8px; 
+    cursor: pointer; 
+    margin-top: auto; 
+    transition: var(--btn-transition-std); 
+    letter-spacing: var(--btn-spacing-std); 
+    font-family: var(--btn-font); 
+    font-size: 0.8rem;
 }
 .sell-btn:hover { background: var(--hud-color); color: black; }
 
 .buy-btn { 
-    background: transparent; border: 1px solid var(--hud-color); color: var(--hud-color); 
-    padding: 6px 15px; cursor: pointer; transition: 0.3s; 
-    display: flex; flex-direction: column; align-items: center; min-width: 90px;
-    font-family: monospace; font-size: 0.8rem;
+    background: transparent; 
+    border: var(--btn-border-w) solid var(--hud-color); 
+    color: var(--hud-color); 
+    padding: 6px 15px; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    display: flex; flex-direction: column; align-items: center; 
+    min-width: 90px;
+    font-family: var(--btn-font); 
+    font-size: 0.8rem;
 }
 .buy-btn:hover:not(:disabled) { background: var(--hud-color); color: black; }
 .buy-btn:disabled { opacity: 0.3; border-color: #475569; color: #475569; cursor: not-allowed; }
@@ -105,7 +160,9 @@
 /* --- STORAGE BUTTONS --- */
 .storage-btn-s {
     padding: 4px 10px; font-size: 0.7rem; cursor: pointer;
-    border: 1px solid transparent; transition: 0.2s; font-family: monospace;
+    border: var(--btn-border-w) solid transparent; 
+    transition: var(--btn-transition-std); 
+    font-family: var(--btn-font);
 }
 .btn-deposit { background: transparent; color: var(--ray-color); border-color: var(--ray-color); }
 .btn-deposit:hover { background: var(--ray-color); color: #000; }
