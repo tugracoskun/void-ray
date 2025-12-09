@@ -24,67 +24,7 @@
     pointer-events: auto; align-items: flex-start; 
 }
 
-/* --- MİNİMAL HUD BUTONLARI --- */
-.hud-btn {
-    width: 38px; height: 38px; /* Daha küçük boyut */
-    border-radius: 0;
-    
-    /* Varsayılan: Çok silik, sadece hayalet */
-    background: rgba(10, 12, 14, 0.4);
-    border: 1px solid rgba(148, 216, 195, 0.1);
-    
-    display: flex; justify-content: center; align-items: center;
-    cursor: pointer; 
-    
-    /* İkon Stili */
-    color: var(--hud-text-dim);
-    font-size: 0.9rem; /* İkon boyutu dengelendi */
-    font-family: 'Courier New', Courier, monospace;
-    
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: visible; /* Köşe taşmaları için */
-}
-
-/* Köşe Vurguları - Sadece Çapraz Köşeler (Benzersiz Dokunuş) */
-.hud-btn::before { 
-    content: ''; position: absolute; top: -1px; left: -1px; 
-    width: 6px; height: 6px; 
-    border-top: 2px solid var(--hud-color-dim); 
-    border-left: 2px solid var(--hud-color-dim); 
-    transition: all 0.2s;
-}
-.hud-btn::after { 
-    content: ''; position: absolute; bottom: -1px; right: -1px; 
-    width: 6px; height: 6px; 
-    border-bottom: 2px solid var(--hud-color-dim); 
-    border-right: 2px solid var(--hud-color-dim); 
-    transition: all 0.2s;
-}
-
-/* Hover Efektleri - Canlanma */
-.hud-btn:hover { 
-    background: rgba(10, 12, 14, 0.9); 
-    border-color: var(--hud-color-dim);
-    color: var(--hud-color); 
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-}
-
-/* Hover'da Köşeler Parlar */
-.hud-btn:hover::before { border-color: var(--hud-color); width: 100%; height: 100%; opacity: 0.5; }
-.hud-btn:hover::after { border-color: var(--hud-color); width: 100%; height: 100%; opacity: 0.5; }
-
-/* Aktif Durum */
-.hud-btn.active { 
-    background: rgba(148, 216, 195, 0.1); 
-    color: var(--hud-color); 
-    border-color: var(--hud-color);
-}
-.hud-btn.active::before, .hud-btn.active::after {
-    border-color: var(--hud-color);
-    width: 8px; height: 8px; /* Aktifken köşeler biraz daha belirgin */
-}
+/* BUTTONS TAŞINDI: .hud-btn stilleri buttons.css'e alındı */
 
 /* Minimal Rozet */
 .hud-badge {
@@ -115,25 +55,21 @@
 .ai-mode-switch.visible { display: block; }
 .ai-mode-switch:hover { border-color: var(--hud-color); color: var(--hud-color); background: rgba(0,0,0,0.9); }
 
-/* Echo Menu - GÜNCELLENDİ (Mavi Arka Plan Kaldırıldı / Okunabilirlik Artırıldı) */
+/* Echo Menu - GÜNCELLENDİ */
 .echo-wrapper { position: relative; display: none; flex-direction: column; }
 .echo-wrapper:hover .echo-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
 
 .echo-dropdown {
     position: absolute; top: 45px; left: 0;
-    /* Tamamen koyu, nötr arka plan */
     background-color: #050505; 
     border: 1px solid var(--hud-color-dim);
-    
-    /* Izgara deseni GRİ tonlara çekildi (Mavimsi ton kaldırıldı) */
     background-image: 
         linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 20px 20px;
-    
-    padding: 0; /* Padding sıfırlandı, iç öğeler kenara yapışsın */
+    padding: 0; 
     width: 210px;
-    display: flex; flex-direction: column; gap: 1px; /* Öğeler arası 1px boşluk */
+    display: flex; flex-direction: column; gap: 1px;
     opacity: 0; visibility: hidden; transform: translateY(-5px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px); 
@@ -145,12 +81,11 @@
     padding: 10px 12px; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex; align-items: center; gap: 12px;
-    /* Nötr koyu gri arka plan */
     background: rgba(30, 30, 30, 0.5); 
 }
 .echo-p-icon { 
     width: 32px; height: 32px; 
-    border: 1px solid var(--echo-color); /* İkon rengi korunabilir, küçük bir detay */
+    border: 1px solid var(--echo-color);
     display: flex; justify-content: center; align-items: center; 
     font-size: 0.9rem; color: var(--echo-color);
     background: rgba(0,0,0,0.5);
@@ -161,15 +96,14 @@
 
 .echo-menu-item {
     padding: 10px 12px; cursor: pointer;
-    font-size: 0.7rem; letter-spacing: 1px; color: #aaa; /* Gri metin */
+    font-size: 0.7rem; letter-spacing: 1px; color: #aaa;
     transition: all 0.2s; 
-    border-left: 2px solid transparent; /* Sol kenar vurgusu için yer tutucu */
+    border-left: 2px solid transparent; 
     display: flex; justify-content: space-between; align-items: center;
     font-family: monospace;
-    background: rgba(20, 20, 20, 0.8); /* Çok koyu gri */
+    background: rgba(20, 20, 20, 0.8);
 }
 
-/* Hover: Arka planı hafif aydınlat, metni beyaz yap */
 .echo-menu-item:hover { 
     background: rgba(40, 40, 40, 0.9); 
     color: #fff; 
@@ -177,13 +111,12 @@
     padding-left: 15px;
 }
 
-/* AKTİF MOD: Mavi arka plan YERİNE Sol Kenar Vurgusu ve Renkli Metin */
 .echo-menu-item.active-mode { 
-    color: var(--echo-color); /* Metin rengi turkuaz/mavi kalsın, okunabilir */
-    background: rgba(20, 20, 20, 1); /* Arka plan koyu kalsın */
+    color: var(--echo-color);
+    background: rgba(20, 20, 20, 1);
     font-weight: bold; 
-    border-left: 3px solid var(--echo-color); /* Sadece sol çizgi renkli */
-    box-shadow: inset 10px 0 20px -10px rgba(103, 232, 249, 0.1); /* Çok hafif iç parlama */
+    border-left: 3px solid var(--echo-color);
+    box-shadow: inset 10px 0 20px -10px rgba(103, 232, 249, 0.1);
 }
 
 /* --- REHBER / TUTORIAL KUTUSU --- */
@@ -192,8 +125,7 @@
     top: 30px; left: 50%; transform: translateX(-50%) translateY(-20px);
     background: rgba(10, 12, 14, 0.9);
     border: 1px solid var(--ray-color);
-    border-left-width: 4px; /* Sol kenar vurgusu */
-    
+    border-left-width: 4px;
     padding: 10px 15px;
     display: flex; align-items: center; gap: 12px;
     box-shadow: 0 0 20px rgba(0,0,0,0.6);
@@ -258,7 +190,7 @@
 
 /* --- SPEEDOMETER --- */
 #speedometer {
-    position: absolute; bottom: 20px; right: 215px; /* Minimap yanına yaklaştırıldı */
+    position: absolute; bottom: 20px; right: 215px; 
     left: auto; 
     background: transparent; border: none;
     padding: 0; border-radius: 0;
@@ -270,25 +202,21 @@
 .speed-unit { font-size: 0.7rem; color: var(--hud-text-dim); margin-left: 5px; font-weight: 300; }
 
 /* --- MİNİMAL AYARLAR BUTONU --- */
+/* .hud-btn stilini kullanır ancak ID spesifik pozisyonu vardır */
 #btn-settings { 
     position: absolute; top: 20px; right: 20px; 
     width: 38px; height: 38px; 
-    
     border-radius: 0;
     background: rgba(10, 12, 14, 0.4);
     border: 1px solid rgba(148, 216, 195, 0.1);
-    
     display: flex; justify-content: center; align-items: center; 
     cursor: pointer; z-index: 90; 
-    
     color: var(--hud-text-dim); 
     font-size: 1.2rem;
-    
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
     pointer-events: auto; 
 }
 
-/* Ayarlar Çapraz Köşe Vurgusu */
 #btn-settings::before { 
     content: ''; position: absolute; top: -1px; left: -1px; 
     width: 6px; height: 6px; 
@@ -315,20 +243,15 @@
     border-color: var(--hud-color); opacity: 0.8;
 }
 
-/* Ayarlar Paneli (GÜNCELLENDİ - OKUNABİLİRLİK İÇİN) */
+/* Ayarlar Paneli */
 #settings-panel { 
     position: absolute; top: 70px; right: 20px; width: 280px; 
-    
-    /* Okunabilirlik için koyu arka plan */
     background-color: #0b0d10;
     border: 1px solid var(--hud-color-dim);
-    
-    /* Daha seyrek ve silik ızgara deseni */
     background-image: 
         linear-gradient(rgba(148, 216, 195, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(148, 216, 195, 0.03) 1px, transparent 1px);
     background-size: 20px 20px;
-    
     padding: 15px; 
     pointer-events: none; opacity: 0; 
     transition: all 0.3s; transform: translateY(-10px); 

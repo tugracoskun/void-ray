@@ -9,7 +9,7 @@
     --hud-danger: #ef4444;
 }
 
-/* --- ANA MENÜ (Önceki stille aynı, korundu) --- */
+/* --- ANA MENÜ --- */
 #main-menu {
     position: absolute; inset: 0;
     background: 
@@ -44,18 +44,7 @@
 .void-symbol-center circle { fill: var(--hud-color) !important; }
 @keyframes pulseSymbol { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } }
 
-.menu-btn, .menu-btn-primary {
-    background: transparent; border: 1px solid var(--hud-color); padding: 15px 60px;
-    border-radius: 0; font-size: 1rem; letter-spacing: 4px; text-transform: uppercase;
-    color: var(--hud-color); cursor: pointer; transition: all 0.2s; font-family: 'Courier New', Courier, monospace;
-    position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.5); margin-top: 15px;
-}
-.menu-btn:hover, .menu-btn-primary:hover {
-    background: var(--hud-color); color: #000; box-shadow: 0 0 20px var(--hud-color-dim);
-    transform: translateY(-2px); letter-spacing: 6px; font-weight: bold;
-}
-.menu-btn::before, .menu-btn-primary::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: var(--hud-color); }
-.menu-btn::after, .menu-btn-primary::after { content: ''; position: absolute; bottom: 0; right: 0; width: 4px; height: 4px; background: var(--hud-color); }
+/* BUTTONS TAŞINDI: .menu-btn, .menu-btn-primary */
 
 .dev-footer {
     position: absolute; bottom: 30px; display: flex; align-items: center; gap: 30px; padding: 10px 40px;
@@ -66,17 +55,14 @@
 .dev-footer:hover { border-color: var(--hud-color); box-shadow: 0 0 15px var(--hud-color-dim); }
 .dev-label { font-size: 0.5rem; letter-spacing: 2px; color: var(--hud-text-dim); }
 .dev-name { font-size: 0.8rem; letter-spacing: 1px; color: var(--hud-text); font-weight: bold; }
-.github-link-btn { color: var(--hud-text-dim); border: 1px solid transparent; transition: 0.2s; }
-.github-link-btn:hover { color: var(--hud-color); text-shadow: 0 0 5px var(--hud-color); }
 
-/* --- YENİ: SİSTEM PENCERESİ (MODAL) STİLİ --- */
-/* Pause ve Death ekranları için ortak Wireframe kutusu */
+/* BUTTONS TAŞINDI: .github-link-btn */
+
+/* --- SİSTEM PENCERESİ (MODAL) STİLİ --- */
 .system-modal {
     width: 500px;
     background: var(--hud-bg);
     border: 1px solid var(--hud-color-dim);
-    
-    /* Köşe Vurguları */
     background-image: 
         linear-gradient(to right, var(--hud-color) 2px, transparent 2px),
         linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px),
@@ -85,7 +71,6 @@
     background-size: 10px 10px;
     background-position: top left, top left, bottom right, bottom right;
     background-repeat: no-repeat;
-
     box-shadow: 0 0 50px rgba(0,0,0,0.8);
     display: flex; flex-direction: column;
 }
@@ -118,7 +103,7 @@
     display: flex; flex-direction: column; align-items: center; text-align: center;
 }
 
-/* --- OVERLAY YAPILARI --- */
+/* --- OVERLAYS --- */
 #pause-overlay, #death-screen, .mobile-warning-overlay {
     position: absolute; inset: 0;
     background: rgba(0, 0, 0, 0.8);
@@ -137,15 +122,7 @@
 }
 .pause-menu-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
 
-.pause-btn {
-    background: transparent; border: 1px solid var(--hud-color); color: var(--hud-color);
-    padding: 15px; font-size: 0.9rem; letter-spacing: 2px; cursor: pointer; transition: 0.2s;
-    font-family: monospace; width: 100%;
-}
-.pause-btn:hover { background: var(--hud-color); color: #000; box-shadow: 0 0 15px var(--hud-color-dim); }
-
-.pause-btn.danger { border-color: var(--hud-danger); color: var(--hud-danger); }
-.pause-btn.danger:hover { background: var(--hud-danger); color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+/* BUTTONS TAŞINDI: .pause-btn */
 
 /* DEATH ÖZEL */
 .death-title { font-size: 2.5rem; letter-spacing: 5px; color: var(--hud-danger); margin-bottom: 10px; font-weight: bold; text-transform: uppercase; }

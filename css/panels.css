@@ -1,6 +1,5 @@
 /* * PANELS.CSS
  * Nexus, Depo ve Bağlam Analizi.
- * (İstatistikler stats.css dosyasına taşındı)
  */
 
 /* WINDOWS GENEL YAPISI */
@@ -76,12 +75,7 @@
 }
 .market-card:hover { border-color: var(--hud-color); box-shadow: 0 0 15px var(--hud-color-dim); }
 
-.sell-btn { 
-    background: transparent; color: var(--hud-color); border: 1px solid var(--hud-color); 
-    padding: 8px; cursor: pointer; margin-top: auto; transition: 0.2s; 
-    letter-spacing: 2px; font-family: monospace; font-size: 0.8rem;
-}
-.sell-btn:hover { background: var(--hud-color); color: black; }
+/* BUTTONS TAŞINDI: .sell-btn, .buy-btn */
 
 .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
 .upgrade-col-title { 
@@ -98,14 +92,6 @@
 .lvl-pip { width: 8px; height: 8px; background: #334155; border: 1px solid #000; }
 .lvl-pip.filled { background: var(--ray-color); box-shadow: 0 0 5px var(--ray-color); }
 
-.buy-btn { 
-    background: transparent; border: 1px solid var(--hud-color); color: var(--hud-color); 
-    padding: 6px 15px; cursor: pointer; transition: 0.3s; 
-    display: flex; flex-direction: column; align-items: center; min-width: 90px;
-    font-family: monospace; font-size: 0.8rem;
-}
-.buy-btn:hover:not(:disabled) { background: var(--hud-color); color: black; }
-.buy-btn:disabled { opacity: 0.3; border-color: #475569; color: #475569; cursor: not-allowed; }
 .cost-text { font-size: 0.7rem; margin-top: 2px; opacity: 0.8; }
 
 /* --- STORAGE (DEPO) --- */
@@ -115,11 +101,5 @@
     margin-bottom: 4px; transition: all 0.2s;
 }
 .storage-item:hover { border-color: var(--hud-color-dim); background: rgba(255,255,255,0.05); }
-.storage-btn-s {
-    padding: 4px 10px; font-size: 0.7rem; cursor: pointer;
-    border: 1px solid transparent; transition: 0.2s; font-family: monospace;
-}
-.btn-deposit { background: transparent; color: var(--ray-color); border-color: var(--ray-color); }
-.btn-deposit:hover { background: var(--ray-color); color: #000; }
-.btn-withdraw { background: transparent; color: var(--color-storage); border-color: var(--color-storage); }
-.btn-withdraw:hover { background: var(--color-storage); color: #000; }
+
+/* BUTTONS TAŞINDI: .storage-btn-s, .btn-deposit, .btn-withdraw */

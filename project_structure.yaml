@@ -5,6 +5,7 @@
 
 css:
   - core.css
+  - buttons.css
   - menus.css
   - hud.css
   - panels.css
