@@ -1,35 +1,79 @@
 /* * TABS.CSS
  * Tüm panellerdeki sekme ve sayfa navigasyon stilleri.
  * (Nexus, Ayarlar, Profil, Chat, Envanter)
+ * GÜNCELLEME: Merkezi değişkenler (CSS Variables) kullanımı
  */
+
+:root {
+    /* -- Tabs Renk Paleti -- */
+    --tab-border-color: var(--hud-color-dim);      /* Kenarlık rengi (Core.css'den) */
+    --tab-bg-default: rgba(0,0,0,0.5);             /* Varsayılan arka plan */
+    --tab-bg-hover: rgba(148, 216, 195, 0.05);     /* Üzerine gelince arka plan */
+    --tab-bg-active: var(--hud-color);             /* Aktif sekme arka planı */
+    --tab-bg-active-dim: rgba(148, 216, 195, 0.1); /* Alternatif aktif arka plan (Yarı şeffaf) */
+    
+    /* -- Tabs Metin Renkleri -- */
+    --tab-text-default: var(--hud-text-dim);       /* Varsayılan metin */
+    --tab-text-hover: var(--hud-text);             /* Hover metin */
+    --tab-text-active: #000;                       /* Aktif sekme metni (Koyu) */
+    --tab-text-active-alt: var(--hud-color);       /* Alternatif aktif metin (Renkli) */
+
+    /* -- Tabs Yapısal Özellikler -- */
+    --tab-font-size-lg: 0.8rem;
+    --tab-font-size-md: 0.7rem;
+    --tab-font-size-sm: 0.65rem;
+    --tab-font-size-xs: 0.6rem;
+    
+    --tab-padding-lg: 8px 25px;
+    --tab-padding-md: 6px 0;
+    
+    --tab-transition: all 0.2s ease;
+    --tab-letter-spacing: 2px;
+}
+
+/* --- ORTAK TAB STİLİ (BASE) --- */
+.tab-base {
+    cursor: pointer;
+    transition: var(--tab-transition);
+    border-right: 1px solid var(--tab-border-color);
+    font-family: monospace; /* Veya inherit */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.tab-base:last-child { border-right: none; }
+
 
 /* --- NEXUS TABS --- */
 .nexus-tabs { 
     display: flex; 
     gap: 0; 
-    border: 1px solid var(--hud-color-dim); 
+    border: 1px solid var(--tab-border-color); 
 }
 
 .nexus-tab { 
-    padding: 8px 25px; 
-    cursor: pointer; 
-    color: var(--hud-text-dim); 
-    letter-spacing: 2px; 
-    transition: 0.3s; 
-    font-size: 0.8rem;
-    border-right: 1px solid var(--hud-color-dim);
-    background: rgba(0,0,0,0.5);
+    /* Base stilin üzerine özelleştirme */
+    padding: var(--tab-padding-lg);
+    color: var(--tab-text-default);
+    letter-spacing: var(--tab-letter-spacing);
+    font-size: var(--tab-font-size-lg);
+    background: var(--tab-bg-default);
+    
+    /* Base özellikleri manuel ekliyoruz (mixin olmadığı için) */
+    cursor: pointer;
+    transition: var(--tab-transition);
+    border-right: 1px solid var(--tab-border-color);
 }
 .nexus-tab:last-child { border-right: none; }
 
 .nexus-tab:hover { 
-    color: var(--hud-text); 
-    background: rgba(255,255,255,0.05); 
+    color: var(--tab-text-hover); 
+    background: rgba(255,255,255,0.05); /* Özel hover */
 }
 
 .nexus-tab.active { 
-    color: #000; 
-    background: var(--hud-color); 
+    color: var(--tab-text-active); 
+    background: var(--tab-bg-active); 
     font-weight: bold; 
 }
 
@@ -38,38 +82,39 @@
     display: flex;
     gap: 0;
     margin-bottom: 12px;
-    border: 1px solid var(--hud-color-dim);
+    border: 1px solid var(--tab-border-color);
     background: rgba(0,0,0,0.3);
 }
 
 .settings-tab {
     flex: 1;
     text-align: center;
-    padding: 6px 0;
-    font-size: 0.6rem;
-    color: var(--hud-text-dim);
-    cursor: pointer;
-    border-right: 1px solid var(--hud-color-dim);
-    transition: 0.2s;
+    padding: var(--tab-padding-md);
+    font-size: var(--tab-font-size-xs);
+    color: var(--tab-text-default);
     letter-spacing: 1px;
     font-weight: bold;
+    
+    cursor: pointer;
+    transition: var(--tab-transition);
+    border-right: 1px solid var(--tab-border-color);
 }
 .settings-tab:last-child { border-right: none; }
 
 .settings-tab:hover { 
-    color: var(--hud-text); 
-    background: rgba(148, 216, 195, 0.05); 
+    color: var(--tab-text-hover); 
+    background: var(--tab-bg-hover); 
 }
 
 .settings-tab.active { 
-    color: #000; 
-    background: var(--hud-color); 
+    color: var(--tab-text-active); 
+    background: var(--tab-bg-active); 
 }
 
 /* --- PROFILE BOTTOM TABS --- */
 .profile-tabs-bottom {
     display: flex;
-    border-top: 1px solid var(--hud-color-dim);
+    border-top: 1px solid var(--tab-border-color);
     height: 40px;
     flex-shrink: 0;
     margin-top: auto;
@@ -80,24 +125,25 @@
     display: flex; 
     justify-content: center; 
     align-items: center;
-    font-size: 0.7rem; 
-    color: var(--hud-text-dim); 
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 2px;
-    border-right: 1px solid var(--hud-color-dim);
+    font-size: var(--tab-font-size-md);
+    color: var(--tab-text-default);
+    letter-spacing: var(--tab-letter-spacing);
     font-family: monospace;
+    
+    cursor: pointer;
+    transition: var(--tab-transition);
+    border-right: 1px solid var(--tab-border-color);
 }
 .profile-tab-btn:last-child { border-right: none; }
 
 .profile-tab-btn:hover {
-    color: var(--hud-text);
-    background: rgba(148, 216, 195, 0.05);
+    color: var(--tab-text-hover);
+    background: var(--tab-bg-hover);
 }
 
 .profile-tab-btn.active { 
-    color: var(--hud-color);
-    background: rgba(148, 216, 195, 0.1);
+    color: var(--tab-text-active-alt);
+    background: var(--tab-bg-active-dim);
     font-weight: bold;
 }
 
@@ -105,22 +151,26 @@
 .chat-tab {
     flex: 1; 
     display: flex; justify-content: center; align-items: center;
-    font-size: 0.65rem; letter-spacing: 2px; color: var(--hud-text-dim);
-    cursor: pointer; transition: all 0.2s; 
-    border-right: 1px solid var(--hud-color-dim);
+    font-size: var(--tab-font-size-sm);
+    letter-spacing: var(--tab-letter-spacing);
+    color: var(--tab-text-default);
     font-weight: bold;
+    
+    cursor: pointer; 
+    transition: var(--tab-transition); 
+    border-right: 1px solid var(--tab-border-color);
 }
 .chat-tab:last-child { border-right: none; }
 
 .chat-tab:hover:not(.disabled) { 
-    background: rgba(148, 216, 195, 0.1); 
-    color: var(--hud-text); 
+    background: var(--tab-bg-active-dim); /* Chat için biraz daha belirgin hover */
+    color: var(--tab-text-hover); 
 }
 
 .chat-tab.active { 
-    color: #000;
-    background: var(--hud-color);
-    box-shadow: 0 0 10px var(--hud-color-dim);
+    color: var(--tab-text-active);
+    background: var(--tab-bg-active);
+    box-shadow: 0 0 10px var(--tab-border-color);
 }
 
 /* --- INVENTORY PAGINATION TABS --- */
@@ -129,23 +179,27 @@
     height: 100%;
     background: transparent;
     border: none;
-    border-right: 1px solid var(--hud-color-dim);
-    color: var(--hud-text-dim);
-    font-family: monospace; font-size: 0.7rem;
-    cursor: pointer; transition: all 0.2s;
-    display: flex; justify-content: center; align-items: center;
+    color: var(--tab-text-default);
+    font-family: monospace; 
+    font-size: var(--tab-font-size-md);
     letter-spacing: 1px;
+    
+    cursor: pointer; 
+    transition: var(--tab-transition);
+    display: flex; justify-content: center; align-items: center;
+    
+    border-right: 1px solid var(--tab-border-color);
 }
 .inv-page-btn:last-child { border-right: none; }
 
 .inv-page-btn:hover { 
-    background: rgba(148, 216, 195, 0.05); 
-    color: var(--hud-text); 
+    background: var(--tab-bg-hover); 
+    color: var(--tab-text-hover); 
 }
 
 .inv-page-btn.active { 
-    background: rgba(148, 216, 195, 0.1); 
-    color: var(--hud-color); 
+    background: var(--tab-bg-active-dim); 
+    color: var(--tab-text-active-alt); 
     font-weight: bold; 
     box-shadow: inset 0 0 10px rgba(148, 216, 195, 0.05);
 }
