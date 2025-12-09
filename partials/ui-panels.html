@@ -10,9 +10,14 @@
             </div>
 
             <div class="absolute bottom-4 right-4 flex gap-2">
-                <!-- TAKİP MODU BUTONU (YENİ) -->
+                <!-- TAKİP MODU BUTONU -->
                 <button id="btn-map-track" onclick="toggleMapTracking()" class="bg-white/10 hover:bg-white/20 text-white w-8 h-8 flex items-center justify-center rounded border border-white/10 backdrop-blur-sm transition active:scale-95" title="Oyuncuyu Takip Et">
                     ◎
+                </button>
+
+                <!-- HEDEF VEKTÖRLERİ GÖSTER BUTONU (YENİ) -->
+                <button id="btn-map-targets" onclick="toggleMapTargets()" class="bg-white/10 hover:bg-white/20 text-white w-8 h-8 flex items-center justify-center rounded border border-white/10 backdrop-blur-sm transition active:scale-95" title="Hedef Vektörleri">
+                    ⇢
                 </button>
 
                 <!-- MERKEZE ODAKLA BUTONU -->
@@ -52,7 +57,7 @@
     </div>
 </div>
 
-<!-- BAĞLAMLAR PENCERESİ -->
+<!-- Diğer Pencereler Aynı Kalır -->
 <div id="context-overlay" class="overlay-base">
     <div class="context-window compact">
         <div class="context-header">
@@ -60,20 +65,14 @@
             <div class="cursor-pointer text-sm opacity-50 hover:opacity-100 text-white" onclick="closeContext()">✕</div>
         </div>
         <div class="context-content">
-            
             <div class="ctx-grid">
-                <!-- HIZ ANALİZİ -->
                 <div class="ctx-item full" style="background: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.2);">
                     <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-1">
                         <span class="ctx-lbl text-sky-300">MAKSİMUM HIZ HESAPLAMASI</span>
                         <span id="ctx-speed-val" class="ctx-val text-lg">0 KM/S</span>
                     </div>
-                    <div id="ctx-speed-formula" class="font-mono text-xs space-y-1">
-                        <!-- JS ile doldurulacak -->
-                    </div>
+                    <div id="ctx-speed-formula" class="font-mono text-xs space-y-1"></div>
                 </div>
-
-                <!-- KARGO -->
                 <div class="ctx-item">
                     <div class="flex justify-between items-center mb-1">
                         <span class="ctx-lbl">KARGO</span>
@@ -81,8 +80,6 @@
                     </div>
                     <div id="ctx-cargo-formula" class="ctx-formula">...</div>
                 </div>
-
-                <!-- SENSÖR -->
                 <div class="ctx-item">
                     <div class="flex justify-between items-center mb-1">
                         <span class="ctx-lbl">SENSÖR</span>
@@ -90,8 +87,6 @@
                     </div>
                     <div id="ctx-sensor-formula" class="ctx-formula">...</div>
                 </div>
-
-                <!-- ENERJİ -->
                 <div class="ctx-item full">
                     <div class="flex justify-between items-center mb-1">
                         <span class="ctx-lbl">ENERJİ AKIŞI</span>
@@ -99,8 +94,6 @@
                     </div>
                     <div id="ctx-energy-state" class="ctx-formula text-emerald-400">...</div>
                 </div>
-
-                <!-- ORTAM -->
                 <div class="ctx-item full border-l-2 border-red-500/50 mt-1">
                     <div class="flex justify-between items-center">
                         <div>
@@ -111,12 +104,10 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- İSTATİSTİK PANELİ -->
 <div id="stats-overlay" class="overlay-base">
     <div class="stats-window">
         <div class="stats-header">
@@ -129,7 +120,6 @@
     </div>
 </div>
 
-<!-- YENİ: BAŞARIM PANELİ -->
 <div id="achievements-overlay" class="overlay-base">
     <div class="stats-window">
         <div class="stats-header">
@@ -140,18 +130,15 @@
             <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeAchievements()">✕</div>
         </div>
         <div class="stats-content">
-            <div id="achievements-list" class="space-y-2 p-2">
-                <!-- JS ile doldurulacak -->
-            </div>
+            <div id="achievements-list" class="space-y-2 p-2"></div>
         </div>
     </div>
 </div>
 
 <style>
-/* BAŞARIM LİSTESİ STİLİ - KOMPAKT TASARIM */
 .achievement-item {
     display: flex; gap: 10px; align-items: center;
-    padding: 8px 12px; /* Dolgu azaltıldı */
+    padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid rgba(255,255,255,0.05);
     background: rgba(255,255,255,0.02);
@@ -169,7 +156,6 @@
 .ach-check { color: #10b981; font-weight: bold; font-size: 1rem; }
 </style>
 
-<!-- DEPO YÖNETİMİ -->
 <div id="storage-overlay" class="overlay-base">
     <div class="nexus-window" style="height: 800px;"> 
         <div class="nexus-header">
@@ -205,7 +191,6 @@
     </div>
 </div>
 
-<!-- ENVANTER -->
 <div id="inventory-overlay" class="overlay-base">
     <div class="inv-window">
         <div style="display:flex; flex:1; overflow:hidden;">
@@ -225,7 +210,6 @@
     </div>
 </div>
 
-<!-- YANKI ENVANTERI -->
 <div id="echo-inventory-overlay" class="overlay-base">
     <div class="nexus-window" style="height: 600px; border-color: var(--echo-color);">
         <div class="nexus-header">
@@ -261,7 +245,6 @@
     </div>
 </div>
 
-<!-- NEXUS EKRANI -->
 <div id="nexus-overlay" class="overlay-base">
     <div class="nexus-window">
         <div class="nexus-header">

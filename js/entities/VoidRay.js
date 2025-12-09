@@ -1,6 +1,7 @@
 /**
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
- * * GÜNCELLEME: Yerçekimi (Gravity) hesaplamaları Spatial Hash kullanacak şekilde optimize edildi.
+ * * GÜNCELLEME: Gereksiz iz (trail) mantığı kaldırıldı.
+ * * AI Otopilot "Keşif ve Toplama" mantığı korundu.
  */
 class VoidRay {
     constructor() {
@@ -36,7 +37,9 @@ class VoidRay {
         this.isGhost = false;
         this.currentAlpha = 1.0; 
 
-        this.debugTarget = null;
+        // AI Hedefleri
+        this.scoutTarget = null;
+        this.debugTarget = null; // Anlık gidilen hedef (Haritada çizgi için kullanılacak)
     }
     
     gainXp(amount) { 
@@ -80,7 +83,9 @@ class VoidRay {
         this.outOfBoundsTimer = 0;
         this.x = GameRules.LOCATIONS.PLAYER_RESPAWN.x; 
         this.y = GameRules.LOCATIONS.PLAYER_RESPAWN.y;
-        this.isGhost = false; this.idleTimer = 0; this.currentAlpha = 1.0; this.debugTarget = null;
+        this.isGhost = false; this.idleTimer = 0; this.currentAlpha = 1.0; 
+        this.debugTarget = null; 
+        this.scoutTarget = null;
         
         const deathScreen = document.getElementById('death-screen');
         if(deathScreen) deathScreen.classList.remove('active');
@@ -165,6 +170,7 @@ class VoidRay {
 
         if (this.energy <= 0 && keys[" "]) ACCEL = 0.2; 
 
+        // --- OTO-PİLOT MANTIĞI ---
         const energyBar = document.getElementById('energy-bar-fill');
         if(energyBar) {
             energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
@@ -231,6 +237,7 @@ class VoidRay {
             if (aiMode === 'base') {
                  targetX = nexus.x; targetY = nexus.y;
                  if(Utils.distEntity(this, nexus) < 400) doThrust = false;
+                 this.scoutTarget = null;
             } 
             else if (aiMode === 'deposit') {
                 targetX = storageCenter.x; targetY = storageCenter.y;
@@ -241,6 +248,7 @@ class VoidRay {
                     showNotification({name: "OTOMATİK AKTARIM TAMAMLANDI", type:{color:'#10b981'}}, "");
                     updateAIButton();
                 }
+                this.scoutTarget = null;
             }
             else if (aiMode === 'travel' && manualTarget) {
                 targetX = manualTarget.x; targetY = manualTarget.y;
@@ -256,25 +264,41 @@ class VoidRay {
                 let nearest = null, minDist = Infinity;
                 
                 if (collectedItems.length < cap) {
-                    // --- OPTİMİZASYON: Spatial Hash ---
-                    // Sadece yakındaki gezegenleri sorgula
-                    const queryRange = 5000; 
-                    const candidates = entityManager ? entityManager.grid.query(this.x, this.y, queryRange) : planets;
+                    const candidates = (entityManager && entityManager.grid) 
+                        ? entityManager.grid.query(this.x, this.y, this.radarRadius) 
+                        : planets;
 
                     for(let p of candidates) {
                         if(!p.collected && p.type.id !== 'toxic') {
                             const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
-                            let echoIsCloser = false;
-                            if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < GameRules.getEchoCapacity()) {
-                                const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
-                                if (distToEcho < distToMe) echoIsCloser = true;
+                            if (distToMe < this.radarRadius**2) {
+                                let echoIsCloser = false;
+                                if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < GameRules.getEchoCapacity()) {
+                                    const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
+                                    if (distToEcho < distToMe) echoIsCloser = true;
+                                }
+                                if(!echoIsCloser && distToMe < minDist) { minDist = distToMe; nearest = p; }
                             }
-                            if(!echoIsCloser && distToMe < minDist) { minDist = distToMe; nearest = p; }
                         }
                     }
                 }
-                if(nearest) { targetX = nearest.x; targetY = nearest.y; } 
-                else { targetX = this.x + Math.cos(this.angle)*1000; targetY = this.y + Math.sin(this.angle)*1000; }
+                
+                if(nearest) { 
+                    targetX = nearest.x; targetY = nearest.y; 
+                    if (this.scoutTarget) this.scoutTarget = null;
+                } 
+                else { 
+                    if (!this.scoutTarget || Utils.dist(this.x, this.y, this.scoutTarget.x, this.scoutTarget.y) < 300) {
+                        const margin = 5000;
+                        const safeSize = WORLD_SIZE - margin;
+                        this.scoutTarget = {
+                            x: Utils.random(margin, safeSize),
+                            y: Utils.random(margin, safeSize)
+                        };
+                    }
+                    targetX = this.scoutTarget.x;
+                    targetY = this.scoutTarget.y;
+                }
             }
 
             if(targetX !== undefined) {
@@ -303,7 +327,6 @@ class VoidRay {
                 this.debugTarget = {x: manualTarget.x, y: manualTarget.y};
             } else {
                 let nearest = null, minDist = Infinity;
-                // --- OPTİMİZASYON: Spatial Hash (Rehber hedefi için) ---
                 if (typeof entityManager !== 'undefined' && entityManager.grid) {
                     const candidates = entityManager.grid.query(this.x, this.y, 5000);
                     for(let p of candidates) {
@@ -315,12 +338,10 @@ class VoidRay {
                 }
                 if(nearest) this.debugTarget = {x: nearest.x, y: nearest.y};
             }
+            this.scoutTarget = null;
         }
 
-        // --- OPTİMİZASYON: Yerçekimi (Gravity) ---
-        // Tüm gezegenleri gezmek yerine sadece yakındakileri (Gravity Range) sorgula
         if (entityManager && entityManager.grid) {
-            // Maksimum yerçekimi etki alanı yaklaşık 2000-3000 birim olabilir
             const gravityQueryRange = 3000;
             const nearbyPlanets = entityManager.grid.query(this.x, this.y, gravityQueryRange);
 

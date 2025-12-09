@@ -1,6 +1,6 @@
 /**
  * Void Ray - Varlık Sınıfı: ECHO RAY (YANKI)
- * * GÜNCELLEME: Hedef arama mantığı Spatial Hash ile optimize edildi.
+ * * GÜNCELLEME: Gereksiz iz (trail) mantığı kaldırıldı.
  */
 class EchoRay {
     constructor(x, y) { 
@@ -26,7 +26,7 @@ class EchoRay {
         this.colorLerp = 0; 
         this.baseColor = { r: 203, g: 213, b: 225 }; 
         this.targetColor = { r: 56, g: 189, b: 248 }; 
-        this.debugTarget = null;
+        this.debugTarget = null; // Anlık gidilen hedef
     }
     
     update() {
@@ -115,8 +115,6 @@ class EchoRay {
             if (this.lootBag.length < echoCap) {
                 let nearest = null, minDist = Infinity;
                 
-                // --- OPTİMİZASYON: Spatial Hash ---
-                // Sadece yakındaki (5000 birim) gezegenleri tara
                 const queryRange = 5000;
                 const candidates = (entityManager && entityManager.grid) ? entityManager.grid.query(this.x, this.y, queryRange) : planets;
 
@@ -195,9 +193,6 @@ class EchoRay {
                 const pickupRange = 40 * rangeMult;
                 
                 if (this.lootBag.length < echoCap) {
-                    // Toplama için yine Spatial Hash kullanabiliriz veya update içinde zaten hedefe gidiyoruz
-                    // Hedef yakınındaysa topla.
-                    // Fakat Echo yoldayken başka bir şeye çarpabilir, bu yüzden burada da query yapalım.
                     const candidates = (entityManager && entityManager.grid) ? entityManager.grid.query(this.x, this.y, pickupRange + 100) : planets;
 
                     for(let p of candidates) { 

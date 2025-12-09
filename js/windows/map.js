@@ -16,7 +16,8 @@ const bigMapState = {
     panY: 0,
     targetPanY: 0, // Hedef Pan Y
     isDragging: false,
-    isTracking: false // Takip modu
+    isTracking: false, // Takip modu
+    showTargets: false // Hedef Çizgilerini Gösterme Modu (YENİ)
 };
 
 function openMap() {
@@ -64,11 +65,32 @@ window.toggleMapTracking = function() {
     }
 }
 
+/**
+ * Hedef Çizgisi Modunu Açar/Kapatır (YENİ)
+ */
+window.toggleMapTargets = function() {
+    bigMapState.showTargets = !bigMapState.showTargets;
+    updateTargetButtonState();
+}
+
 function updateTrackButtonState() {
     const btn = document.getElementById('btn-map-track');
     if (!btn) return;
     
     if (bigMapState.isTracking) {
+        btn.classList.remove('text-white', 'bg-white/10');
+        btn.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+    } else {
+        btn.classList.remove('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+        btn.classList.add('text-white', 'bg-white/10');
+    }
+}
+
+function updateTargetButtonState() {
+    const btn = document.getElementById('btn-map-targets');
+    if (!btn) return;
+    
+    if (bigMapState.showTargets) {
         btn.classList.remove('text-white', 'bg-white/10');
         btn.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
     } else {
@@ -439,7 +461,37 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(6, 8); ctx.lineTo(-6, 8); ctx.fill(); 
     ctx.restore();
 
-    // Hedef Çizgisi
+    // --- SCOUT (KEŞİF) HEDEFİ GÖRSELLEŞTİRME ---
+    if (entities.player.scoutTarget) {
+        const sx = offsetX + entities.player.scoutTarget.x * scale;
+        const sy = offsetY + entities.player.scoutTarget.y * scale;
+        const px = offsetX + entities.player.x * scale;
+        const py = offsetY + entities.player.y * scale;
+
+        // Rota Çizgisi (Kesikli, Turkuaz)
+        ctx.strokeStyle = "#67e8f9"; // Echo Rengi (Araştırma/Keşif teması)
+        ctx.setLineDash([2, 8]); 
+        ctx.lineWidth = 1;
+        
+        ctx.beginPath(); 
+        ctx.moveTo(px, py); 
+        ctx.lineTo(sx, sy); 
+        ctx.stroke(); 
+        ctx.setLineDash([]);
+
+        // Hedef Noktası
+        ctx.fillStyle = "#67e8f9";
+        ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI*2); ctx.fill();
+        
+        // Etiket (Zoom yapıldığında görünür)
+        if (bigMapState.zoom > 0.8) {
+            ctx.font = "9px monospace";
+            ctx.fillStyle = "#67e8f9";
+            ctx.fillText("KEŞİF", sx + 6, sy);
+        }
+    }
+
+    // Hedef Çizgisi (Manuel Target)
     if(state.manualTarget) {
         const tx = offsetX + state.manualTarget.x*scale; 
         const ty = offsetY + state.manualTarget.y*scale;
@@ -473,5 +525,68 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
         
         ctx.setLineDash([]);
         ctx.lineDashOffset = 0;
+    }
+
+    // --- HEDEF VEKTÖRLERİ (TARGET LINES) ÇİZİMİ ---
+    if (bigMapState.showTargets) {
+        // 1. Oyuncu Hedeﬁ (Kesikli Çizgi)
+        if (entities.player.debugTarget) {
+            const px = offsetX + entities.player.x * scale;
+            const py = offsetY + entities.player.y * scale;
+            const tx = offsetX + entities.player.debugTarget.x * scale;
+            const ty = offsetY + entities.player.debugTarget.y * scale;
+
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(tx, ty);
+            ctx.strokeStyle = MAP_CONFIG.colors.player;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([10, 10]); 
+            ctx.globalAlpha = 0.6;
+            ctx.stroke();
+            
+            // Ok Ucu
+            const angle = Math.atan2(ty - py, tx - px);
+            const headLen = 10;
+            ctx.beginPath();
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - headLen * Math.cos(angle - Math.PI / 6), ty - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - headLen * Math.cos(angle + Math.PI / 6), ty - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // 2. Yankı Hedeﬁ (Kesikli Çizgi)
+        if (entities.echoRay && entities.echoRay.debugTarget && !entities.echoRay.attached) {
+            const ex = offsetX + entities.echoRay.x * scale;
+            const ey = offsetY + entities.echoRay.y * scale;
+            const tx = offsetX + entities.echoRay.debugTarget.x * scale;
+            const ty = offsetY + entities.echoRay.debugTarget.y * scale;
+
+            ctx.beginPath();
+            ctx.moveTo(ex, ey);
+            ctx.lineTo(tx, ty);
+            ctx.strokeStyle = MAP_CONFIG.colors.echo;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([10, 10]);
+            ctx.globalAlpha = 0.6;
+            ctx.stroke();
+
+            // Ok Ucu
+            const angle = Math.atan2(ty - ey, tx - ex);
+            const headLen = 8;
+            ctx.beginPath();
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - headLen * Math.cos(angle - Math.PI / 6), ty - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - headLen * Math.cos(angle + Math.PI / 6), ty - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1.0;
+        }
     }
 }
