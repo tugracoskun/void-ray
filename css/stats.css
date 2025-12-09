@@ -29,8 +29,8 @@
     transition: opacity 0.3s;
 }
 
-/* Header Tasarımı - Daha İnce */
-.stats-wireframe-header {
+/* Header Tasarımı - Düzeltildi: .stats-wireframe-header -> .stats-header */
+.stats-header {
     height: 45px;
     display: flex; align-items: center; 
     padding: 0 12px; gap: 10px;
@@ -38,6 +38,7 @@
     border-bottom: 1px dashed var(--hud-color-dim);
     background: rgba(148, 216, 195, 0.02);
     position: relative; /* Z-index için */
+    user-select: none; /* Sürüklerken metin seçilmesin */
 }
 
 .stats-icon-box {

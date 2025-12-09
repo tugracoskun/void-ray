@@ -1,6 +1,6 @@
 /**
  * Void Ray - Kontrol Sistemi
- * GÜNCELLEME: İstatistik penceresi için scroll (tekerlek) kilidi kaldırıldı.
+ * GÜNCELLEME: HUD Butonları için aç/kapa (toggle) mantığı eklendi.
  */
 
 // Tuş Durumları (Global erişim için)
@@ -114,6 +114,8 @@ function initControls() {
             const invOverlay = document.getElementById('inventory-overlay');
             if(invOverlay) invOverlay.classList.toggle('open'); 
             if(inventoryOpen) renderInventory(); 
+            // Hud butonunu güncelle
+            if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-inv-icon', inventoryOpen);
         } 
     });
 
@@ -126,14 +128,12 @@ function initControls() {
 
     // --- FARE TEKERLEĞİ ---
     window.addEventListener('wheel', e => { 
-        // UI pencereleri üzerindeyken oyunun zoom yapmasını engelle ve normal kaydırmaya izin ver
-        // 'stats-wireframe-content' sınıfını ekledik ki burada scroll çalışsın
         if (e.target.closest('.chat-content') || 
             e.target.closest('.profile-content') || 
             e.target.closest('.nexus-content') || 
             e.target.closest('.inv-content') || 
-            e.target.closest('.stats-wireframe-content') || // <--- BURASI EKLENDİ
-            e.target.closest('.overflow-y-auto') || // Tailwind class'ı olan scroll alanları
+            e.target.closest('.stats-wireframe-content') || 
+            e.target.closest('.overflow-y-auto') || 
             e.target.closest('#settings-panel')) {
             return; 
         }
@@ -159,7 +159,6 @@ function initControls() {
             const screenX = (echoRay.x - focusPoint.x) * currentZoom + width/2;
             const screenY = (echoRay.y - focusPoint.y) * currentZoom + height/2;
             
-            // Utils güncellemesi:
             const dist = Utils.dist(mx, my, screenX, screenY);
             if (dist < 40 * currentZoom) {
                 echoRay.energyDisplayTimer = 240; 
@@ -167,7 +166,7 @@ function initControls() {
         });
     }
 
-    // --- ARAYÜZ BUTONLARI ---
+    // --- ARAYÜZ BUTONLARI VE BAŞLATICILAR ---
     const btnStart = document.getElementById('btn-start');
     if(btnStart) {
         btnStart.addEventListener('click', () => { 
@@ -186,25 +185,33 @@ function initControls() {
         });
     }
 
+    // ENVANTER BUTONU (TOGGLE)
     const btnInv = document.getElementById('btn-inv-icon');
     if(btnInv) {
         btnInv.addEventListener('click', () => { 
-            inventoryOpen = true; 
-            const el = document.getElementById('inventory-overlay');
-            if(el) el.classList.add('open'); 
-            renderInventory(); 
+            if (inventoryOpen) {
+                closeInventory();
+            } else {
+                inventoryOpen = true; 
+                const el = document.getElementById('inventory-overlay');
+                if(el) el.classList.add('open'); 
+                renderInventory(); 
+            }
         });
     }
     
+    // ENVANTER KAPATMA BUTONU
     const btnCloseInv = document.getElementById('btn-close-inv');
     if(btnCloseInv) {
         btnCloseInv.addEventListener('click', () => { 
             inventoryOpen = false; 
             const el = document.getElementById('inventory-overlay');
             if(el) el.classList.remove('open'); 
+            if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-inv-icon', false);
         });
     }
 
+    // OTO-PİLOT BUTONU
     const btnAi = document.getElementById('btn-ai-toggle');
     if(btnAi) {
         btnAi.addEventListener('click', () => { 
@@ -219,10 +226,29 @@ function initControls() {
         });
     }
 
+    // İSTATİSTİK BUTONU (TOGGLE)
     const btnStats = document.getElementById('btn-stats-icon');
     if(btnStats) {
         btnStats.addEventListener('click', () => {
-            openStats();
+            if (typeof statsOpen !== 'undefined' && statsOpen) {
+                closeStats();
+            } else {
+                openStats();
+            }
         });
+    }
+
+    // PROFİL BUTONU (HTML ONCLICK OVERRIDE)
+    const btnProfile = document.getElementById('btn-profile-icon');
+    if(btnProfile) {
+        btnProfile.onclick = function(e) {
+            e.preventDefault();
+            if (typeof toggleProfile === 'function') {
+                toggleProfile();
+            } else if (typeof openProfile === 'function') {
+                if(typeof profileOpen !== 'undefined' && profileOpen) closeProfile(); 
+                else openProfile();
+            }
+        };
     }
 }

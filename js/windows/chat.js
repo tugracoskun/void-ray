@@ -301,52 +301,6 @@ function initChatSystem() {
         }
     });
 
-    // Chat Panelini Sürüklenebilir Yap
-    const chatPanelEl = document.getElementById('chat-panel');
-    const chatHeaderEl = document.querySelector('#chat-panel .chat-header');
-    
-    if(chatPanelEl && chatHeaderEl) {
-        makeElementDraggable(chatPanelEl, chatHeaderEl);
-    }
-}
-
-// --- SÜRÜKLE BIRAK SİSTEMİ ---
-function makeElementDraggable(el, handle) {
-    if (!el || !handle) return;
-    handle.style.cursor = 'move';
-    let isDragging = false;
-    let startX, startY, startLeft, startTop;
-    
-    handle.addEventListener('mousedown', (e) => {
-        if (e.button !== 0 || chatState !== 2) return; // Sadece aktifken taşı
-        isDragging = true;
-        startX = e.clientX; startY = e.clientY;
-        const rect = el.getBoundingClientRect();
-        el.style.bottom = 'auto'; el.style.right = 'auto';
-        el.style.left = rect.left + 'px'; el.style.top = rect.top + 'px'; el.style.margin = '0';
-        startLeft = rect.left; startTop = rect.top;
-        e.preventDefault();
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
-    
-    function onMouseMove(e) {
-        if (!isDragging) return;
-        const dx = e.clientX - startX; const dy = e.clientY - startY;
-        let newLeft = Math.max(0, Math.min(startLeft + dx, window.innerWidth - el.offsetWidth));
-        let newTop = Math.max(0, Math.min(startTop + dy, window.innerHeight - el.offsetHeight));
-        el.style.left = newLeft + 'px'; el.style.top = newTop + 'px';
-    }
-    
-    function onMouseUp() {
-        isDragging = false;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    }
-    
-    window.addEventListener('resize', () => {
-        const rect = el.getBoundingClientRect();
-        el.style.left = Math.max(0, Math.min(rect.left, window.innerWidth - el.offsetWidth)) + 'px';
-        el.style.top = Math.max(0, Math.min(rect.top, window.innerHeight - el.offsetHeight)) + 'px';
-    });
+    // NOT: Chat Panelini Sürüklenebilir Yapma kodu buradan kaldırıldı.
+    // Artık js/ui.js içindeki 'initDraggableWindows' fonksiyonu tarafından yönetiliyor.
 }
