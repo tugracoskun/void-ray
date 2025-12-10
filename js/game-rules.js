@@ -62,7 +62,31 @@ const GameRules = {
     },
 
     // ==========================================
-    // 3. OYNANIŞ MANTIĞI (GAMEPLAY LOGIC)
+    // 3. ÇEVRESEL ETKİLER (RADYASYON & VOID)
+    // ==========================================
+
+    /**
+     * Radyasyon alanında (harita dışı) kalınan süreye göre hasarı hesaplar.
+     * @param {number} timer - outOfBoundsTimer değeri (tick sayısı)
+     * @returns {number} Uygulanacak hasar miktarı
+     */
+    calculateRadiationDamage: function(timer) {
+        // Taban hasar (0.2) + Her tick için artan hasar (0.005)
+        return 0.2 + (timer * 0.005);
+    },
+
+    /**
+     * Radyasyon alanında (harita dışı) kalınan süreye göre merkeze itme kuvvetini hesaplar.
+     * @param {number} timer - outOfBoundsTimer değeri (tick sayısı)
+     * @returns {number} İtme kuvveti (force)
+     */
+    calculateVoidPushForce: function(timer) {
+        // Taban itme (0.5) + Her tick için artan kuvvet (0.002)
+        return 0.5 + (timer * 0.002);
+    },
+
+    // ==========================================
+    // 4. OYNANIŞ MANTIĞI (GAMEPLAY LOGIC)
     // ==========================================
 
     /**
@@ -110,7 +134,7 @@ const GameRules = {
     },
 
     // ==========================================
-    // 4. DURUM KONTROLLERİ (STATE CHECKS) - YENİ
+    // 5. DURUM KONTROLLERİ (STATE CHECKS)
     // ==========================================
 
     /**
@@ -180,7 +204,6 @@ const GameRules = {
 
     /**
      * Gezegenin oyuncu ve yankıya göre görünürlük seviyesini hesaplar.
-     * (Eskiden maps.js içindeydi, burası daha mantıklı)
      * @param {Planet} p - Gezegen nesnesi
      * @param {VoidRay} player - Oyuncu nesnesi
      * @param {EchoRay | null} echo - Yankı nesnesi
@@ -189,7 +212,6 @@ const GameRules = {
     getPlanetVisibility: function(p, player, echo) {
         let visibility = 0;
         
-        // Utils kullanılabilir veya Math.hypot ile doğrudan hesaplanabilir
         const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
         
         // Oyuncu Tarama Alanı (Tam Görüş)

@@ -125,7 +125,8 @@ function renderContext() {
         if (isOutOfBounds) {
             ctxEl.envStatus.innerText = "RADYASYON";
             ctxEl.envStatus.className = "ctx-val text-red-500 blink text-sm";
-            const dmg = (0.2 + (player.outOfBoundsTimer * 0.005)).toFixed(2);
+            
+            const dmg = GameRules.calculateRadiationDamage(player.outOfBoundsTimer).toFixed(2);
             ctxEl.envDetail.innerText = `Hasar: -${dmg}/tick`;
         } else if (distToNexus < 1500) {
             ctxEl.envStatus.innerText = "GÜVENLİ";

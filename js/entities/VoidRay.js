@@ -1,7 +1,6 @@
 /**
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
- * * GÜNCELLEME: Gereksiz iz (trail) mantığı kaldırıldı.
- * * AI Otopilot "Keşif ve Toplama" mantığı korundu.
+ * * GÜNCELLEME: Radyasyon hasarı ve İtme kuvveti artık GameRules üzerinden alınıyor.
  */
 class VoidRay {
     constructor() {
@@ -125,14 +124,17 @@ class VoidRay {
         
         if (isOutOfBounds) {
             this.outOfBoundsTimer++;
-            const damage = 0.2 + (this.outOfBoundsTimer * 0.005); 
+            
+            const damage = GameRules.calculateRadiationDamage(this.outOfBoundsTimer);
             this.takeDamage(damage);
 
             if (this.outOfBoundsTimer > 120) {
                 const centerX = WORLD_SIZE / 2;
                 const centerY = WORLD_SIZE / 2;
                 const angleToCenter = Math.atan2(centerY - this.y, centerX - this.x);
-                const pushForce = 0.5 + (this.outOfBoundsTimer * 0.002); 
+                
+                const pushForce = GameRules.calculateVoidPushForce(this.outOfBoundsTimer);
+                
                 this.vx += Math.cos(angleToCenter) * pushForce;
                 this.vy += Math.sin(angleToCenter) * pushForce;
             }
