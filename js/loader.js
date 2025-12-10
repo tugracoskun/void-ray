@@ -10,7 +10,8 @@ async function loadPartials() {
         { id: 'ui-menus', url: 'partials/ui-menus.html' },
         { id: 'ui-hud', url: 'partials/ui-hud.html' },
         { id: 'ui-panels', url: 'partials/ui-panels.html' },
-        { id: 'ui-settings', url: 'partials/ui-settings.html' } // Yeni settings parçası
+        { id: 'ui-windows', url: 'partials/ui-windows.html' }, // Yeni windows parçası
+        { id: 'ui-settings', url: 'partials/ui-settings.html' }
     ];
 
     console.log("Arayüz parçaları yükleniyor...");

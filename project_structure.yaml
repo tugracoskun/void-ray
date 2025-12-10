@@ -68,4 +68,5 @@ partials:
   - ui-menus.html
   - ui-hud.html
   - ui-panels.html
+  - ui-windows.html
   - ui-settings.html
