@@ -8,14 +8,32 @@
 .pointer-events-auto { pointer-events: auto; }
 
 /* --- HUD GİZLEME ÖZELLİĞİ --- */
+/* Oyun içi kullanıcı toggle'ı için (H tuşu) */
 .hidden-ui {
     opacity: 0 !important;
     pointer-events: none !important;
 }
 
+/* * BAŞLANGIÇ DURUMU (Game Start öncesi)
+ * Oyun başlayana kadar HUD ve Panelleri gizle.
+ * ui.js içinde startGameSession fonksiyonunda 'active' sınıfı eklenir.
+ */
 #ui-hud, #ui-panels {
-    transition: opacity 0.5s ease;
+    transition: opacity 1.5s ease; /* Açılış efekti yumuşak olsun */
+    opacity: 0; /* Varsayılan Gizli */
+    pointer-events: none; /* Etkileşimi kes */
+}
+
+/* Oyun Başlayınca Görünür Ol */
+#ui-hud.active, #ui-panels.active {
     opacity: 1;
+    /* Pointer-events: auto YAPMIYORUZ, çünkü hud-container zaten none olmalı, 
+       içindeki butonlar auto. Bu sınıf sadece opacity yönetir. */
+}
+
+/* Henüz aktif değilse alt elementlerin de tıklanmasını engelle (Garanti) */
+#ui-hud:not(.active) *, #ui-panels:not(.active) * {
+    pointer-events: none !important;
 }
 
 .hud-icon-group { 
