@@ -1,27 +1,25 @@
 /**
- * Void Ray - Bildirim Sistemi (Notification System)
- * * Oyun içi olayları, toplamaları, uyarıları ve sistem mesajlarını işler.
- * * İşlenen mesajları Chat sistemine (addChatMessage) iletir.
+ * Void Ray - Bildirim ve Geri Bildirim Sistemi (Notification System)
+ * * Oyun içi metin bildirimleri, görsel efektler ve başarı popup'larını yönetir.
+ * * Merkezi UI geri bildirim katmanıdır.
  */
 
 /**
- * Ekrana ve chat paneline bildirim gönderir.
- * Game logic tarafından global olarak kullanılır.
+ * 1. METİN BİLDİRİMLERİ
+ * Chat paneline ve ekrana bilgi mesajı gönderir.
  * @param {Object} planet - Gezegen/Nesne objesi veya {name: "Mesaj"} formatında obje
- * @param {string} suffix - Mesajın sonuna eklenecek ek metin (örn: miktar, XP)
+ * @param {string} suffix - Mesajın sonuna eklenecek ek metin
  */
 function showNotification(planet, suffix) {
     let msg = "";
     let type = "loot";
     const name = planet.name || "";
 
-    // 1. Sistem ve Otopilot Mesajları
+    // Kategori Analizi
     if (name === "ROTA OLUŞTURULDU" || name.includes("OTOMATİK")) {
         msg = `Sistem: ${name}`;
         type = "info";
-    } 
-    // 2. Seviye ve Evrim
-    else if (name.includes("EVRİM GEÇİRİLDİ")) {
+    } else if (name.includes("EVRİM GEÇİRİLDİ")) {
         msg = `Sistem: ${name}`;
         type = "info";
     } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ") || name.includes("DEPO") || name.includes("GÖRÜŞ:")) {
@@ -104,11 +102,10 @@ function showAchievementPopup(ach) {
         popup.classList.add('visible');
     });
 
-    // 4 saniye sonra kapat ve sil
     setTimeout(() => {
         popup.classList.remove('visible');
         setTimeout(() => popup.remove(), 600);
-    }, 4000);
+    }, 3000);
 }
 
 // Global erişimler
