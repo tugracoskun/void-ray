@@ -157,27 +157,31 @@
 }
 
 #tutorial-box.success {
-    border-color: #10b981;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    /* GÜNCELLEME: Sabit yeşil yerine tema rengi kullanıldı */
+    border-color: var(--hud-color);
+    box-shadow: 0 0 20px var(--hud-color-dim);
     background-image: 
-        linear-gradient(to right, #10b981 2px, transparent 2px),
-        linear-gradient(to bottom, #10b981 2px, transparent 2px),
-        linear-gradient(to left, #10b981 2px, transparent 2px),
-        linear-gradient(to top, #10b981 2px, transparent 2px);
+        linear-gradient(to right, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to left, var(--hud-color) 2px, transparent 2px),
+        linear-gradient(to top, var(--hud-color) 2px, transparent 2px);
 }
 
 #tutorial-icon {
     width: 28px; height: 28px;
     border: 1px solid var(--hud-color);
     display: flex; justify-content: center; align-items: center;
-    background: rgba(148, 216, 195, 0.1);
+    background: var(--hud-color-dim); /* GÜNCELLEME: Dinamik arka plan */
     font-weight: bold; font-family: monospace; font-size: 1.1rem;
     color: var(--hud-color);
     flex-shrink: 0;
 }
 
 #tutorial-box.success #tutorial-icon {
-    color: #10b981; border-color: #10b981; background: rgba(16, 185, 129, 0.1);
+    /* GÜNCELLEME: Başarı ikonunda da tema rengi */
+    color: var(--hud-color); 
+    border-color: var(--hud-color); 
+    background: var(--hud-color-dim);
 }
 
 #tutorial-content { display: flex; flex-direction: column; flex: 1; justify-content: center; }

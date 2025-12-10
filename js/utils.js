@@ -47,6 +47,31 @@ const Utils = {
         return array[Math.floor(Math.random() * array.length)];
     },
 
+    // --- RENK İŞLEMLERİ ---
+
+    /**
+     * Hex renk kodunu (örn: #ffffff) RGBA formatına çevirir.
+     * CSS değişkenlerini dinamik güncellemek için kullanılır.
+     * @param {string} hex - #RRGGBB formatında renk
+     * @param {number} alpha - 0.0 ile 1.0 arası opaklık
+     */
+    hexToRgba: (hex, alpha) => {
+        let r = 0, g = 0, b = 0;
+        // 3 haneli hex (#RGB)
+        if (hex.length === 4) {
+            r = "0x" + hex[1] + hex[1];
+            g = "0x" + hex[2] + hex[2];
+            b = "0x" + hex[3] + hex[3];
+        } 
+        // 6 haneli hex (#RRGGBB)
+        else if (hex.length === 7) {
+            r = "0x" + hex[1] + hex[2];
+            g = "0x" + hex[3] + hex[4];
+            b = "0x" + hex[5] + hex[6];
+        }
+        return "rgba(" + +r + "," + +g + "," + +b + "," + alpha + ")";
+    },
+
     // --- GÜVENLİ SES YÖNETİMİ ---
 
     /**

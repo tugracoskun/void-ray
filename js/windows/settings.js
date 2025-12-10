@@ -21,15 +21,15 @@ function initSettings() {
         newBtn.addEventListener('click', toggleSettings);
     }
 
+    // --- ELEMENT REFERANSLARI ---
     const nexusToggle = document.getElementById('toggle-nexus-arrow');
     const repairToggle = document.getElementById('toggle-repair-arrow');
     const storageToggle = document.getElementById('toggle-storage-arrow');
     const echoToggle = document.getElementById('toggle-echo-arrow');
     const hudHoverToggle = document.getElementById('toggle-hud-hover');
     
-    // YENİ: Gemi Durum Çubukları Toggle
     const shipBarsToggle = document.getElementById('toggle-ship-bars');
-    const consoleToggle = document.getElementById('toggle-console'); // YENİ: Konsol Toggle
+    const consoleToggle = document.getElementById('toggle-console'); 
     
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     const smoothCamToggle = document.getElementById('toggle-smooth-cam');
@@ -60,6 +60,43 @@ function initSettings() {
         }
     });
 
+    // --- TEMA RENK SEÇİMİ ---
+    const themeOpts = document.querySelectorAll('.theme-opt');
+    themeOpts.forEach(opt => {
+        opt.addEventListener('click', (e) => {
+            const color = e.target.getAttribute('data-color');
+            setGameTheme(color);
+            
+            // Custom picker değerini de güncelle ki senkron olsun
+            const picker = document.getElementById('custom-theme-picker');
+            if (picker) picker.value = color;
+        });
+        
+        // Başlangıçta varsayılan rengi (#94d8c3) işaretle
+        if (opt.getAttribute('data-color') === '#94d8c3') {
+            opt.style.borderColor = '#fff';
+            opt.style.transform = 'scale(1.1)';
+        }
+    });
+
+    // YENİ: ÖZEL RENK SEÇİCİ DİNLEYİCİSİ
+    const customPicker = document.getElementById('custom-theme-picker');
+    if (customPicker) {
+        // 'input' eventi renk seçilirken anlık tetiklenir (canlı önizleme için)
+        customPicker.addEventListener('input', (e) => {
+            setGameTheme(e.target.value);
+            
+            // Diğer sabit renklerin seçimini kaldır
+            document.querySelectorAll('.theme-opt').forEach(el => {
+                el.style.borderColor = 'rgba(255,255,255,0.2)';
+                el.style.transform = 'scale(1)';
+                el.style.boxShadow = 'none';
+            });
+        });
+    }
+
+    // --- TOGGLE LISTENERLARI ---
+
     if (nexusToggle) nexusToggle.addEventListener('change', (e) => window.gameSettings.showNexusArrow = e.target.checked);
     if (repairToggle) repairToggle.addEventListener('change', (e) => window.gameSettings.showRepairArrow = e.target.checked);
     if (storageToggle) storageToggle.addEventListener('change', (e) => window.gameSettings.showStorageArrow = e.target.checked);
@@ -79,7 +116,6 @@ function initSettings() {
         shipBarsToggle.addEventListener('change', (e) => window.gameSettings.showShipBars = e.target.checked);
     }
 
-    // YENİ: Konsol Toggle Listener
     if (consoleToggle) {
         consoleToggle.addEventListener('change', (e) => {
             window.gameSettings.enableConsole = e.target.checked;
@@ -246,6 +282,30 @@ function initSettings() {
             slider.dispatchEvent(new Event('input'));
         }, { passive: false });
     });
+}
+
+function setGameTheme(colorHex) {
+    if (!colorHex) return;
+    
+    // CSS Değişkenlerini Güncelle (Global)
+    document.documentElement.style.setProperty('--hud-color', colorHex);
+    
+    if (typeof Utils !== 'undefined' && Utils.hexToRgba) {
+        const dimColor = Utils.hexToRgba(colorHex, 0.3);
+        document.documentElement.style.setProperty('--hud-color-dim', dimColor);
+    }
+
+    // Aktif seçimi işaretle
+    document.querySelectorAll('.theme-opt').forEach(el => {
+        const isActive = el.getAttribute('data-color') === colorHex;
+        el.style.borderColor = isActive ? '#fff' : 'rgba(255,255,255,0.2)';
+        el.style.transform = isActive ? 'scale(1.2)' : 'scale(1)';
+        // Shadow efektini de güncelle
+        el.style.boxShadow = isActive ? `0 0 10px ${colorHex}` : 'none';
+    });
+    
+    // Kullanıcıya bildir
+    showNotification({name: "TEMA GÜNCELLENDİ", type:{color: colorHex}}, "");
 }
 
 function toggleSettings() {
