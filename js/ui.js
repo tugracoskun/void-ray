@@ -266,6 +266,12 @@ window.startGameSession = function(loadSave) {
     const mainMenu = document.getElementById('main-menu');
     if(mainMenu) mainMenu.classList.add('menu-hidden'); 
     
+    // YENİ: HUD'u görünür yap (Fade In)
+    const hud = document.getElementById('ui-hud');
+    const panels = document.getElementById('ui-panels');
+    if(hud) hud.classList.add('active');
+    if(panels) panels.classList.add('active');
+    
     const controlsWrapper = document.getElementById('menu-controls-wrapper');
     if (controlsWrapper) {
         controlsWrapper.classList.remove('menu-controls-visible');
