@@ -367,7 +367,6 @@ window.makeElementDraggable = function(el, handle) {
 
         // --- DİNAMİK SINIR KONTROLÜ (CLAMPING) ---
         // Pencerenin o anki güncel boyutlarını ve ekran (parent) boyutlarını al
-        // Böylece pencere sonradan büyüse/küçülse bile güncel boyutuna göre sınırlandırılır.
         const parent = el.offsetParent || document.body;
         const parentW = parent.clientWidth;
         const parentH = parent.clientHeight;
@@ -378,10 +377,12 @@ window.makeElementDraggable = function(el, handle) {
         const maxLeft = parentW - elW;
         const maxTop = parentH - elH;
 
-        // Sıkıştırma (Clamp):
-        // 1. Math.min(newLeft, maxLeft) -> Sağa taşmayı engeller
-        // 2. Math.max(0, ...) -> Sola taşmayı engeller
+        // GÜVENLİ SIKIŞTIRMA:
+        // Eğer maxLeft < 0 ise (pencere ekrandan genişse), sol kenarı 0'da tut (Math.max(0, ...)).
+        // Math.min(newLeft, maxLeft) -> Sağa taşmayı engeller.
         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        
+        // Eğer maxTop < 0 ise (pencere ekrandan yüksekse), üst kenarı 0'da tut.
         newTop = Math.max(0, Math.min(newTop, maxTop));
 
         el.style.left = newLeft + 'px';
@@ -405,7 +406,8 @@ window.initDraggableWindows = function() {
     const screenH = window.innerHeight;
 
     // Helper: Değeri belirli aralıkta tut (Ekran dışına taşmaması için)
-    const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+    // DÜZELTME: Eğer max < min ise, min değerini döndürerek pencerenin üst/sol kısmının görünür kalmasını sağla.
+    const clamp = (val, min, max) => Math.max(min, Math.min(val, max));
 
     // Her pencere için konfigürasyon.
     // getPos: Ekran boyutuna ve eleman boyutuna göre dinamik x, y döndürür.
@@ -413,12 +415,13 @@ window.initDraggableWindows = function() {
         // 1. CHAT PANELİ (Varsayılan olarak Sol Altta kalsın)
         { container: '#chat-panel', handle: '.chat-header' },
         
-        // 2. ENVANTER: Sağ Taraf
+        // 2. ENVANTER: Sağ Taraf (Ortalı veya Üstten Sabit)
         { 
             container: '#inventory-overlay .inv-window', 
             handle: '.inv-header', 
-            // Varsayılan: Sağdan 20px içeride, Alttan biraz yukarıda
-            getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: h - elH - 120 }) 
+            // ESKİ: h - elH - 120 (Alttan hizalama riskliydi)
+            // YENİ: Dikeyde ortala ama hafif yukarıda
+            getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: (h - elH) / 2 }) 
         },
         
         // 3. İSTATİSTİKLER: Sağ Üst
@@ -488,6 +491,7 @@ window.initDraggableWindows = function() {
                 const pos = win.getPos(screenW, screenH, elW, elH);
                 
                 // --- SINIR KONTROLÜ (CLAMPING) ---
+                // Pencerenin ekran dışına taşmasını engelle
                 // X: En az 10px, En fazla (Ekran Genişliği - Pencere Genişliği - 10px)
                 // Y: En az 10px, En fazla (Ekran Yüksekliği - Pencere Yüksekliği - 10px)
                 const safeX = clamp(pos.x, 10, screenW - elW - 10);
@@ -536,6 +540,7 @@ window.initDraggableWindows = function() {
                 const maxTop = newH - elH;
 
                 // Sınır dışındaysa içeri çek
+                // Math.max(0, ...) kullanımı pencerenin sol/üst kısmının her zaman görünür kalmasını sağlar
                 if (currentLeft > maxLeft) el.style.left = Math.max(0, maxLeft) + 'px';
                 if (currentTop > maxTop) el.style.top = Math.max(0, maxTop) + 'px';
             }
