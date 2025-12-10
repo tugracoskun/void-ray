@@ -55,6 +55,7 @@ window.initUIListeners = function() {
     });
 
     // PENCERE SÜRÜKLEME SİSTEMİNİ VE VARSAYILAN KONUMLARI BAŞLAT
+    // Resize durumunda pencerelerin kaybolmaması için event ekleyebiliriz (Opsiyonel)
     setTimeout(initDraggableWindows, 100);
 };
 
@@ -361,8 +362,27 @@ window.makeElementDraggable = function(el, handle) {
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
 
-        const newLeft = startLeft + dx;
-        const newTop = startTop + dy;
+        let newLeft = startLeft + dx;
+        let newTop = startTop + dy;
+
+        // --- DİNAMİK SINIR KONTROLÜ (CLAMPING) ---
+        // Pencerenin o anki güncel boyutlarını ve ekran (parent) boyutlarını al
+        // Böylece pencere sonradan büyüse/küçülse bile güncel boyutuna göre sınırlandırılır.
+        const parent = el.offsetParent || document.body;
+        const parentW = parent.clientWidth;
+        const parentH = parent.clientHeight;
+        const elW = el.offsetWidth;
+        const elH = el.offsetHeight;
+
+        // Ekranın sağ ve alt sınırlarını belirle
+        const maxLeft = parentW - elW;
+        const maxTop = parentH - elH;
+
+        // Sıkıştırma (Clamp):
+        // 1. Math.min(newLeft, maxLeft) -> Sağa taşmayı engeller
+        // 2. Math.max(0, ...) -> Sola taşmayı engeller
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
 
         el.style.left = newLeft + 'px';
         el.style.top = newTop + 'px';
@@ -377,38 +397,67 @@ window.makeElementDraggable = function(el, handle) {
 };
 
 /**
- * Oyundaki tüm pencereleri tanımlar, sürüklenebilir yapar ve VARSAYILAN KONUMLARI uygular.
+ * Oyundaki tüm pencereleri tanımlar, sürüklenebilir yapar ve VARSAYILAN KONUMLARI DİNAMİK OLARAK uygular.
+ * Bu sayede ekran boyutları ne olursa olsun pencereler her zaman ekran içinde kalır.
  */
 window.initDraggableWindows = function() {
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
 
-    // Her pencere için varsayılan koordinatlar (x, y)
+    // Helper: Değeri belirli aralıkta tut (Ekran dışına taşmaması için)
+    const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+    // Her pencere için konfigürasyon.
+    // getPos: Ekran boyutuna ve eleman boyutuna göre dinamik x, y döndürür.
     const windows = [
         // 1. CHAT PANELİ (Varsayılan olarak Sol Altta kalsın)
         { container: '#chat-panel', handle: '.chat-header' },
         
-        // 2. ENVANTER: Sağ Taraf (Hafif aşağıda)
-        { container: '#inventory-overlay .inv-window', handle: '.inv-header', x: screenW - 280, y: screenH - 550 },
+        // 2. ENVANTER: Sağ Taraf
+        { 
+            container: '#inventory-overlay .inv-window', 
+            handle: '.inv-header', 
+            // Varsayılan: Sağdan 20px içeride, Alttan biraz yukarıda
+            getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: h - elH - 120 }) 
+        },
         
         // 3. İSTATİSTİKLER: Sağ Üst
-        { container: '#stats-overlay .stats-window', handle: '.stats-header', x: screenW - 380, y: 100 }, 
+        { 
+            container: '#stats-overlay .stats-window', 
+            handle: '.stats-header', 
+            // Varsayılan: Sağdan 20px içeride, Üstten 100px aşağıda
+            getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: 100 })
+        }, 
         
-        // 4. PROFİL: Sol Üst (Karakter Bilgisi)
-        { container: '#profile-overlay .profile-window', handle: '.profile-rpg-header', x: 60, y: 100 },
+        // 4. PROFİL: Sol Üst
+        { 
+            container: '#profile-overlay .profile-window', 
+            handle: '.profile-rpg-header', 
+            // Varsayılan: Soldan 60px içeride, Üstten 100px aşağıda
+            getPos: (w, h, elW, elH) => ({ x: 60, y: 100 })
+        },
         
-        // 5. BAĞLAMLAR: Sol Taraf (Chat'in hemen üstü)
-        { container: '#context-overlay .context-window', handle: '.context-header', x: 60, y: screenH - 450 },
+        // 5. BAĞLAMLAR: Sol Alt (Chat'in üstü)
+        { 
+            container: '#context-overlay .context-window', 
+            handle: '.context-header', 
+            // Varsayılan: Soldan 60px içeride, Alttan hesaplanmış yükseklikte
+            getPos: (w, h, elW, elH) => ({ x: 60, y: h - elH - 150 })
+        },
         
-        // 6. NEXUS/DEPO (Büyük Pencereler): Merkezde kalsın
+        // 6. AYARLAR: Sağ Üst (Sabit menü gibi ama taşınabilir)
+        { 
+            container: '#settings-panel', 
+            handle: '#settings-header',
+            getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: 70 })
+        },
+        
+        // --- MERKEZİ PENCERELER ---
+        // Bunlar varsayılan olarak CSS Flex ile ortalanır.
+        // Ancak kullanıcı sürüklerse 'absolute' pozisyona geçerler.
         { container: '#nexus-overlay .nexus-window', handle: '.nexus-header' },
         { container: '#storage-overlay .nexus-window', handle: '.nexus-header' },
         { container: '#echo-inventory-overlay .nexus-window', handle: '.nexus-header' },
-        
-        // 7. AYARLAR: Sağ Üst
-        { container: '#settings-panel', handle: '#settings-header' },
-        
-        // 8. BAŞARIMLAR: Merkez
         { container: '#achievements-overlay .stats-window', handle: '.stats-header' }
     ];
 
@@ -417,22 +466,81 @@ window.initDraggableWindows = function() {
         const handleEl = containerEl ? (containerEl.querySelector(win.handle) || document.querySelector(win.handle)) : null;
         
         if (containerEl) {
-            // Varsayılan pozisyon tanımlıysa uygula
-            if (win.x !== undefined && win.y !== undefined) {
+            // Eğer bir getPos fonksiyonu tanımlıysa dinamik konumlandırma yap
+            if (win.getPos) {
+                // Eleman henüz görünür değilse (display: none), offsetWidth 0 dönebilir.
+                // Bu yüzden tahmini genişlikleri (CSS'den) fallback olarak veriyoruz.
+                let elW = containerEl.offsetWidth;
+                let elH = containerEl.offsetHeight;
+
+                // Fallback değerler (CSS dosyalarındaki değerlere göre)
+                if (elW === 0) {
+                    if (containerEl.classList.contains('inv-window')) elW = 242; // inventory.css
+                    else if (containerEl.classList.contains('stats-window')) elW = 340; // stats.css
+                    else if (containerEl.classList.contains('profile-window')) elW = 400; // profile.css
+                    else if (containerEl.classList.contains('context-window')) elW = 400; // panels.css
+                    else if (containerEl.id === 'settings-panel') elW = 280; // hud.css
+                    else elW = 300; // Genel varsayılan
+                }
+                
+                if (elH === 0) elH = 400; // Yükseklik tahmini
+
+                const pos = win.getPos(screenW, screenH, elW, elH);
+                
+                // --- SINIR KONTROLÜ (CLAMPING) ---
+                // X: En az 10px, En fazla (Ekran Genişliği - Pencere Genişliği - 10px)
+                // Y: En az 10px, En fazla (Ekran Yüksekliği - Pencere Yüksekliği - 10px)
+                const safeX = clamp(pos.x, 10, screenW - elW - 10);
+                const safeY = clamp(pos.y, 10, screenH - elH - 10);
+
                 containerEl.style.position = 'absolute';
-                containerEl.style.left = win.x + 'px';
-                containerEl.style.top = win.y + 'px';
+                containerEl.style.left = safeX + 'px';
+                containerEl.style.top = safeY + 'px';
+                
+                // Flex veya grid düzenlerini bozmamak için marginleri sıfırla
                 containerEl.style.margin = '0';
-                containerEl.style.transform = 'none'; // Varsa flex ortalamasını iptal et
+                containerEl.style.transform = 'none'; 
                 containerEl.style.bottom = 'auto';
                 containerEl.style.right = 'auto';
             }
 
+            // Sürüklenebilirlik özelliğini ekle
             if (handleEl) {
                 makeElementDraggable(containerEl, handleEl);
             }
         }
     });
+
+    // --- PENCERE BOYUTLANDIRMA VE EKRAN DEĞİŞİMİ KORUMASI ---
+    // Ekran boyutu değiştiğinde pencereler dışarıda kalırsa içeri iter.
+    window.addEventListener('resize', () => {
+        const newW = window.innerWidth;
+        const newH = window.innerHeight;
+        
+        windows.forEach(win => {
+            const el = document.querySelector(win.container);
+            // Sadece konumu manuel olarak değiştirilmiş (absolute) pencereleri kontrol et
+            if (el && el.style.position === 'absolute') {
+                const elW = el.offsetWidth;
+                const elH = el.offsetHeight;
+                
+                // Mevcut koordinatları al
+                let currentLeft = parseFloat(el.style.left);
+                let currentTop = parseFloat(el.style.top);
+                
+                // Eğer parse edilemiyorsa (henüz set edilmemişse) bounding rect kullan
+                if (isNaN(currentLeft)) currentLeft = el.getBoundingClientRect().left;
+                if (isNaN(currentTop)) currentTop = el.getBoundingClientRect().top;
+
+                const maxLeft = newW - elW;
+                const maxTop = newH - elH;
+
+                // Sınır dışındaysa içeri çek
+                if (currentLeft > maxLeft) el.style.left = Math.max(0, maxLeft) + 'px';
+                if (currentTop > maxTop) el.style.top = Math.max(0, maxTop) + 'px';
+            }
+        });
+    });
     
-    console.log("Pencere konumlandırma ve sürükleme sistemi aktif.");
+    console.log("Pencere konumlandırma ve sürükleme sistemi aktif (Dinamik Konumlar).");
 };
