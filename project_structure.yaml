@@ -68,3 +68,4 @@ partials:
   - ui-menus.html
   - ui-hud.html
   - ui-panels.html
+  - ui-settings.html
