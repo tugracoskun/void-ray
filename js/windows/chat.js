@@ -1,8 +1,7 @@
 /**
- * Void Ray - Pencere: İletişim ve Bildirimler
- * * Sohbet geçmişi, sistem bildirimleri ve kullanıcı mesajlarını yönetir.
- * * Sürüklenebilir pencere mantığını içerir.
- * * ConsoleSystem entegrasyonu yapılmıştır.
+ * Void Ray - Pencere: İletişim (Chat)
+ * * Sohbet geçmişi ve kullanıcı mesajlarını yönetir.
+ * * Bildirim mantığı js/notifications.js dosyasına taşınmıştır.
  */
 
 // İletişim Sistemi (Loglar ve Mesajlar)
@@ -85,43 +84,7 @@ function updateChatUI() {
     }
 }
 
-/**
- * Ekrana ve chat paneline bildirim gönderir.
- * Game logic tarafından global olarak kullanılır.
- */
-function showNotification(planet, suffix) {
-    let msg = "";
-    let type = "loot";
-    const name = planet.name || "";
-
-    if (name === "ROTA OLUŞTURULDU" || name.includes("OTOMATİK")) {
-        msg = `Sistem: ${name}`;
-        type = "info";
-    } else if (name.includes("EVRİM GEÇİRİLDİ")) {
-        msg = `Sistem: ${name}`;
-        type = "info";
-    } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ") || name.includes("DEPO")) {
-        msg = `Sistem: ${name}`;
-        type = "info";
-    } else if (name.includes("ENERJİ")) {
-         msg = `${name} ${suffix}`;
-         type = "info";
-    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU") || name.includes("YETERSİZ") || name.includes("BAĞLANTI YOK") || name.includes("BOŞ")) {
-        msg = `UYARI: ${name} ${suffix}`;
-        type = "alert";
-    } else if (name.includes("KAYIP KARGO")) {
-        msg = `Keşif: ${name} bulundu!`;
-        type = "info";
-    } else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
-        msg = `Toplandı: ${name} ${suffix}`;
-        type = "loot";
-    } else {
-        msg = `${name} ${suffix}`;
-        type = "info";
-    }
-    
-    addChatMessage(msg, type, 'bilgi');
-}
+// NOT: showNotification fonksiyonu js/notifications.js dosyasına taşındı.
 
 /**
  * Sohbet paneline yeni bir mesaj ekler.
@@ -300,7 +263,4 @@ function initChatSystem() {
             }
         }
     });
-
-    // NOT: Chat Panelini Sürüklenebilir Yapma kodu buradan kaldırıldı.
-    // Artık js/ui.js içindeki 'initDraggableWindows' fonksiyonu tarafından yönetiliyor.
 }

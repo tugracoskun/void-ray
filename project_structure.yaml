@@ -32,6 +32,7 @@ js:
   - maps.js
   - boot.js
   - console.js
+  - notifications.js # YENİ: Bildirim sistemi eklendi
   - EntityManager.js
   - ParticleSystem.js
   - TutorialSystem.js
