@@ -12,17 +12,20 @@ let chatHistory = {
 };
 let activeChatTab = 'genel';
 
-// CHAT MODU: 2=Aktif (Tam), 1=Yarım (Fading), 0=Kapalı
+// CHAT MODU: 2=Aktif (Tam), 1=Yarım (Fading)
 let chatState = 1; // Varsayılan olarak Yarım Mod başlat
 let wasSemiActive = false; // Enter ile açıldığında, geri dönüş için bayrak
 
 /**
  * Chat modunu değiştirir (Buton tetikler).
- * 2 -> 1 -> 0 -> 2 döngüsü.
+ * 2 -> 1 -> 2 döngüsü (Aktif <-> Yarım).
  */
 window.cycleChatMode = function() {
-    chatState--;
-    if (chatState < 0) chatState = 2;
+    if (chatState === 2) {
+        chatState = 1; // Aktif -> Yarım
+    } else {
+        chatState = 2; // Yarım -> Aktif
+    }
     wasSemiActive = false; // Manuel değişimde hafızayı sıfırla
     updateChatUI();
 };
@@ -54,8 +57,8 @@ function updateChatUI() {
         // Tam geçmişi geri yükle
         switchChatTab(activeChatTab); 
     } 
-    else if (chatState === 1) {
-        // --- YARIM AKTİF ---
+    else {
+        // --- YARIM AKTİF (Varsayılan else durumu) ---
         btn.innerText = "⋯"; 
         btn.style.color = "#94a3b8"; 
         panel.classList.add('chat-mode-semi');
@@ -69,18 +72,6 @@ function updateChatUI() {
         // Yarım moda geçerken eski kalabalığı temizle
         const chatContent = document.getElementById('chat-content');
         if (chatContent) chatContent.innerHTML = ''; 
-    } 
-    else {
-        // --- KAPALI MOD ---
-        btn.innerText = "⊘"; 
-        btn.style.color = "#ef4444"; 
-        panel.classList.add('chat-mode-off');
-        
-        // Buton aktifliğini kaldır
-        if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-chat-mode', false);
-        
-        // Input alanını ZORLA gizle
-        if(inputArea) inputArea.style.display = 'none';
     }
 }
 
@@ -100,9 +91,6 @@ function addChatMessage(text, type = 'system', channel = 'bilgi') {
         chatHistory['genel'].push(msgObj);
     }
     
-    // Eğer kapalıysa (0) ekrana çizme
-    if (chatState === 0) return;
-
     // Eğer kanal aktif değilse ekrana çizme (Yarım modda sadece aktif kanaldakiler görünsün)
     if (activeChatTab !== channel && activeChatTab !== 'genel') return;
 
