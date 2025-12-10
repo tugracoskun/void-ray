@@ -112,15 +112,29 @@ canvas {
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* --- YENİ: CRT SCANLINE EFEKTİ --- */
+/* --- YENİ: CRT SCANLINE EFEKTİ (GÜÇLENDİRİLMİŞ) --- */
 #crt-overlay {
     position: fixed; inset: 0; z-index: 9999; pointer-events: none;
-    /* İnce yatay çizgiler ve hafif dikey RGB ayrışması */
+    
+    /* Katman 1: Vignette (Köşeleri karartma) - Monitör bombesi hissi
+       Katman 2: Scanlines (Yatay çizgiler) - Siyah ve hafif beyaz çizgiler
+       Katman 3: RGB Subpixels (Dikey çizgiler) - Hafif renk ayrışması
+    */
     background: 
-        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-    background-size: 100% 3px, 3px 100%;
-    opacity: 0; transition: opacity 0.5s;
-    mix-blend-mode: overlay;
+        radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 100%),
+        linear-gradient(to bottom, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.6) 50%),
+        linear-gradient(90deg, rgba(255,0,0,0.08), rgba(0,255,0,0.04), rgba(0,0,255,0.08));
+        
+    background-size: 100% 100%, 100% 4px, 4px 100%;
+    
+    opacity: 0; 
+    /* Performans için transition süresini kısalttık */
+    transition: opacity 0.1s;
+    /* mix-blend-mode kaldırıldı, normal karışım uzayda daha belirgin durur */
+    pointer-events: none;
 }
-#crt-overlay.active { opacity: 1; }
+
+#crt-overlay.active { 
+    /* Opaklık JS tarafından slider ile kontrol edilir (0.1 - 1.0) */
+    opacity: 1; 
+}

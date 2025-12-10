@@ -15,6 +15,10 @@ if (!window.gameSettings) {
 if (typeof window.gameSettings.windowOpacity === 'undefined') {
     window.gameSettings.windowOpacity = 1.0;
 }
+// CRT Intensity eksikse tamamla (Geriye dönük uyumluluk)
+if (typeof window.gameSettings.crtIntensity === 'undefined') {
+    window.gameSettings.crtIntensity = 50;
+}
 
 function initSettings() {
     console.log("Ayarlar paneli başlatılıyor...");
@@ -41,6 +45,7 @@ function initSettings() {
     
     // YENİ TOGGLE REFERANSLARI
     const crtToggle = document.getElementById('toggle-crt');
+    const crtIntensityWrapper = document.getElementById('crt-intensity-wrapper');
     const starsToggle = document.getElementById('toggle-stars');
     
     const devModeToggle = document.getElementById('toggle-dev-mode');
@@ -234,14 +239,31 @@ function initSettings() {
     }
 
     // YENİ EFEKT TOGGLE'LARI
+    // CRT Yardımcı Fonksiyonu
+    const updateCRT = () => {
+        const overlay = document.getElementById('crt-overlay');
+        if (!overlay) return;
+        
+        if (window.gameSettings.enableCRT) {
+            overlay.classList.add('active');
+            // Yoğunluğu uygula (0.1 - 1.0 arası)
+            overlay.style.opacity = window.gameSettings.crtIntensity / 100;
+        } else {
+            overlay.classList.remove('active');
+            overlay.style.opacity = ''; // CSS varsayılanına dön
+        }
+    };
+
     if (crtToggle) {
         crtToggle.addEventListener('change', (e) => {
             window.gameSettings.enableCRT = e.target.checked;
-            const crtOverlay = document.getElementById('crt-overlay');
-            if(crtOverlay) {
-                if(e.target.checked) crtOverlay.classList.add('active');
-                else crtOverlay.classList.remove('active');
+            
+            // Slider'ı aç/kapa
+            if (crtIntensityWrapper) {
+                crtIntensityWrapper.style.display = e.target.checked ? 'block' : 'none';
             }
+            
+            updateCRT();
         });
     }
 
@@ -380,6 +402,13 @@ function initSettings() {
                 const disp = document.getElementById('val-s');
                 if(disp) disp.innerText = val + '%';
                 window.volSFX = val / 100;
+            }
+            // YENİ: CRT SLIDER
+            else if (id === 'vol-crt-intensity') {
+                window.gameSettings.crtIntensity = val;
+                const disp = document.getElementById('val-crt-intensity');
+                if(disp) disp.innerText = val + '%';
+                updateCRT();
             }
         });
 

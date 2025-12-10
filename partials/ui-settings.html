@@ -137,7 +137,7 @@
             </div>
         </div>
 
-        <!-- YENİ BÖLÜM: GÖRSEL EFEKTLER -->
+        <!-- EFEKTLER BÖLÜMÜ -->
         <div class="mb-2 text-xs font-bold tracking-widest opacity-80 mt-4" style="color: var(--hud-color);">EFEKTLER</div>
         
         <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'RETRO EFEKT: Ekranı eski bir monitör gibi gösteren tarama çizgileri ekler.')" onmouseleave="hideTooltip()">
@@ -146,6 +146,12 @@
                 <input type="checkbox" id="toggle-crt">
                 <span class="slider"></span>
             </label>
+        </div>
+
+        <!-- EKLENDİ: CRT YOĞUNLUK SLIDER'I (Başlangıçta gizli) -->
+        <div id="crt-intensity-wrapper" style="display: none; margin-top: 5px; margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--hud-color-dim);">
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'YOĞUNLUK: Scanline efektinin opaklığını ayarlar.')" onmouseleave="hideTooltip()"><span>YOĞUNLUK</span><span id="val-crt-intensity">50%</span></div>
+            <input type="range" id="vol-crt-intensity" class="smart-slider" data-default="50" min="10" max="100" value="50">
         </div>
 
         <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'YILDIZLAR: Arka plandaki yıldızları açıp kapatır (Performans için kapatılabilir).')" onmouseleave="hideTooltip()">

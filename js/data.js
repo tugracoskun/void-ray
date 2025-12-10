@@ -266,5 +266,6 @@ const DEFAULT_GAME_SETTINGS = {
     
     // YENİ GÖRÜNÜM AYARLARI
     enableCRT: false,    // Retro Scanline Efekti
+    crtIntensity: 50,    // EKLENDİ: CRT Efekt Yoğunluğu (%50 Varsayılan)
     showStars: true      // Arka Plan Yıldızları
 };
