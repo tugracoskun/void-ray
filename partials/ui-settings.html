@@ -84,11 +84,16 @@
             </div>
         </div>
 
-        <div class="mb-2 text-xs font-bold tracking-widest opacity-80 mt-4" style="color: var(--hud-color);">ARAYÜZ (HUD)</div>
+        <div class="mb-2 text-xs font-bold tracking-widest opacity-80 mt-4" style="color: var(--hud-color);">ARAYÜZ VE PENCERELER</div>
         <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'OPAKLIK: Arayüz elementlerinin şeffaflığını ayarlar.')" onmouseleave="hideTooltip()"><span>OPAKLIK</span><span id="val-hud-opacity">100%</span></div>
-            <input type="range" id="vol-hud-opacity" class="smart-slider" data-default="100" min="20" max="100" value="100" onmouseenter="showInfoTooltip(event, 'Varsayılan (%100) için çift tıklayın.')" onmouseleave="hideTooltip()">
+            <!-- HUD OPAKLIĞI -->
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'HUD OPAKLIĞI: Kalıcı arayüz elementlerinin (Radar, Bar, İkonlar) şeffaflığı.')" onmouseleave="hideTooltip()"><span>HUD OPAKLIĞI</span><span id="val-hud-opacity">100%</span></div>
+            <input type="range" id="vol-hud-opacity" class="smart-slider" data-default="100" min="20" max="100" value="100">
             
+            <!-- PENCERE OPAKLIĞI (YENİ) -->
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest mt-2" onmouseenter="showInfoTooltip(event, 'PENCERE OPAKLIĞI: Açılan pencerelerin (Envanter, Ayarlar, Sohbet) şeffaflığı.')" onmouseleave="hideTooltip()"><span>PENCERE OPAKLIĞI</span><span id="val-window-opacity">100%</span></div>
+            <input type="range" id="vol-window-opacity" class="smart-slider" data-default="100" min="20" max="100" value="100">
+
             <div class="toggle-row mt-3" onmouseenter="showInfoTooltip(event, 'AKILLI GÖRÜNÜRLÜK: Fare ile üzerine gelindiğinde arayüzü tam netleştirir.')" onmouseleave="hideTooltip()">
                 <span>ÜZERİNE GELİNCE %100</span>
                 <label class="toggle-switch">

@@ -1,7 +1,7 @@
 /**
  * Void Ray - Pencere: İletişim (Chat)
  * * Sohbet geçmişi ve kullanıcı mesajlarını yönetir.
- * * Bildirim mantığı js/notifications.js dosyasına taşınmıştır.
+ * * GÜNCELLEME: Opaklık ayarının çalışması için 'active' sınıfı eklendi.
  */
 
 // İletişim Sistemi (Loglar ve Mesajlar)
@@ -45,20 +45,27 @@ function updateChatUI() {
 
     if (chatState === 2) {
         // --- AKTİF MOD ---
+        // Opaklık sisteminin bu pencereyi "AÇIK" olarak algılaması için active sınıfı şart
+        panel.classList.add('active'); 
+        
         btn.innerText = "✉"; 
         btn.style.color = "white";
         
         // Butonu aktif olarak işaretle
         if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-chat-mode', true);
         
-        // Input alanını görünür yap (Tab durumuna göre switchChatTab yönetecek)
+        // Input alanını görünür yap
         if(inputArea) inputArea.style.removeProperty('display');
         
         // Tam geçmişi geri yükle
         switchChatTab(activeChatTab); 
     } 
     else {
-        // --- YARIM AKTİF (Varsayılan else durumu) ---
+        // --- YARIM AKTİF ---
+        // Pencere kapanmış gibi davranması için active sınıfını kaldırıyoruz
+        // (Böylece opaklık ayarı yerine CSS'teki varsayılan şeffaflık devreye giriyor)
+        panel.classList.remove('active');
+        
         btn.innerText = "⋯"; 
         btn.style.color = "#94a3b8"; 
         panel.classList.add('chat-mode-semi');
@@ -74,8 +81,6 @@ function updateChatUI() {
         if (chatContent) chatContent.innerHTML = ''; 
     }
 }
-
-// NOT: showNotification fonksiyonu js/notifications.js dosyasına taşındı.
 
 /**
  * Sohbet paneline yeni bir mesaj ekler.
@@ -127,14 +132,13 @@ function switchChatTab(tab) {
     const inputArea = document.getElementById('chat-input-area');
     if(inputArea) {
         // Sadece AKTİF (2) moddaysa input görünürlüğünü yönet
-        // Diğer modlarda updateChatUI zaten gizliyor
         if (chatState === 2) {
             if(tab === 'bilgi') inputArea.style.display = 'none';
             else inputArea.style.display = 'flex';
         }
     }
 
-    // Yarım moddaysa tarihçeyi yükleme, temiz kalsın (sadece yeni gelenler görünsün)
+    // Yarım moddaysa tarihçeyi yükleme
     if (chatState === 1) {
         const chatContent = document.getElementById('chat-content');
         if (chatContent) chatContent.innerHTML = '';

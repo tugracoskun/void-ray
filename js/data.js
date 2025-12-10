@@ -247,6 +247,7 @@ const DEFAULT_GAME_SETTINGS = {
     showStorageArrow: false,
     showEchoArrow: true, 
     hudOpacity: 1.0,
+    windowOpacity: 1.0, // YENİ: Pencere Opaklığı
     hudHoverEffect: false,
     showShipBars: false,
     cameraOffsetX: 0, 
@@ -254,7 +255,7 @@ const DEFAULT_GAME_SETTINGS = {
     adaptiveCamera: false,
     smoothCameraTransitions: true,
     developerMode: false,
-    enableConsole: false, // YENİ: Varsayılan olarak konsol kapalı
+    enableConsole: false, 
     showGravityFields: false,
     showHitboxes: false,
     showVectors: false,

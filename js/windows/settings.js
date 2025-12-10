@@ -1,14 +1,19 @@
 /**
  * Void Ray - Pencere: Ayarlar
  * * Oyun ayarlarını, ses kontrollerini ve görünüm tercihlerini yönetir.
+ * * GÜNCELLEME: Overlay yapısına sahip pencereler için opaklık düzeltmesi.
  */
 
 let settingsOpen = false;
 
-// Global Ayar Nesnesi (Varsayılanlar, game.js ile aynı olmalı)
+// Global Ayar Nesnesi
 if (!window.gameSettings) {
-    // data.js yüklendiyse oradaki varsayılanları kullan, yoksa boş obje başlat (hata önleme)
     window.gameSettings = typeof DEFAULT_GAME_SETTINGS !== 'undefined' ? Object.assign({}, DEFAULT_GAME_SETTINGS) : {};
+}
+
+// Varsayılan eksikse tamamla
+if (typeof window.gameSettings.windowOpacity === 'undefined') {
+    window.gameSettings.windowOpacity = 1.0;
 }
 
 function initSettings() {
@@ -47,18 +52,130 @@ function initSettings() {
     const camXInput = document.getElementById('cam-offset-x');
     const camYInput = document.getElementById('cam-offset-y');
 
-    const hudSelectors = ['.hud-icon-group', '#xp-container', '#chat-panel', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt'];
-    const hudElements = [];
+    // --- OPAK KONTROLÜ İÇİN YAPI ---
     
-    hudSelectors.forEach(sel => {
-        const el = document.querySelector(sel);
-        if(el) {
-            hudElements.push(el);
-            el.style.transition = 'opacity 0.3s ease';
-            el.addEventListener('mouseenter', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = '1'; });
-            el.addEventListener('mouseleave', () => { if (window.gameSettings.hudHoverEffect) el.style.opacity = window.gameSettings.hudOpacity; });
-        }
-    });
+    // HUD Elemanları (Doğrudan stil uygulanacaklar)
+    const hudSelectors = ['.hud-icon-group', '#xp-container', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt', '#echo-vision-indicator'];
+    
+    // Pencereler (Overlay ve İçerik Ayrımı)
+    // id: Class'ın değiştiği (open/active olan) element
+    // targetClass: Opaklığın uygulanacağı iç element (null ise id'nin kendisi)
+    const windowDefinitions = [
+        { id: '#chat-panel', targetClass: null }, // Kendisi açılıp kapanıyor
+        { id: '#settings-panel', targetClass: null }, // Kendisi
+        { id: '#inventory-overlay', targetClass: '.inv-window' }, // Overlay açılıyor, stil window'a
+        { id: '#stats-overlay', targetClass: '.stats-window' },
+        { id: '#profile-overlay', targetClass: '.profile-window' },
+        { id: '#context-overlay', targetClass: '.context-window' },
+        { id: '#nexus-overlay', targetClass: '.nexus-window' },
+        { id: '#storage-overlay', targetClass: '.nexus-window' },
+        { id: '#echo-inventory-overlay', targetClass: '.nexus-window' },
+        { id: '#achievements-overlay', targetClass: '.stats-window' }
+    ];
+
+    const hudElements = [];
+    const windowTrackers = []; // { trigger: Element, target: Element } olarak saklanacak
+    let windowObserver = null;
+
+    // Elementleri önbelleğe al ve Observer kur
+    const cacheElements = () => {
+        hudElements.length = 0;
+        windowTrackers.length = 0;
+
+        // HUD Elemanlarını Topla
+        hudSelectors.forEach(sel => {
+            const el = document.querySelector(sel);
+            if(el) {
+                hudElements.push(el);
+                el.style.transition = 'opacity 0.3s ease';
+            }
+        });
+
+        // Pencere Elemanlarını Eşleştir
+        windowDefinitions.forEach(def => {
+            const triggerEl = document.querySelector(def.id);
+            if (triggerEl) {
+                // Eğer targetClass varsa onu bul, yoksa trigger'ın kendisi hedef
+                const targetEl = def.targetClass ? triggerEl.querySelector(def.targetClass) : triggerEl;
+                
+                if (targetEl) {
+                    targetEl.style.transition = 'opacity 0.3s ease';
+                    windowTrackers.push({ trigger: triggerEl, target: targetEl });
+                }
+            }
+        });
+
+        // --- PENCERE GÖZLEMCİSİ (MUTATION OBSERVER) ---
+        if (windowObserver) windowObserver.disconnect();
+
+        windowObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const el = mutation.target;
+                    
+                    // Bu element hangi pencerenin tetikleyicisi?
+                    const tracker = windowTrackers.find(t => t.trigger === el);
+                    if (!tracker) return;
+
+                    const isOpen = el.classList.contains('open') || el.classList.contains('active');
+                    
+                    if (isOpen) {
+                        // Açıldı: Hedef elemente opaklık ver
+                        tracker.target.style.opacity = window.gameSettings.windowOpacity;
+                    } else {
+                        // Kapandı: Stili temizle
+                        tracker.target.style.opacity = '';
+                    }
+                }
+            });
+        });
+
+        // Tetikleyici elementleri (Overlay'leri) izle
+        windowTrackers.forEach(t => {
+            windowObserver.observe(t.trigger, { attributes: true, attributeFilter: ['class'] });
+        });
+    };
+
+    cacheElements();
+
+    // Hover Efekti Yöneticisi
+    const applyHoverLogic = (items, baseOpacity, isWindow = false) => {
+        items.forEach(item => {
+            // item bir Element olabilir veya {trigger, target} objesi olabilir
+            const el = item.target || item;      // Stil uygulanacak element
+            const trigger = item.trigger || item; // Açık mı kapalı mı kontrol edilecek element
+
+            // Pencere kontrolü: Kapalıysa işlem yapma
+            if (isWindow) {
+                const isOpen = trigger.classList.contains('open') || trigger.classList.contains('active');
+                if (!isOpen) {
+                    el.style.opacity = ''; // Temizle
+                    return; 
+                }
+            }
+
+            // Mevcut durumu güncelle
+            if (window.gameSettings.hudHoverEffect && el.matches(':hover')) {
+                el.style.opacity = '1';
+            } else {
+                el.style.opacity = baseOpacity;
+            }
+
+            // Mouse olaylarını güncelle
+            el.onmouseenter = () => {
+                if (window.gameSettings.hudHoverEffect) el.style.opacity = '1';
+            };
+            el.onmouseleave = () => {
+                // Eğer pencereyse ve hala açıksa eski haline dön
+                if (isWindow) {
+                     const isOpen = trigger.classList.contains('open') || trigger.classList.contains('active');
+                     if(isOpen) el.style.opacity = baseOpacity;
+                } else {
+                     el.style.opacity = baseOpacity;
+                }
+            };
+        });
+    };
 
     // --- TEMA RENK SEÇİMİ ---
     const themeOpts = document.querySelectorAll('.theme-opt');
@@ -66,27 +183,20 @@ function initSettings() {
         opt.addEventListener('click', (e) => {
             const color = e.target.getAttribute('data-color');
             setGameTheme(color);
-            
-            // Custom picker değerini de güncelle ki senkron olsun
             const picker = document.getElementById('custom-theme-picker');
             if (picker) picker.value = color;
         });
         
-        // Başlangıçta varsayılan rengi (#94d8c3) işaretle
         if (opt.getAttribute('data-color') === '#94d8c3') {
             opt.style.borderColor = '#fff';
             opt.style.transform = 'scale(1.1)';
         }
     });
 
-    // YENİ: ÖZEL RENK SEÇİCİ DİNLEYİCİSİ
     const customPicker = document.getElementById('custom-theme-picker');
     if (customPicker) {
-        // 'input' eventi renk seçilirken anlık tetiklenir (canlı önizleme için)
         customPicker.addEventListener('input', (e) => {
             setGameTheme(e.target.value);
-            
-            // Diğer sabit renklerin seçimini kaldır
             document.querySelectorAll('.theme-opt').forEach(el => {
                 el.style.borderColor = 'rgba(255,255,255,0.2)';
                 el.style.transform = 'scale(1)';
@@ -96,7 +206,6 @@ function initSettings() {
     }
 
     // --- TOGGLE LISTENERLARI ---
-
     if (nexusToggle) nexusToggle.addEventListener('change', (e) => window.gameSettings.showNexusArrow = e.target.checked);
     if (repairToggle) repairToggle.addEventListener('change', (e) => window.gameSettings.showRepairArrow = e.target.checked);
     if (storageToggle) storageToggle.addEventListener('change', (e) => window.gameSettings.showStorageArrow = e.target.checked);
@@ -105,23 +214,18 @@ function initSettings() {
     if (hudHoverToggle) {
         hudHoverToggle.addEventListener('change', (e) => {
             window.gameSettings.hudHoverEffect = e.target.checked;
-            hudElements.forEach(el => {
-                if (window.gameSettings.hudHoverEffect && el.matches(':hover')) el.style.opacity = '1';
-                else el.style.opacity = window.gameSettings.hudOpacity;
-            });
+            cacheElements();
+            applyHoverLogic(hudElements, window.gameSettings.hudOpacity);
+            applyHoverLogic(windowTrackers, window.gameSettings.windowOpacity, true);
         });
     }
 
-    if (shipBarsToggle) {
-        shipBarsToggle.addEventListener('change', (e) => window.gameSettings.showShipBars = e.target.checked);
-    }
+    if (shipBarsToggle) shipBarsToggle.addEventListener('change', (e) => window.gameSettings.showShipBars = e.target.checked);
 
     if (consoleToggle) {
         consoleToggle.addEventListener('change', (e) => {
             window.gameSettings.enableConsole = e.target.checked;
-            if(e.target.checked) {
-                 showNotification({name: "KONSOL AKTİF", type:{color:'#fbbf24'}}, "Komutları kullanabilirsiniz.");
-            }
+            if(e.target.checked) showNotification({name: "KONSOL AKTİF", type:{color:'#fbbf24'}}, "Komutları kullanabilirsiniz.");
         });
     }
 
@@ -144,9 +248,7 @@ function initSettings() {
         });
     }
 
-    if (smoothCamToggle) {
-        smoothCamToggle.addEventListener('change', (e) => window.gameSettings.smoothCameraTransitions = e.target.checked);
-    }
+    if (smoothCamToggle) smoothCamToggle.addEventListener('change', (e) => window.gameSettings.smoothCameraTransitions = e.target.checked);
     
     if (devModeToggle) {
         devModeToggle.addEventListener('change', (e) => {
@@ -178,7 +280,6 @@ function initSettings() {
                     if(hidePlayerToggle) hidePlayerToggle.checked = false;
                     
                     document.getElementById('debug-fps-panel').style.display = 'none';
-                    
                     showNotification({name: "GELİŞTİRİCİ MODU KAPALI", type:{color:'#fff'}}, "");
                 }
             }
@@ -200,19 +301,12 @@ function initSettings() {
     if (godModeToggle) {
         godModeToggle.addEventListener('change', (e) => {
             window.gameSettings.godMode = e.target.checked;
-            if(window.gameSettings.godMode) {
-                showNotification({name: "ÖLÜMSÜZLÜK AKTİF", type:{color:'#10b981'}}, "");
-            } else {
-                showNotification({name: "ÖLÜMSÜZLÜK KAPALI", type:{color:'#ef4444'}}, "");
-            }
+            if(window.gameSettings.godMode) showNotification({name: "ÖLÜMSÜZLÜK AKTİF", type:{color:'#10b981'}}, "");
+            else showNotification({name: "ÖLÜMSÜZLÜK KAPALI", type:{color:'#ef4444'}}, "");
         });
     }
 
-    if (hidePlayerToggle) {
-        hidePlayerToggle.addEventListener('change', (e) => {
-            window.gameSettings.hidePlayer = e.target.checked;
-        });
-    }
+    if (hidePlayerToggle) hidePlayerToggle.addEventListener('change', (e) => window.gameSettings.hidePlayer = e.target.checked);
 
     // --- AKILLI SLIDER YÖNETİMİ ---
     const smartSliders = document.querySelectorAll('.smart-slider');
@@ -228,11 +322,19 @@ function initSettings() {
                 const disp = document.getElementById('val-hud-opacity');
                 if(disp) disp.innerText = val + '%';
                 
-                hudElements.forEach(el => {
-                    if (window.gameSettings.hudHoverEffect && el.matches(':hover')) el.style.opacity = '1';
-                    else el.style.opacity = opacity;
-                });
+                cacheElements();
+                applyHoverLogic(hudElements, opacity);
             } 
+            else if (id === 'vol-window-opacity') { 
+                const opacity = val / 100;
+                window.gameSettings.windowOpacity = opacity;
+                const disp = document.getElementById('val-window-opacity');
+                if(disp) disp.innerText = val + '%';
+                
+                cacheElements();
+                // Pencereler için objeler dizisini gönder (windowTrackers)
+                applyHoverLogic(windowTrackers, opacity, true);
+            }
             else if (id === 'cam-offset-x') {
                 window.gameSettings.cameraOffsetX = val;
                 const disp = document.getElementById('val-cam-x');
@@ -286,32 +388,23 @@ function initSettings() {
 
 function setGameTheme(colorHex) {
     if (!colorHex) return;
-    
-    // CSS Değişkenlerini Güncelle (Global)
     document.documentElement.style.setProperty('--hud-color', colorHex);
-    
     if (typeof Utils !== 'undefined' && Utils.hexToRgba) {
         const dimColor = Utils.hexToRgba(colorHex, 0.3);
         document.documentElement.style.setProperty('--hud-color-dim', dimColor);
     }
-
-    // Aktif seçimi işaretle
     document.querySelectorAll('.theme-opt').forEach(el => {
         const isActive = el.getAttribute('data-color') === colorHex;
         el.style.borderColor = isActive ? '#fff' : 'rgba(255,255,255,0.2)';
         el.style.transform = isActive ? 'scale(1.2)' : 'scale(1)';
-        // Shadow efektini de güncelle
         el.style.boxShadow = isActive ? `0 0 10px ${colorHex}` : 'none';
     });
-    
-    // Kullanıcıya bildir
     showNotification({name: "TEMA GÜNCELLENDİ", type:{color: colorHex}}, "");
 }
 
 function toggleSettings() {
     const panel = document.getElementById('settings-panel');
     if (!panel) return;
-    
     settingsOpen = !settingsOpen;
     if (settingsOpen) {
         panel.classList.add('open');
@@ -366,7 +459,6 @@ window.actionImportSave = function() {
     const code = prompt("Kayıt kodunu buraya yapıştırın:");
     if (code) {
         const result = SaveManager.importSave(code);
-        // Hata durumunda bildirim göster (Başarılı ise importSave kendi gösteriyor)
         if (result && result.startsWith("HATA")) {
             showNotification({name: "İÇE AKTARMA HATASI", type:{color:'#ef4444'}}, "Geçersiz kod.");
         }
