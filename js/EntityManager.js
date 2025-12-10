@@ -196,6 +196,8 @@ class EntityManager {
     }
 
     drawStars(ctx, width, height, target) {
+        if (window.gameSettings && !window.gameSettings.showStars) return;
+
         if(!this.bgGenerated || this.bgCanvas.width !== width || this.bgCanvas.height !== height) {
             this.generateStarBackground(width, height);
         }

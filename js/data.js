@@ -247,7 +247,7 @@ const DEFAULT_GAME_SETTINGS = {
     showStorageArrow: false,
     showEchoArrow: true, 
     hudOpacity: 1.0,
-    windowOpacity: 1.0, // YENİ: Pencere Opaklığı
+    windowOpacity: 1.0, 
     hudHoverEffect: false,
     showShipBars: false,
     cameraOffsetX: 0, 
@@ -262,5 +262,9 @@ const DEFAULT_GAME_SETTINGS = {
     showTargetVectors: false,
     showFps: false,
     godMode: false,
-    hidePlayer: false
+    hidePlayer: false,
+    
+    // YENİ GÖRÜNÜM AYARLARI
+    enableCRT: false,    // Retro Scanline Efekti
+    showStars: true      // Arka Plan Yıldızları
 };

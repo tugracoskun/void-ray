@@ -39,6 +39,10 @@ function initSettings() {
     const adaptiveCamToggle = document.getElementById('toggle-adaptive-cam');
     const smoothCamToggle = document.getElementById('toggle-smooth-cam');
     
+    // YENİ TOGGLE REFERANSLARI
+    const crtToggle = document.getElementById('toggle-crt');
+    const starsToggle = document.getElementById('toggle-stars');
+    
     const devModeToggle = document.getElementById('toggle-dev-mode');
     const gravityToggle = document.getElementById('toggle-gravity-debug');
     const hitboxToggle = document.getElementById('toggle-hitboxes');
@@ -226,6 +230,26 @@ function initSettings() {
         consoleToggle.addEventListener('change', (e) => {
             window.gameSettings.enableConsole = e.target.checked;
             if(e.target.checked) showNotification({name: "KONSOL AKTİF", type:{color:'#fbbf24'}}, "Komutları kullanabilirsiniz.");
+        });
+    }
+
+    // YENİ EFEKT TOGGLE'LARI
+    if (crtToggle) {
+        crtToggle.addEventListener('change', (e) => {
+            window.gameSettings.enableCRT = e.target.checked;
+            const crtOverlay = document.getElementById('crt-overlay');
+            if(crtOverlay) {
+                if(e.target.checked) crtOverlay.classList.add('active');
+                else crtOverlay.classList.remove('active');
+            }
+        });
+    }
+
+    if (starsToggle) {
+        starsToggle.addEventListener('change', (e) => {
+            window.gameSettings.showStars = e.target.checked;
+            // Etkiyi anında görmek için arka planı temizle/çiz
+            // EntityManager bir sonraki karede bu ayarı okuyacak
         });
     }
 
