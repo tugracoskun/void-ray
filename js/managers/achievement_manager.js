@@ -92,40 +92,14 @@ const AchievementManager = {
 
     unlock: function(ach) {
         ach.unlocked = true;
-        this.showPopup(ach);
+        if (typeof showAchievementPopup === 'function') {
+            showAchievementPopup(ach);
+        } else {
+            console.warn("showAchievementPopup fonksiyonu bulunamadı (notifications.js yüklü mü?)");
+        }
+        
         if (typeof audio !== 'undefined' && audio) audio.playChime({id: 'legendary'});
         if (typeof SaveManager !== 'undefined') SaveManager.save(true);
-    },
-
-    showPopup: function(ach) {
-        const container = document.getElementById('ui-core');
-        if (!container) return;
-
-        const popup = document.createElement('div');
-        // CSS sınıfları css/hud.css dosyasında tanımlandı.
-        popup.className = 'achievement-popup';
-        popup.innerHTML = `
-            <div class="ach-icon">★</div>
-            <div class="ach-content">
-                <div class="ach-title">BAŞARIM AÇILDI</div>
-                <div class="ach-name">${ach.title}</div>
-                <div class="ach-desc">${ach.desc}</div>
-            </div>
-        `;
-        
-        container.appendChild(popup);
-
-        // Animasyonu tetiklemek için bir kare bekle
-        requestAnimationFrame(() => {
-            popup.classList.add('visible');
-        });
-
-        // 4 saniye sonra kapat
-        setTimeout(() => {
-            popup.classList.remove('visible');
-            // Geçiş efekti (0.5s) bitince DOM'dan sil
-            setTimeout(() => popup.remove(), 600);
-        }, 4000);
     },
 
     getUnlockedIds: function() {

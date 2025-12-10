@@ -60,11 +60,11 @@ class VoidRay {
     takeDamage(amount) {
         if (window.gameSettings && window.gameSettings.godMode) return;
         this.health = Math.max(0, this.health - amount);
-        const dmgOverlay = document.getElementById('damage-overlay');
-        if(dmgOverlay) {
-            dmgOverlay.classList.add('active');
-            setTimeout(() => dmgOverlay.classList.remove('active'), 200);
+        
+        if (typeof showDamageEffect === 'function') {
+            showDamageEffect();
         }
+        
         if (this.health <= 0) this.die();
     }
 

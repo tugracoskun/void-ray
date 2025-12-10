@@ -24,46 +24,95 @@ function showNotification(planet, suffix) {
     else if (name.includes("EVRİM GEÇİRİLDİ")) {
         msg = `Sistem: ${name}`;
         type = "info";
-    } 
-    // 3. Yankı (Echo) Durumları
-    else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ") || name.includes("DEPO") || name.includes("GÖRÜŞ:")) {
+    } else if (name.includes("YANKI DOĞDU") || name.includes("YANKI AYRILDI") || name.includes("YANKI: ŞARJ") || name.includes("DEPO") || name.includes("GÖRÜŞ:")) {
         msg = `Sistem: ${name}`;
         type = "info";
-    } 
-    // 4. Enerji Durumları
-    else if (name.includes("ENERJİ") || name.includes("TARDİGRAD")) {
+    } else if (name.includes("ENERJİ") || name.includes("TARDİGRAD")) {
          msg = `${name} ${suffix}`;
          type = "info";
-    } 
-    // 5. Uyarılar ve Hatalar (Kırmızı)
-    else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU") || name.includes("YETERSİZ") || name.includes("BAĞLANTI") || name.includes("BOŞ") || name.includes("ERİŞİM") || name.includes("HATA") || name.includes("SİNYAL KAYBI")) {
+    } else if (name.includes("ZEHİR") || name.includes("TEHLİKE") || name.includes("YANKI ZEHİRLENDİ") || name.includes("DOLU") || name.includes("YETERSİZ") || name.includes("BAĞLANTI") || name.includes("BOŞ") || name.includes("ERİŞİM") || name.includes("HATA") || name.includes("SİNYAL KAYBI")) {
         msg = `UYARI: ${name} ${suffix}`;
         type = "alert";
-    } 
-    // 6. Özel Keşifler
-    else if (name.includes("KAYIP KARGO")) {
+    } else if (name.includes("KAYIP KARGO")) {
         msg = `Keşif: ${name} bulundu!`;
         type = "info";
-    } 
-    // 7. Kaynak Toplama (Loot)
-    else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
+    } else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
         msg = `Toplandı: ${name} ${suffix}`;
         type = "loot";
-    } 
-    // 8. Varsayılan
-    else {
+    } else {
         msg = `${name} ${suffix}`;
         type = "info";
     }
     
-    // Mesajı Chat Sistemine İlet
-    // addChatMessage fonksiyonu js/windows/chat.js içindedir.
+    // Chat Sistemine İlet
     if (typeof addChatMessage === 'function') {
         addChatMessage(msg, type, 'bilgi');
-    } else {
-        console.warn("Notification System: addChatMessage fonksiyonu bulunamadı. Mesaj:", msg);
     }
 }
 
-// Global erişim için window'a ata (Gerekirse)
+/**
+ * 2. GÖRSEL EFEKTLER (HUD OVERLAYS)
+ */
+
+/**
+ * Ekranı yeşil renkte titreştirir (Zehir hasarı).
+ */
+function showToxicEffect() { 
+    const el = document.getElementById('toxic-overlay'); 
+    if(el) { 
+        el.classList.add('active'); 
+        setTimeout(() => el.classList.remove('active'), 1500); 
+    }
+}
+
+/**
+ * Ekranı kırmızı renkte titreştirir (Fiziksel hasar).
+ */
+function showDamageEffect() {
+    const dmgOverlay = document.getElementById('damage-overlay');
+    if(dmgOverlay) {
+        dmgOverlay.classList.add('active');
+        setTimeout(() => dmgOverlay.classList.remove('active'), 200);
+    }
+}
+
+/**
+ * 3. BAŞARIM POPUP'I
+ * Sağ taraftan kayarak gelen başarım bildirimini gösterir.
+ * @param {Object} ach - Başarım objesi {title, desc}
+ */
+function showAchievementPopup(ach) {
+    const container = document.getElementById('ui-core');
+    if (!container) return;
+
+    const popup = document.createElement('div');
+    // CSS sınıfları css/hud.css dosyasında tanımlandı.
+    popup.className = 'achievement-popup';
+    popup.innerHTML = `
+        <div class="ach-icon">★</div>
+        <div class="ach-content">
+            <div class="ach-title">BAŞARIM AÇILDI</div>
+            <div class="ach-name">${ach.title}</div>
+            <div class="ach-desc">${ach.desc}</div>
+        </div>
+    `;
+    
+    container.appendChild(popup);
+
+    // Animasyonu tetiklemek için bir kare bekle
+    requestAnimationFrame(() => {
+        popup.classList.add('visible');
+    });
+
+    // 4 saniye sonra kapat ve sil
+    setTimeout(() => {
+        popup.classList.remove('visible');
+        setTimeout(() => popup.remove(), 600);
+    }, 4000);
+}
+
+// Global erişimler
 window.showNotification = showNotification;
+window.showToxicEffect = showToxicEffect;
+window.showDamageEffect = showDamageEffect;
+window.showAchievementPopup = showAchievementPopup;

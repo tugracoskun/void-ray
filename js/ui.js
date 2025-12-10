@@ -131,11 +131,6 @@ function startTipsCycle() {
     }, 5000);
 }
 
-function showToxicEffect() { 
-    const el = document.getElementById('toxic-overlay'); 
-    if(el) { el.classList.add('active'); setTimeout(() => el.classList.remove('active'), 1500); }
-}
-
 function renderGrid(container, items, capacity, onClickAction, isUnlimited = false) {
     if (!container) return;
     container.innerHTML = '';
