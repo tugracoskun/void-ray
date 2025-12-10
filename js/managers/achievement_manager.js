@@ -2,6 +2,7 @@
  * Void Ray - Başarım Yöneticisi (Achievement Manager)
  * * Oyuncunun istatistiklerini izler ve belirli koşullar sağlandığında ödül verir.
  * * GÜNCELLEME: İlerleme takibi için 'target' ve 'getValue' eklendi.
+ * * GÜNCELLEME (UI): CSS sınıf tabanlı popup tasarımı.
  */
 
 const AchievementManager = {
@@ -101,8 +102,7 @@ const AchievementManager = {
         if (!container) return;
 
         const popup = document.createElement('div');
-        // CSS stilleri achievement_manager.js'de inline olarak veya css dosyasında olabilir.
-        // Önceki adımda inline eklemiştik, aynen koruyoruz.
+        // CSS sınıfları css/hud.css dosyasında tanımlandı.
         popup.className = 'achievement-popup';
         popup.innerHTML = `
             <div class="ach-icon">★</div>
@@ -113,36 +113,17 @@ const AchievementManager = {
             </div>
         `;
         
-        popup.style.cssText = `
-            position: absolute; top: 100px; right: -300px;
-            background: rgba(16, 185, 129, 0.9);
-            border: 1px solid #34d399;
-            border-left: 4px solid #fff;
-            padding: 15px; width: 280px;
-            display: flex; gap: 15px; align-items: center;
-            border-radius: 4px; z-index: 200;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(5px);
-        `;
-        
-        const icon = popup.querySelector('.ach-icon');
-        icon.style.cssText = "font-size: 2rem;";
-        
-        const title = popup.querySelector('.ach-title');
-        title.style.cssText = "font-size: 0.7rem; color: #ecfdf5; letter-spacing: 1px; font-weight:bold;";
-        
-        const name = popup.querySelector('.ach-name');
-        name.style.cssText = "font-size: 1.1rem; color: #fff; font-weight: 800; margin: 2px 0;";
-        
-        const desc = popup.querySelector('.ach-desc');
-        desc.style.cssText = "font-size: 0.8rem; color: #d1fae5; line-height: 1.2;";
-
         container.appendChild(popup);
 
-        setTimeout(() => { popup.style.right = '30px'; }, 100);
+        // Animasyonu tetiklemek için bir kare bekle
+        requestAnimationFrame(() => {
+            popup.classList.add('visible');
+        });
+
+        // 4 saniye sonra kapat
         setTimeout(() => {
-            popup.style.right = '-350px';
+            popup.classList.remove('visible');
+            // Geçiş efekti (0.5s) bitince DOM'dan sil
             setTimeout(() => popup.remove(), 600);
         }, 4000);
     },

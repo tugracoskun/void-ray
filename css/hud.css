@@ -8,37 +8,29 @@
 .pointer-events-auto { pointer-events: auto; }
 
 /* --- HUD GİZLEME ÖZELLİĞİ --- */
-/* Oyun içi kullanıcı toggle'ı için (H tuşu) */
 .hidden-ui {
     opacity: 0 !important;
     pointer-events: none !important;
 }
 
-/* * BAŞLANGIÇ DURUMU (Game Start öncesi)
- * Oyun başlayana kadar HUD ve Panelleri gizle.
- * ui.js içinde startGameSession fonksiyonunda 'active' sınıfı eklenir.
- */
+/* * BAŞLANGIÇ DURUMU (Game Start öncesi) */
 #ui-hud, #ui-panels {
-    transition: opacity 1.5s ease; /* Açılış efekti yumuşak olsun */
-    opacity: 0; /* Varsayılan Gizli */
-    pointer-events: none; /* Etkileşimi kes */
+    transition: opacity 1.5s ease; 
+    opacity: 0; 
+    pointer-events: none; 
 }
 
-/* Oyun Başlayınca Görünür Ol */
 #ui-hud.active, #ui-panels.active {
     opacity: 1;
-    /* Pointer-events: auto YAPMIYORUZ, çünkü hud-container zaten none olmalı, 
-       içindeki butonlar auto. Bu sınıf sadece opacity yönetir. */
 }
 
-/* Henüz aktif değilse alt elementlerin de tıklanmasını engelle (Garanti) */
 #ui-hud:not(.active) *, #ui-panels:not(.active) * {
     pointer-events: none !important;
 }
 
 .hud-icon-group { 
     position: absolute; top: 20px; left: 20px; 
-    display: flex; gap: 8px; /* Boşluk azaltıldı */
+    display: flex; gap: 8px; 
     pointer-events: auto; align-items: flex-start; 
 }
 
@@ -47,7 +39,7 @@
     position: absolute; top: -4px; right: -4px;
     background: var(--hud-color); color: #000;
     font-weight: bold;
-    width: 14px; height: 14px; /* Daha küçük */
+    width: 14px; height: 14px;
     font-size: 0.55rem;
     display: flex; justify-content: center; align-items: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
@@ -66,12 +58,12 @@
     font-family: monospace; letter-spacing: 1px;
     cursor: pointer; pointer-events: auto; display: none; text-align: center;
     transition: 0.2s;
-    width: 38px; /* Buton genişliğiyle aynı */
+    width: 38px;
 }
 .ai-mode-switch.visible { display: block; }
 .ai-mode-switch:hover { border-color: var(--hud-color); color: var(--hud-color); background: rgba(0,0,0,0.9); }
 
-/* Echo Menu - GÜNCELLENDİ */
+/* Echo Menu */
 .echo-wrapper { position: relative; display: none; flex-direction: column; }
 .echo-wrapper:hover .echo-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
 
@@ -139,16 +131,25 @@
 #tutorial-box {
     position: absolute;
     top: 30px; left: 50%; transform: translateX(-50%) translateY(-20px);
-    background: rgba(10, 12, 14, 0.9);
-    border: 1px solid var(--ray-color);
-    border-left-width: 4px;
-    padding: 10px 15px;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color-dim);
+    
+    background-image: var(--wireframe-gradient);
+    background-size: 10px 10px;
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
+
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    
     opacity: 0; pointer-events: none;
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    min-width: 300px;
-    backdrop-filter: blur(4px);
+    min-width: 320px;
+    max-width: 450px;
+    border-radius: 0;
 }
 
 #tutorial-box.visible {
@@ -158,20 +159,105 @@
 #tutorial-box.success {
     border-color: #10b981;
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    background-image: 
+        linear-gradient(to right, #10b981 2px, transparent 2px),
+        linear-gradient(to bottom, #10b981 2px, transparent 2px),
+        linear-gradient(to left, #10b981 2px, transparent 2px),
+        linear-gradient(to top, #10b981 2px, transparent 2px);
 }
 
 #tutorial-icon {
-    font-weight: bold; font-family: monospace; font-size: 1.2rem;
-    color: var(--ray-color);
+    width: 28px; height: 28px;
+    border: 1px solid var(--hud-color);
+    display: flex; justify-content: center; align-items: center;
+    background: rgba(148, 216, 195, 0.1);
+    font-weight: bold; font-family: monospace; font-size: 1.1rem;
+    color: var(--hud-color);
+    flex-shrink: 0;
 }
 
 #tutorial-box.success #tutorial-icon {
-    color: #10b981;
+    color: #10b981; border-color: #10b981; background: rgba(16, 185, 129, 0.1);
 }
 
-#tutorial-content { display: flex; flex-direction: column; flex: 1; }
-.tut-label { font-size: 0.55rem; letter-spacing: 2px; color: var(--hud-text-dim); font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
-#tutorial-text { font-size: 0.75rem; color: var(--hud-text); line-height: 1.3; font-family: monospace; }
+#tutorial-content { display: flex; flex-direction: column; flex: 1; justify-content: center; }
+
+.tut-label { 
+    font-size: 0.6rem; letter-spacing: 2px; color: var(--hud-text-dim); 
+    font-weight: bold; margin-bottom: 4px; text-transform: uppercase; 
+    font-family: monospace; border-bottom: 1px dashed var(--hud-color-dim);
+    padding-bottom: 2px; display: inline-block; align-self: flex-start;
+}
+
+#tutorial-text { 
+    font-size: 0.75rem; color: var(--hud-text); line-height: 1.4; 
+    font-family: monospace; text-shadow: 0 0 5px rgba(0,0,0,0.5); 
+}
+
+/* --- ACHIEVEMENT POPUP (BAŞARIM BİLDİRİMİ) --- */
+.achievement-popup {
+    position: absolute; top: 100px; right: -350px; /* Ekran dışından başla */
+    width: 300px;
+    
+    background: var(--hud-bg);
+    border: 1px solid var(--color-gold); /* Altın Çerçeve */
+    
+    /* Wireframe Deseni */
+    background-image: var(--wireframe-gradient);
+    background-size: 10px 10px;
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
+
+    padding: 15px;
+    display: flex; gap: 15px; align-items: center;
+    z-index: 200;
+    
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.2); /* Altın Glow */
+    transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+    border-radius: 0;
+}
+
+.achievement-popup.visible {
+    right: 30px; /* Görünür konumu */
+}
+
+.ach-icon {
+    width: 42px; height: 42px;
+    border: 1px solid var(--color-gold);
+    color: var(--color-gold);
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.5rem;
+    background: rgba(251, 191, 36, 0.1);
+    flex-shrink: 0;
+    text-shadow: 0 0 10px var(--color-gold);
+}
+
+.ach-content {
+    display: flex; flex-direction: column; justify-content: center; flex: 1;
+}
+
+.ach-title {
+    font-size: 0.6rem; letter-spacing: 2px; color: var(--hud-text-dim);
+    font-weight: bold; margin-bottom: 4px;
+    text-transform: uppercase;
+    font-family: monospace;
+    border-bottom: 1px dashed rgba(251, 191, 36, 0.3);
+    padding-bottom: 2px;
+    align-self: flex-start;
+}
+
+.ach-name {
+    font-size: 0.95rem; color: var(--color-gold); font-weight: bold;
+    font-family: monospace; letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(251, 191, 36, 0.5);
+    margin-bottom: 2px;
+}
+
+.ach-desc {
+    font-size: 0.7rem; color: var(--hud-text);
+    line-height: 1.2; font-family: monospace;
+}
 
 /* --- ECHO VISION INDICATOR --- */
 #echo-vision-indicator {
@@ -218,7 +304,6 @@
 .speed-unit { font-size: 0.7rem; color: var(--hud-text-dim); margin-left: 5px; font-weight: 300; }
 
 /* --- MİNİMAL AYARLAR BUTONU --- */
-/* .hud-btn stilini kullanır ancak ID spesifik pozisyonu vardır */
 #btn-settings { 
     position: absolute; top: 20px; right: 20px; 
     width: 38px; height: 38px; 
