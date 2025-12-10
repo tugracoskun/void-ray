@@ -347,6 +347,17 @@
     border-color: var(--hud-color); opacity: 0.8;
 }
 
+#btn-settings.active {
+    border-color: var(--hud-color); 
+    color: var(--hud-color); 
+    background: rgba(148, 216, 195, 0.1);
+    transform: rotate(90deg);
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+#btn-settings.active::before, #btn-settings.active::after {
+    border-color: var(--hud-color); opacity: 0.8;
+}
+
 /* Ayarlar Paneli */
 #settings-panel { 
     position: absolute; top: 70px; right: 20px; width: 280px; 
