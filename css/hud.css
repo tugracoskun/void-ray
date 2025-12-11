@@ -22,8 +22,11 @@
 
 #ui-hud.active, #ui-panels.active {
     opacity: 1;
+    pointer-events: auto; /* DÜZELTME: Aktif olduğunda tıklamalara izin ver */
 }
 
+/* Aktif olsa bile içindeki her şeyin tıklanabilir olmasını istemeyiz (boşluklar vs.)
+   Bu yüzden child selector ile kontrolü sıkı tutuyoruz, ancak ana container eventleri geçirmeli */
 #ui-hud:not(.active) *, #ui-panels:not(.active) * {
     pointer-events: none !important;
 }
