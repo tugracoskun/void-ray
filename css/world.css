@@ -76,6 +76,8 @@
     background: rgba(5, 5, 10, 0.8); 
     backdrop-filter: blur(10px); 
     box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+    /* DÜZELTME: Harita tuvali ve üzerindeki etkileşimler için pointer-events: auto eklendi */
+    pointer-events: auto;
 }
 
 .big-map-info-overlay { 

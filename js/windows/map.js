@@ -236,9 +236,15 @@ function initMapListeners(canvasElement, worldSize, onTargetSelected) {
 
 function drawBigMap(ctx, canvas, worldSize, entities, state) {
     const container = canvas.parentElement;
-    canvas.width = container.clientWidth; 
-    canvas.height = container.clientHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Canvas boyutu değişmişse güncelle (Performans optimizasyonu)
+    if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
+        canvas.width = container.clientWidth; 
+        canvas.height = container.clientHeight;
+    } else {
+        // Boyut değişmediyse sadece temizle
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
     
     // --- İNTERPOLASYON (SOFT ZOOM/PAN) ---
     // Mevcut değerleri hedef değerlere %10 oranında yaklaştır (Lerp)
