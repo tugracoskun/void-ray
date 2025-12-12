@@ -619,7 +619,16 @@ function loop() {
             drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
         }
 
-        const entities = { player, echoRay, nexus, repairStation, storageCenter, planets: (entityManager ? entityManager.planets : []) };
+        // --- GÜNCELLEME: WORMHOLES LİSTESİ EKLENDİ ---
+        const entities = { 
+            player, 
+            echoRay, 
+            nexus, 
+            repairStation, 
+            storageCenter, 
+            planets: (entityManager ? entityManager.planets : []),
+            wormholes: (entityManager ? entityManager.wormholes : []) // YENİ
+        };
         const state = { manualTarget };
         
         drawMiniMap(mmCtx, entities, state, navOrigin, window.cameraTarget);

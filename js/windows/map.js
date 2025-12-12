@@ -455,6 +455,44 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     if(entities.repairStation) drawBaseIcon(entities.repairStation, MAP_CONFIG.colors.repair, "TAMİR");
     if(entities.storageCenter) drawBaseIcon(entities.storageCenter, MAP_CONFIG.colors.storage, "DEPO");
 
+    // Solucan Delikleri (YENİ)
+    if (entities.wormholes) {
+        entities.wormholes.forEach(w => {
+            // YENİ: Görünürlük Kontrolü (Radar Menzili)
+            // Varsayılan olarak gizli, sadece radar menzilindeyse çiz
+            let isVisible = false;
+            
+            // Oyuncu radarı içinde mi?
+            if (Utils.distEntity(entities.player, w) <= entities.player.radarRadius) {
+                isVisible = true;
+            } 
+            // Yankı (Echo) radarı içinde mi?
+            else if (entities.echoRay && Utils.distEntity(entities.echoRay, w) <= entities.echoRay.radarRadius) {
+                isVisible = true;
+            }
+
+            if (!isVisible) return;
+
+            const wx = offsetX + w.x * scale;
+            const wy = offsetY + w.y * scale;
+            
+            // Sabit boyutlu görünür ikon
+            const size = Math.max(4, 3 * scale);
+            
+            ctx.strokeStyle = GAME_CONFIG.WORMHOLE.COLOR_CORE || "#8b5cf6";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(wx, wy, size, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Merkez nokta
+            ctx.fillStyle = GAME_CONFIG.WORMHOLE.COLOR_OUTER || "#c4b5fd";
+            ctx.beginPath();
+            ctx.arc(wx, wy, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
     if(entities.echoRay) { 
         ctx.fillStyle = MAP_CONFIG.colors.echo; ctx.beginPath(); ctx.arc(offsetX + entities.echoRay.x*scale, offsetY + entities.echoRay.y*scale, 4, 0, Math.PI*2); ctx.fill(); 
     }
