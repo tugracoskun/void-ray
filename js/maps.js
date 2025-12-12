@@ -134,6 +134,23 @@ function drawMiniMap(ctx, entities, state, origin, refEntity) {
     if(entities.repairStation) drawBase(entities.repairStation, MAP_CONFIG.colors.repair);
     if(entities.storageCenter) drawBase(entities.storageCenter, MAP_CONFIG.colors.storage);
     
+    // Solucan Delikleri (YENİ)
+    if (entities.wormholes) {
+        entities.wormholes.forEach(w => {
+            const wx = (w.x - centerPos.x) * scale + cx;
+            const wy = (w.y - centerPos.y) * scale + cy;
+            
+            // Radar içinde mi?
+            if (Utils.dist(wx, wy, cx, cy) < radius) {
+                ctx.strokeStyle = GAME_CONFIG.WORMHOLE.COLOR_CORE || "#8b5cf6";
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(wx, wy, 2.5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        });
+    }
+
     // Gezegenler
     entities.planets.forEach(p => {
         if(!p.collected) {
