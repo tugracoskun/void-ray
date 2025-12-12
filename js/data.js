@@ -20,9 +20,19 @@ const GAME_CONFIG = {
     WORLD_GEN: {
         PLANET_COUNT: 1200,      // Toplam gezegen sayısı
         STAR_COUNT: 5000,        // Arka plan yıldız sayısı
-        SAFE_ZONE_RADIUS: 2000   // Başlangıçta gezegen oluşmayacak ve müzik değişecek alan
+        SAFE_ZONE_RADIUS: 2000,  // Başlangıçta gezegen oluşmayacak alan
+        WORMHOLE_COUNT: 25       // YENİ: Haritadaki solucan deliği sayısı
     },
     
+    // YENİ: SOLUCAN DELİĞİ AYARLARI
+    WORMHOLE: {
+        RADIUS: 150,             // Etkileşim yarıçapı
+        COLOR_CORE: "#8b5cf6",   // Merkez rengi (Violet)
+        COLOR_OUTER: "#c4b5fd",  // Dış hare rengi
+        TELEPORT_SAFE_DISTANCE: 5000, // Işınlanılacak yerin kenarlardan uzaklığı
+        SPIN_SPEED: 0.05         // Dönüş hızı
+    },
+
     // KAMERA AYARLARI (YENİ)
     CAMERA: {
         INITIAL_ZOOM: 0.2,       // Oyun açılışındaki uzaklık
@@ -123,7 +133,9 @@ const MESSAGES = {
         SAFE_ZONE_ENTER: "GÜVENLİ BÖLGEYE VARILDI",
         SAFE_ZONE_ENTER_DESC: "Nexus Koruma Alanı",
         SAFE_ZONE_EXIT: "GÜVENLİ BÖLGEDEN AYRILDINIZ",
-        SAFE_ZONE_EXIT_DESC: "Dikkatli Olun"
+        SAFE_ZONE_EXIT_DESC: "Dikkatli Olun",
+        WORMHOLE_ENTER: "SOLUCAN DELİĞİ TESPİT EDİLDİ", // YENİ
+        WORMHOLE_DESC: "Uzay-Zaman Atlaması Başlatılıyor..." // YENİ
     }
 };
 
@@ -192,7 +204,7 @@ const UPGRADES = {
 
 const TIPS = [
     "Enerjinizi yenilemek için Tardigradlar çok değerlidir.",
-    "Yankı, Nexus istasyonunda enerjisini yenileyebilir.",
+    "Solucan delikleri (Mor Girdaplar) sizi haritanın rastgele bir yerine fırlatır.", // YENİ İPUCU
     "Mor sinyaller değerli kayıp kargoları işaret eder.",
     "Veri Sislerinden (Yeşil Bulutlar) uzak durun, gemiye zarar verir.",
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
@@ -228,6 +240,7 @@ const MAP_CONFIG = {
         repair: "#10b981",     // Yeşil
         storage: "#a855f7",    // Mor
         echo: "#67e8f9",       // Turkuaz
+        wormhole: "#8b5cf6",   // YENİ: Solucan Deliği Rengi
         target: "#ef4444",     // Kırmızı
         scanArea: "rgba(16, 185, 129, 0.05)",
         radarArea: "rgba(251, 191, 36, 0.03)",

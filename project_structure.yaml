@@ -32,7 +32,7 @@ js:
   - maps.js
   - boot.js
   - console.js
-  - notifications.js # YENİ: Bildirim sistemi eklendi
+  - notifications.js 
   - EntityManager.js
   - ParticleSystem.js
   - TutorialSystem.js
@@ -62,6 +62,7 @@ js:
     - RepairStation.js
     - Planet.js
     - Particle.js
+    - Wormhole.js # YENİ
 
 partials:
   - ui-core.html

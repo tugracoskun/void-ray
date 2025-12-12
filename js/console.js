@@ -16,12 +16,11 @@ const ConsoleSystem = {
                 let msg = "MEVCUT KOMUTLAR:<br>";
                 Object.keys(ConsoleSystem.commands).forEach(cmd => {
                     const info = ConsoleSystem.commands[cmd];
-                    // DevOnly komutları gri, açık komutları sarı gösterelim (Eğer dev modu kapalıysa)
                     const isDev = info.devOnly;
                     const isDevActive = window.gameSettings && window.gameSettings.developerMode;
                     
-                    let color = "#fbbf24"; // Sarı
-                    if (isDev && !isDevActive) color = "#475569"; // Sönük gri (Kilitli)
+                    let color = "#fbbf24"; 
+                    if (isDev && !isDevActive) color = "#475569"; 
                     
                     msg += `<span style="color:${color}">/${cmd}</span>: <span style="color:#94a3b8">${info.desc}</span>${isDev ? " <span style='font-size:0.6em; color:#ef4444'>[DEV]</span>" : ""}<br>`;
                 });
@@ -38,7 +37,6 @@ const ConsoleSystem = {
                 const state = window.gameSettings.godMode ? "AKTİF" : "PASİF";
                 const color = window.gameSettings.godMode ? "#10b981" : "#ef4444";
                 
-                // Settings UI'daki checkbox'ı güncelle (varsa)
                 const toggle = document.getElementById('toggle-god-mode');
                 if (toggle) toggle.checked = window.gameSettings.godMode;
 
@@ -76,9 +74,7 @@ const ConsoleSystem = {
                     player.y = y;
                     player.vx = 0;
                     player.vy = 0;
-                    // Kuyruğu da taşı
                     if(player.tail) player.tail.forEach(t => { t.x = x; t.y = y; });
-                    // Kamerayı odakla
                     if (window.cameraFocus) { window.cameraFocus.x = x; window.cameraFocus.y = y; }
                     
                     showNotification({name: "IŞINLANMA BAŞARILI", type:{color:'#a855f7'}}, `[${Math.floor(x)}:${Math.floor(y)}]`);
@@ -175,6 +171,58 @@ const ConsoleSystem = {
                 addChatMessage(`Konsol: +${amount} Kristal eklendi.`, 'loot', 'genel');
             }
         },
+        'wormhole': {
+            desc: 'Solucan deliği oluşturur veya bulur.',
+            usage: '/wormhole <spawn|list>',
+            devOnly: true,
+            action: (args) => {
+                if (!entityManager) return ConsoleSystem.error("Entity Manager yok.");
+
+                if (args[0] === 'spawn') {
+                    const dist = 500;
+                    const wx = player.x + Math.cos(player.angle) * dist;
+                    const wy = player.y + Math.sin(player.angle) * dist;
+                    
+                    if (typeof Wormhole !== 'undefined') {
+                        const w = new Wormhole(wx, wy);
+                        entityManager.wormholes.push(w);
+                        addChatMessage("Konsol: Solucan deliği oluşturuldu.", 'info', 'genel');
+                        showNotification({name: "YAPAY ANOMALİ", type:{color:'#8b5cf6'}}, "Oluşturuldu");
+                    } else {
+                        ConsoleSystem.error("Wormhole sınıfı bulunamadı.");
+                    }
+                } else if (args[0] === 'list') {
+                    const count = entityManager.wormholes.length;
+                    addChatMessage(`Konsol: Haritada ${count} solucan deliği var.`, 'info', 'bilgi');
+                    
+                    let nearest = null, minDist = Infinity;
+                    entityManager.wormholes.forEach(w => {
+                        const d = Utils.distEntity(player, w);
+                        if(d < minDist) { minDist = d; nearest = w; }
+                    });
+                    
+                    if(nearest) {
+                        addChatMessage(`En yakın: [${Math.floor(nearest.x)}:${Math.floor(nearest.y)}] (${Math.floor(minDist)}m)`, 'info', 'bilgi');
+                        
+                        // GLOBAL DEĞİŞKENLERİ GÜNCELLE
+                        window.manualTarget = {x: nearest.x, y: nearest.y};
+                        window.autopilot = true;
+                        window.aiMode = 'travel';
+                        
+                        // UI GÜNCELLE
+                        const aiToggle = document.getElementById('btn-ai-toggle');
+                        if(aiToggle) aiToggle.classList.add('active');
+                        
+                        if (typeof updateAIButton === 'function') updateAIButton();
+                        showNotification({name: "ROTA OLUŞTURULDU", type:{color:'#fff'}}, "Solucan Deliğine Gidiliyor...");
+                    } else {
+                        addChatMessage("Konsol: Hiç solucan deliği bulunamadı. '/wormhole spawn' ile oluşturun.", 'alert', 'genel');
+                    }
+                } else {
+                    ConsoleSystem.showUsage('wormhole');
+                }
+            }
+        },
         'echo': {
             desc: 'Yankı dronunu yönetir.',
             usage: '/echo <spawn|kill>',
@@ -199,7 +247,7 @@ const ConsoleSystem = {
         'save': {
             desc: 'Oyunu zorla kaydeder.',
             usage: '/save',
-            devOnly: false, // Herkes kullanabilir
+            devOnly: false, 
             action: () => {
                 if (typeof SaveManager !== 'undefined') {
                     SaveManager.save();
@@ -210,7 +258,7 @@ const ConsoleSystem = {
         'ui': {
             desc: 'Arayüzü gizler/gösterir.',
             usage: '/ui',
-            devOnly: false, // Herkes kullanabilir (Sinematik amaçlı)
+            devOnly: false, 
             action: () => {
                 if (typeof toggleHUD === 'function') toggleHUD();
             }
@@ -230,8 +278,6 @@ const ConsoleSystem = {
     },
 
     execute: function(inputString) {
-        // --- ANA GÜVENLİK KONTROLÜ ---
-        // Konsolun ayarlardan açık olup olmadığını kontrol et
         if (!window.gameSettings || !window.gameSettings.enableConsole) {
             this.error("Konsol devre dışı. Ayarlar > Oyun menüsünden 'Konsolu Aktif Et' seçeneğini açın.");
             return;
@@ -247,8 +293,6 @@ const ConsoleSystem = {
         const cmd = this.commands[commandName];
 
         if (cmd) {
-            // --- DEV YETKİ KONTROLÜ ---
-            // Eğer komut 'devOnly' ise ve ayarlarımızda dev modu kapalıysa engelle.
             if (cmd.devOnly) {
                 if (!window.gameSettings || !window.gameSettings.developerMode) {
                     this.error(`Bu komutu kullanmak için 'Geliştirici Modu'nu açmalısın. (Ayarlar > Oyun)`);

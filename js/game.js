@@ -39,7 +39,15 @@ let currentZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;
 let targetZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;
 let isPaused = false;
 let animationId = null;
-let manualTarget = null; 
+
+// --- DÜZELTME: Konsoldan erişim için 'let' yerine 'var' kullanıldı ---
+var manualTarget = null; 
+var autopilot = false;
+var aiMode = 'gather'; 
+var echoDeathLevel = 0;
+var lowEnergyWarned = false;
+// --------------------------------------------------------------------
+
 let gameStartTime = 0;
 let lastFrameTime = 0;
 window.cinematicMode = false; 
@@ -55,11 +63,6 @@ let width, height;
 var planets = [], stars = []; 
 let collectedItems = [];
 let centralStorage = [];
-
-let autopilot = false;
-let aiMode = 'gather'; 
-let echoDeathLevel = 0;
-let lowEnergyWarned = false;
 
 // -------------------------------------------------------------------------
 // OYUN MEKANİKLERİ VE MANTIK

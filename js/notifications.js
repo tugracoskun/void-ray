@@ -34,6 +34,9 @@ function showNotification(planet, suffix) {
     } else if (name.includes("KAYIP KARGO")) {
         msg = `Keşif: ${name} bulundu!`;
         type = "info";
+    } else if (name.includes("SOLUCAN DELİĞİ")) { // YENİ
+        msg = `UZAY-ZAMAN: ${name} ${suffix}`;
+        type = "info";
     } else if (planet.type && (planet.type.id === 'common' || planet.type.id === 'rare' || planet.type.id === 'epic' || planet.type.id === 'legendary')) {
         msg = `Toplandı: ${name} ${suffix}`;
         type = "loot";
@@ -71,6 +74,19 @@ function showDamageEffect() {
     if(dmgOverlay) {
         dmgOverlay.classList.add('active');
         setTimeout(() => dmgOverlay.classList.remove('active'), 200);
+    }
+}
+
+/**
+ * Ekranı bozar (Glitch) ve titretir. (Solucan Deliği Geçişi)
+ * YENİ
+ */
+function triggerWormholeEffect() {
+    const el = document.getElementById('glitch-overlay');
+    if (el) {
+        el.classList.add('active');
+        // Efekt süresi (Işınlanma animasyonu kadar)
+        setTimeout(() => el.classList.remove('active'), 800);
     }
 }
 
@@ -113,3 +129,4 @@ window.showNotification = showNotification;
 window.showToxicEffect = showToxicEffect;
 window.showDamageEffect = showDamageEffect;
 window.showAchievementPopup = showAchievementPopup;
+window.triggerWormholeEffect = triggerWormholeEffect;

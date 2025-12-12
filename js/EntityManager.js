@@ -1,11 +1,13 @@
 /**
  * Void Ray - Varlık Yöneticisi (Entity Manager)
+ * * GÜNCELLEME: Solucan Delikleri (Wormholes) sisteme eklendi.
  * * GÜNCELLEME: Spatial Hash entegrasyonu ile O(n) performans.
  * * GÜNCELLEME: Izgara çizimi ve dinamik yıldız parlaklığı eklendi.
  */
 class EntityManager {
     constructor() {
         this.planets = [];
+        this.wormholes = []; // YENİ: Solucan delikleri listesi
         
         // --- OPTİMİZASYON: Spatial Hash ---
         // Hücre boyutu 2000: Ekran boyutundan biraz büyük, ideal sorgu alanı sağlar.
@@ -18,15 +20,20 @@ class EntityManager {
         
         this.lastToxicNotification = 0;
         this.lastToxicDamage = 0;
+        
+        // YENİ: Işınlanma sonrası anlık tekrar girmeyi önlemek için
+        this.lastTeleportTime = 0;
     }
 
     /**
-     * Başlangıçta gezegenleri oluşturur.
+     * Başlangıçta gezegenleri ve solucan deliklerini oluşturur.
      */
     init() {
         this.planets = [];
+        this.wormholes = [];
         this.grid.clear(); // Grid'i temizle
 
+        // 1. Gezegenleri Oluştur
         for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) {
             let px, py, d;
             do {
@@ -38,6 +45,18 @@ class EntityManager {
             const p = new Planet(px, py);
             this.planets.push(p);
             this.grid.insert(p); // Gezegeni havuza ekle
+        }
+
+        // 2. Solucan Deliklerini Oluştur (YENİ)
+        if (typeof Wormhole !== 'undefined') {
+            for(let i=0; i < GAME_CONFIG.WORLD_GEN.WORMHOLE_COUNT; i++) {
+                const w = new Wormhole();
+                this.wormholes.push(w);
+                // Not: Wormhole'lar SpatialHash'e eklenmiyor çünkü sayıları az,
+                // ve ayrı bir döngüde kontrol edilmeleri daha hızlı olabilir veya
+                // çarpışma mantıkları farklı. Ancak istenirse eklenebilir.
+                // Şimdilik ayrı tutuyoruz.
+            }
         }
 
         window.planets = this.planets;
@@ -99,7 +118,10 @@ class EntityManager {
             }
         }
 
-        // C. Çarpışma Kontrolleri (OPTİMİZE EDİLDİ)
+        // C. Solucan Delikleri Animasyonu (YENİ)
+        this.wormholes.forEach(w => w.update());
+
+        // D. Çarpışma Kontrolleri (OPTİMİZE EDİLDİ)
         this.checkCollisions();
 
         window.planets = this.planets;
@@ -110,6 +132,7 @@ class EntityManager {
      * TÜM gezegenleri gezmek yerine sadece oyuncunun etrafındakileri sorgular.
      */
     checkCollisions() {
+        // 1. Gezegen Kontrolü
         // Oyuncunun tarama yarıçapı + en büyük gezegen boyutu kadar bir alanı sorgula
         const queryRange = player.scanRadius + 500;
         const nearbyPlanets = this.grid.query(player.x, player.y, queryRange);
@@ -121,6 +144,55 @@ class EntityManager {
                 } 
             }
         });
+
+        // 2. Solucan Deliği Kontrolü (YENİ)
+        const now = Date.now();
+        if (now - this.lastTeleportTime > 2000) { // 2 saniye bekleme süresi (Cool-down)
+            this.wormholes.forEach(w => {
+                // Basit mesafe kontrolü (Solucan deliği yarıçapının içine girince)
+                if (Utils.distEntity(player, w) < w.radius * 0.6) {
+                    this.handleWormholeEntry(w);
+                }
+            });
+        }
+    }
+
+    /**
+     * YENİ: Işınlanma Mantığı
+     */
+    handleWormholeEntry(wormhole) {
+        // 1. Efektleri Tetikle
+        triggerWormholeEffect();
+        if (typeof audio !== 'undefined' && audio) audio.playChime({id: 'legendary'}); // Özel ses yoksa legendary sesi kullan
+        
+        showNotification({name: MESSAGES.UI.WORMHOLE_ENTER, type:{color: GAME_CONFIG.WORMHOLE.COLOR_CORE}}, MESSAGES.UI.WORMHOLE_DESC);
+
+        // 2. Yeni Konum Belirle (Güvenli Alan)
+        const margin = GAME_CONFIG.WORMHOLE.TELEPORT_SAFE_DISTANCE;
+        const newX = Utils.random(margin, WORLD_SIZE - margin);
+        const newY = Utils.random(margin, WORLD_SIZE - margin);
+
+        // 3. Oyuncuyu Taşı
+        player.x = newX;
+        player.y = newY;
+        
+        // 4. Kuyruğu Temizle (Görsel sıçramayı önlemek için kuyruğu yeni konuma taşı)
+        player.tail.forEach(t => { t.x = newX; t.y = newY; });
+        
+        // 5. Kamerayı Anında Odakla (Yumuşak geçiş istemiyoruz, anlık olmalı)
+        if (window.cameraFocus) {
+            window.cameraFocus.x = newX;
+            window.cameraFocus.y = newY;
+        }
+        
+        // 6. Otopilotu Kapat (Kafa karışıklığını önlemek için)
+        if (typeof autopilot !== 'undefined' && autopilot) {
+            autopilot = false;
+            // Global güncelleme fonksiyonu varsa çağır
+            if (typeof updateAIButton === 'function') updateAIButton();
+        }
+
+        this.lastTeleportTime = Date.now();
     }
 
     handleCollision(p) {
@@ -208,19 +280,9 @@ class EntityManager {
         const offsetY = cameraY % gridSize;
         
         // Görünür alanın sınırları
-        // Ekran genişliği kadar çizgi + kayma payı
         const cols = width / zoom / gridSize + 2; 
         const rows = height / zoom / gridSize + 2;
 
-        // Başlangıç noktaları (Ekranın sol üst köşesinden başla, offset kadar kaydır)
-        // Transform zaten game.js'de yapıldığı için, burada local koordinatlara göre çizim yapıyoruz.
-        // Ancak game.js'deki transform "Merkez" odaklı.
-        // O yüzden grid'i de merkezden hesaplamak daha kolay olabilir.
-        
-        // Aslında game.js'de ctx.translate(-window.cameraFocus.x, -window.cameraFocus.y) yapılıyor.
-        // Bu, dünya koordinatlarında çizim yaptığımız anlamına gelir.
-        // Bu yüzden dünya koordinatlarında grid çizebiliriz.
-        
         // Ekranda görünen dünya koordinat aralığını bul
         const startX = Math.floor((cameraX - (width / zoom) / 2) / gridSize) * gridSize;
         const startY = Math.floor((cameraY - (height / zoom) / 2) / gridSize) * gridSize;
@@ -232,8 +294,6 @@ class EntityManager {
         
         // Tema rengini al ve şeffaflık ekle
         const themeColor = window.gameSettings.themeColor || '#94d8c3';
-        // Renk kodunu ayrıştırıp rgba yapmak yerine basitçe globalAlpha kullanabiliriz
-        // ama hexToRgba varsa onu kullanmak daha iyi.
         ctx.strokeStyle = themeColor;
         ctx.globalAlpha = 0.08; // Çok silik (arka plan olduğu için)
         ctx.lineWidth = 1 / zoom; // Zoom ne olursa olsun çizgi kalınlığı sabit kalsın (veya ince kalsın)
@@ -263,7 +323,6 @@ class EntityManager {
         }
 
         // Parlaklık Ayarını Uygula
-        // Varsayılan 100, 0 ile 100 arası.
         const brightness = (window.gameSettings.starBrightness !== undefined) 
             ? window.gameSettings.starBrightness / 100 
             : 1.0;
@@ -290,7 +349,7 @@ class EntityManager {
     }
 
     /**
-     * Gezegenleri çizer.
+     * Gezegenleri ve Solucan Deliklerini çizer.
      * OPTİMİZASYON: Sadece kamera görüş alanındaki hücreleri sorgular.
      */
     drawPlanets(ctx, player, echoRay, width, height, zoom) {
@@ -302,6 +361,19 @@ class EntityManager {
         
         const rangeX = (viewW / 2) + 500; 
         
+        // 1. Solucan Deliklerini Çiz (Arkada Kalabilirler veya Önde)
+        // Sayıları az olduğu için doğrudan döngüye alıyoruz.
+        // Görünürlük kontrolü burada da yapılabilir (Radar menzili içinde mi?)
+        this.wormholes.forEach(w => {
+            const dist = Utils.distEntity(player, w);
+            let visibility = 0;
+            if (dist < player.scanRadius) visibility = 2; // Tam görüş
+            else if (dist < player.radarRadius) visibility = 1; // Radar
+            
+            w.draw(ctx, visibility);
+        });
+
+        // 2. Gezegenleri Çiz
         const visiblePlanets = this.grid.query(centerX, centerY, rangeX);
 
         visiblePlanets.forEach(p => { 
