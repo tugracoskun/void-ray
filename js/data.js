@@ -30,7 +30,9 @@ const GAME_CONFIG = {
         COLOR_CORE: "#8b5cf6",   // Merkez rengi (Violet)
         COLOR_OUTER: "#c4b5fd",  // Dış hare rengi
         TELEPORT_SAFE_DISTANCE: 5000, // Işınlanılacak yerin kenarlardan uzaklığı
-        SPIN_SPEED: 0.05         // Dönüş hızı
+        SPIN_SPEED: 0.05,        // Dönüş hızı
+        GRAVITY_RADIUS: 3500,    // Çekim alanı yarıçapı (Geniş alan)
+        GRAVITY_FORCE: 180       // Çekim gücü katsayısı (Yaklaştıkça artar)
     },
 
     // KAMERA AYARLARI (YENİ)

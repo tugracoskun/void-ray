@@ -43,6 +43,27 @@ class Wormhole {
         ctx.save();
         ctx.translate(this.x, this.y);
 
+        // --- GELİŞTİRİCİ MODU: ÇEKİM ALANI GÖRSELLEŞTİRME ---
+        if (window.gameSettings && window.gameSettings.developerMode && window.gameSettings.showGravityFields) {
+            // Config'den çekim yarıçapını al (Varsayılan 3500)
+            const gravityRadius = GAME_CONFIG.WORMHOLE.GRAVITY_RADIUS || 3500;
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, gravityRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(139, 92, 246, 0.3)"; // Violet/Mor (Wormhole teması)
+            ctx.lineWidth = 1;
+            ctx.setLineDash([10, 10]); // Kesikli çizgi
+            ctx.stroke();
+            
+            // Çekim alanı değeri ve etiketi
+            ctx.fillStyle = "rgba(139, 92, 246, 0.8)";
+            ctx.font = "10px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(`W-GRAVITY: ${gravityRadius}`, 0, gravityRadius + 15);
+            
+            ctx.setLineDash([]); // Çizgi stilini sıfırla
+        }
+
         // 1. RADAR GÖRÜNÜMÜ (Basit İkon)
         if (visibility === 1) {
             ctx.beginPath();

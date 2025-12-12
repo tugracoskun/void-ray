@@ -1,6 +1,7 @@
 /**
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
  * * GÜNCELLEME: Çizim rengi (Hue) artık ayarlardan dinamik olarak alınıyor.
+ * * GÜNCELLEME: Solucan deliği çekim kuvveti ve görsel uyarı eklendi.
  */
 class VoidRay {
     constructor() {
@@ -39,6 +40,9 @@ class VoidRay {
         // AI Hedefleri
         this.scoutTarget = null;
         this.debugTarget = null; // Anlık gidilen hedef (Haritada çizgi için kullanılacak)
+        
+        // Çekim Uyarı Durumu (Görsel Efekt İçin)
+        this.gravityPull = null; 
     }
     
     gainXp(amount) { 
@@ -363,6 +367,41 @@ class VoidRay {
             });
         }
 
+        // --- SOLUCAN DELİĞİ ÇEKİMİ (YENİ) ---
+        // Her frame sıfırla, eğer çekim varsa aşağıda doldurulacak
+        this.gravityPull = null; 
+
+        if (typeof entityManager !== 'undefined' && entityManager.wormholes) {
+            // Config'den değerleri al, yoksa varsayılan kullan
+            const wGravityRadius = (GAME_CONFIG.WORMHOLE && GAME_CONFIG.WORMHOLE.GRAVITY_RADIUS) || 3500;
+            const wGravityForce = (GAME_CONFIG.WORMHOLE && GAME_CONFIG.WORMHOLE.GRAVITY_FORCE) || 180;
+
+            entityManager.wormholes.forEach(w => {
+                const dx = w.x - this.x;
+                const dy = w.y - this.y;
+                const distSq = dx*dx + dy*dy;
+                
+                // Çekim alanı içinde mi? (Çok yakınsa çekmeyi bırakabilir veya devam ettirebiliriz, >100 sınırı çarpışma içindir)
+                if (distSq < wGravityRadius * wGravityRadius && distSq > 100) { 
+                    const dist = Math.sqrt(distSq);
+                    // Formül: Sabit / Mesafe (Yaklaştıkça artar)
+                    const force = wGravityForce / dist; 
+                    
+                    this.vx += (dx / dist) * force;
+                    this.vy += (dy / dist) * force;
+
+                    // Görsel efekt için en güçlü çekim kaynağını kaydet
+                    // Eğer birden fazla varsa, en yakın olanı (en güçlü kuvveti) tercih et
+                    if (!this.gravityPull || force > this.gravityPull.force) {
+                        this.gravityPull = {
+                            angle: Math.atan2(dy, dx),
+                            force: force
+                        };
+                    }
+                }
+            });
+        }
+
         const speed = Math.hypot(this.vx, this.vy);
         const speedEl = document.getElementById('speed-val');
         if(speedEl) speedEl.innerText = Math.floor(speed * 10); 
@@ -501,6 +540,51 @@ class VoidRay {
         }
 
         ctx.restore();
+
+        // --- ÇEKİM KUVVETİ UYARI SİNYALİ (YENİ) ---
+        // Geminin merkezine (translate'den sonra değil, önce) çizilir.
+        // Yukarıda ctx.restore() ile translate sıfırlandı, bu yüzden tekrar translate yapıyoruz.
+        if (this.gravityPull && !isHidden) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            // Açıyı çekim yönüne çevir
+            ctx.rotate(this.gravityPull.angle);
+            
+            // Mor renkli uyarı okları (Chevrons)
+            ctx.strokeStyle = "rgba(167, 139, 250, 0.9)"; // Açık mor
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "rgba(139, 92, 246, 0.8)";
+            
+            // Animasyon: Okların gemiden uzaklaşıyormuş (veya çekime doğru gidiyormuş) gibi akması
+            const time = Date.now() / 200;
+            const offset = (time % 1) * 15; // 0 ile 15px arası kayma
+            
+            // 3 Adet ok çiz
+            for(let i=0; i<3; i++) {
+                const xDist = 60 + (i * 12) + offset; // Gemiden 60px uzakta başla
+                
+                ctx.beginPath();
+                ctx.moveTo(xDist, -6);
+                ctx.lineTo(xDist + 8, 0); // Sivri uç sağa (çekim yönüne) bakar
+                ctx.lineTo(xDist, 6);
+                ctx.stroke();
+            }
+            
+            // Metin Uyarısı
+            ctx.fillStyle = "rgba(196, 181, 253, 0.9)";
+            ctx.font = "bold 10px monospace";
+            ctx.textAlign = "center";
+            // Okların hemen altında/üstünde metin
+            ctx.save();
+            ctx.rotate(-Math.PI/2); // Metni dik çevirip okun yanında yazmak yerine düz tutalım
+            // Ama gemi dönüyor, metin de döner. Okun üstünde dursun.
+            ctx.restore();
+            
+            ctx.fillText("GRAVITY", 80, -12);
+            
+            ctx.restore();
+        }
 
         if (window.gameSettings && window.gameSettings.showShipBars && !isHidden) {
             ctx.save(); ctx.translate(this.x, this.y);
