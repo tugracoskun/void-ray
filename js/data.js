@@ -266,6 +266,9 @@ const DEFAULT_GAME_SETTINGS = {
     
     // YENİ GÖRÜNÜM AYARLARI
     enableCRT: false,    // Retro Scanline Efekti
-    crtIntensity: 50,    // EKLENDİ: CRT Efekt Yoğunluğu (%50 Varsayılan)
-    showStars: true      // Arka Plan Yıldızları
+    crtIntensity: 50,    // CRT Efekt Yoğunluğu (%50 Varsayılan)
+    showStars: true,     // Arka Plan Yıldızları
+    themeColor: '#94d8c3', // Varsayılan Tema Rengi (Turkuaz)
+    themeHue: 162,         // Varsayılan Tema Tonu
+    themeSat: 47           // Varsayılan Tema Doygunluğu - EKLENDİ
 };
