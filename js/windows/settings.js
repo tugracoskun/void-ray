@@ -2,6 +2,7 @@
  * Void Ray - Pencere: Ayarlar
  * * Oyun ayarlarını, ses kontrollerini ve görünüm tercihlerini yönetir.
  * * GÜNCELLEME: Tema rengi (Hue) ve Doygunluğu (Sat) gemiye doğru şekilde aktarılır.
+ * * GÜNCELLEME: Izgara ve Yıldız Parlaklığı ayarları eklendi. (Eski yıldız toggle'ı kaldırıldı)
  */
 
 let settingsOpen = false;
@@ -16,7 +17,9 @@ if (typeof window.gameSettings.windowOpacity === 'undefined') window.gameSetting
 if (typeof window.gameSettings.crtIntensity === 'undefined') window.gameSettings.crtIntensity = 50;
 if (typeof window.gameSettings.themeColor === 'undefined') window.gameSettings.themeColor = '#94d8c3';
 if (typeof window.gameSettings.themeHue === 'undefined') window.gameSettings.themeHue = 162;
-if (typeof window.gameSettings.themeSat === 'undefined') window.gameSettings.themeSat = 47; // Varsayılan Doygunluk
+if (typeof window.gameSettings.themeSat === 'undefined') window.gameSettings.themeSat = 47;
+if (typeof window.gameSettings.showGrid === 'undefined') window.gameSettings.showGrid = true;
+if (typeof window.gameSettings.starBrightness === 'undefined') window.gameSettings.starBrightness = 100;
 
 function initSettings() {
     console.log("Ayarlar paneli başlatılıyor...");
@@ -47,7 +50,7 @@ function initSettings() {
     
     const crtToggle = document.getElementById('toggle-crt');
     const crtIntensityWrapper = document.getElementById('crt-intensity-wrapper');
-    const starsToggle = document.getElementById('toggle-stars');
+    const gridToggle = document.getElementById('toggle-grid'); // YENİ
     
     const devModeToggle = document.getElementById('toggle-dev-mode');
     const gravityToggle = document.getElementById('toggle-gravity-debug');
@@ -243,8 +246,11 @@ function initSettings() {
         });
     }
 
-    if (starsToggle) {
-        starsToggle.addEventListener('change', (e) => window.gameSettings.showStars = e.target.checked);
+    // GRID
+    if (gridToggle) {
+        gridToggle.addEventListener('change', (e) => {
+            window.gameSettings.showGrid = e.target.checked;
+        });
     }
 
     if (adaptiveCamToggle) {
@@ -379,6 +385,11 @@ function initSettings() {
                 const disp = document.getElementById('val-crt-intensity');
                 if(disp) disp.innerText = val + '%';
                 updateCRT();
+            }
+            else if (id === 'vol-star-bright') { // YENİ
+                window.gameSettings.starBrightness = val;
+                const disp = document.getElementById('val-star-bright');
+                if(disp) disp.innerText = val + '%';
             }
         });
 

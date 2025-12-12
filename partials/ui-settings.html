@@ -83,6 +83,21 @@
             </div>
         </div>
 
+        <div class="mb-2 text-xs font-bold tracking-widest opacity-80 mt-4" style="color: var(--hud-color);">ATMOSFER</div>
+        
+        <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'UZAY IZGARASI: Arka plana derinlik ve hareket hissi katan retro çizgiler ekler.')" onmouseleave="hideTooltip()">
+            <span>UZAY IZGARASI</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-grid" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="mb-2" onmouseenter="showInfoTooltip(event, 'YILDIZ PARLAKLIĞI: Arka plan yıldızlarının görünürlüğünü ayarlar. %0 performans artırır.')" onmouseleave="hideTooltip()">
+            <div class="flex justify-between text-xs text-gray-400 tracking-widest mt-2"><span>YILDIZ PARLAKLIĞI</span><span id="val-star-bright">100%</span></div>
+            <input type="range" id="vol-star-bright" class="smart-slider" data-default="100" min="0" max="100" value="100">
+        </div>
+
         <div class="mb-2 text-xs font-bold tracking-widest opacity-80 mt-4" style="color: var(--hud-color);">ARAYÜZ VE PENCERELER</div>
         <div class="mb-4">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'HUD OPAKLIĞI: Kalıcı arayüz elementlerinin (Radar, Bar, İkonlar) şeffaflığı.')" onmouseleave="hideTooltip()"><span>HUD OPAKLIĞI</span><span id="val-hud-opacity">100%</span></div>
@@ -152,14 +167,6 @@
         <div id="crt-intensity-wrapper" style="display: none; margin-top: 5px; margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--hud-color-dim);">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'YOĞUNLUK: Scanline efektinin opaklığını ayarlar.')" onmouseleave="hideTooltip()"><span>YOĞUNLUK</span><span id="val-crt-intensity">50%</span></div>
             <input type="range" id="vol-crt-intensity" class="smart-slider" data-default="50" min="10" max="100" value="50">
-        </div>
-
-        <div class="toggle-row" onmouseenter="showInfoTooltip(event, 'YILDIZLAR: Arka plandaki yıldızları açıp kapatır (Performans için kapatılabilir).')" onmouseleave="hideTooltip()">
-            <span>ARKA PLAN YILDIZLARI</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="toggle-stars" checked>
-                <span class="slider"></span>
-            </label>
         </div>
 
         <div class="mt-4 pt-3 border-t border-white/10 text-[9px] text-gray-500 font-mono text-center tracking-widest">

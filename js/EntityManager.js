@@ -1,7 +1,7 @@
 /**
  * Void Ray - Varlık Yöneticisi (Entity Manager)
  * * GÜNCELLEME: Spatial Hash entegrasyonu ile O(n) performans.
- * * Gezegenler artık 'this.grid' içinde saklanıyor ve sorgulanıyor.
+ * * GÜNCELLEME: Izgara çizimi ve dinamik yıldız parlaklığı eklendi.
  */
 class EntityManager {
     constructor() {
@@ -58,6 +58,7 @@ class EntityManager {
             const x = Math.random() * width;
             const y = Math.random() * height;
             const size = Math.random() * 1.5;
+            // Orijinal alpha değerini kaydet (Sonra parlaklık ile çarpılacak)
             const alpha = 0.2 + Math.random() * 0.6;
             
             this.bgCtx.globalAlpha = alpha;
@@ -195,12 +196,80 @@ class EntityManager {
         } 
     }
 
+    /**
+     * Sonsuz Uzay Izgarasını çizer.
+     * Kamera hareketine göre kayan sanal çizgiler oluşturur.
+     */
+    drawGrid(ctx, width, height, cameraX, cameraY, zoom) {
+        if (!window.gameSettings || !window.gameSettings.showGrid) return;
+
+        const gridSize = 500; // Izgara kare boyutu
+        const offsetX = cameraX % gridSize;
+        const offsetY = cameraY % gridSize;
+        
+        // Görünür alanın sınırları
+        // Ekran genişliği kadar çizgi + kayma payı
+        const cols = width / zoom / gridSize + 2; 
+        const rows = height / zoom / gridSize + 2;
+
+        // Başlangıç noktaları (Ekranın sol üst köşesinden başla, offset kadar kaydır)
+        // Transform zaten game.js'de yapıldığı için, burada local koordinatlara göre çizim yapıyoruz.
+        // Ancak game.js'deki transform "Merkez" odaklı.
+        // O yüzden grid'i de merkezden hesaplamak daha kolay olabilir.
+        
+        // Aslında game.js'de ctx.translate(-window.cameraFocus.x, -window.cameraFocus.y) yapılıyor.
+        // Bu, dünya koordinatlarında çizim yaptığımız anlamına gelir.
+        // Bu yüzden dünya koordinatlarında grid çizebiliriz.
+        
+        // Ekranda görünen dünya koordinat aralığını bul
+        const startX = Math.floor((cameraX - (width / zoom) / 2) / gridSize) * gridSize;
+        const startY = Math.floor((cameraY - (height / zoom) / 2) / gridSize) * gridSize;
+        const endX = startX + (width / zoom) + gridSize;
+        const endY = startY + (height / zoom) + gridSize;
+
+        ctx.save();
+        ctx.beginPath();
+        
+        // Tema rengini al ve şeffaflık ekle
+        const themeColor = window.gameSettings.themeColor || '#94d8c3';
+        // Renk kodunu ayrıştırıp rgba yapmak yerine basitçe globalAlpha kullanabiliriz
+        // ama hexToRgba varsa onu kullanmak daha iyi.
+        ctx.strokeStyle = themeColor;
+        ctx.globalAlpha = 0.08; // Çok silik (arka plan olduğu için)
+        ctx.lineWidth = 1 / zoom; // Zoom ne olursa olsun çizgi kalınlığı sabit kalsın (veya ince kalsın)
+
+        // Dikey Çizgiler
+        for (let x = startX; x <= endX; x += gridSize) {
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
+        }
+
+        // Yatay Çizgiler
+        for (let y = startY; y <= endY; y += gridSize) {
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+        }
+
+        ctx.stroke();
+        ctx.restore();
+    }
+
     drawStars(ctx, width, height, target) {
+        // Yıldızlar tamamen kapalıysa çizme
         if (window.gameSettings && !window.gameSettings.showStars) return;
 
         if(!this.bgGenerated || this.bgCanvas.width !== width || this.bgCanvas.height !== height) {
             this.generateStarBackground(width, height);
         }
+
+        // Parlaklık Ayarını Uygula
+        // Varsayılan 100, 0 ile 100 arası.
+        const brightness = (window.gameSettings.starBrightness !== undefined) 
+            ? window.gameSettings.starBrightness / 100 
+            : 1.0;
+
+        // Eğer parlaklık 0 ise çizme
+        if (brightness <= 0.01) return;
 
         const parallaxSpeed = 0.9;
         let offsetX = -(target.x * parallaxSpeed) % width;
@@ -209,10 +278,15 @@ class EntityManager {
         if (offsetX > 0) offsetX -= width;
         if (offsetY > 0) offsetY -= height;
 
+        ctx.save();
+        ctx.globalAlpha = brightness; // Parlaklığı uygula
+
         ctx.drawImage(this.bgCanvas, offsetX, offsetY);
         ctx.drawImage(this.bgCanvas, offsetX + width, offsetY);
         ctx.drawImage(this.bgCanvas, offsetX, offsetY + height);
         ctx.drawImage(this.bgCanvas, offsetX + width, offsetY + height);
+        
+        ctx.restore();
     }
 
     /**
@@ -223,19 +297,11 @@ class EntityManager {
         const viewW = width / zoom; 
         const viewH = height / zoom; 
         
-        // Ekranın kapladığı alan + biraz güvenlik payı (gezegen yarıçapı için)
-        // Ekranın merkezini oyuncuya/kameraya göre hesaplamalıyız ama
-        // draw fonksiyonu zaten transform edilmiş bir context ile çağrılıyor.
-        // Ancak SpatialHash world coordinates ister.
-        
-        // Kamera merkezini (window.cameraFocus) kullanmak en doğrusu
         const centerX = window.cameraFocus ? window.cameraFocus.x : player.x;
         const centerY = window.cameraFocus ? window.cameraFocus.y : player.y;
         
-        // Sorgulanacak alan (Görüş alanının yarısı + tampon)
         const rangeX = (viewW / 2) + 500; 
         
-        // Sadece ekrandaki gezegenleri sorgula
         const visiblePlanets = this.grid.query(centerX, centerY, rangeX);
 
         visiblePlanets.forEach(p => { 

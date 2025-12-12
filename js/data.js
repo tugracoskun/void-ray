@@ -264,11 +264,13 @@ const DEFAULT_GAME_SETTINGS = {
     godMode: false,
     hidePlayer: false,
     
-    // YENİ GÖRÜNÜM AYARLARI
+    // GÖRÜNÜM AYARLARI
     enableCRT: false,    // Retro Scanline Efekti
     crtIntensity: 50,    // CRT Efekt Yoğunluğu (%50 Varsayılan)
     showStars: true,     // Arka Plan Yıldızları
+    starBrightness: 100, // YENİ: Yıldız Parlaklığı (%100)
+    showGrid: true,      // YENİ: Uzay Izgarası
     themeColor: '#94d8c3', // Varsayılan Tema Rengi (Turkuaz)
     themeHue: 162,         // Varsayılan Tema Tonu
-    themeSat: 47           // Varsayılan Tema Doygunluğu - EKLENDİ
+    themeSat: 47           // Varsayılan Tema Doygunluğu
 };
