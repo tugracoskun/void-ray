@@ -1,6 +1,6 @@
 /**
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
- * * GÜNCELLEME: Radyasyon hasarı ve İtme kuvveti artık GameRules üzerinden alınıyor.
+ * * GÜNCELLEME: Çizim rengi (Hue) artık ayarlardan dinamik olarak alınıyor.
  */
 class VoidRay {
     constructor() {
@@ -414,14 +414,35 @@ class VoidRay {
         ctx.save();
         ctx.globalAlpha = this.currentAlpha;
 
+        // 1. TEMA DEĞERLERİNİ AL (Hue ve Saturation)
+        let baseHue = 199; // Varsayılan Mavi
+        let baseSat = 100; // Varsayılan Tam Doygunluk
+
+        if (window.gameSettings) {
+            // HUE kontrolü: 0 değeri falsy olduğu için "typeof" ile kontrol şart
+            if (typeof window.gameSettings.themeHue !== 'undefined') {
+                baseHue = window.gameSettings.themeHue;
+            }
+            if (typeof window.gameSettings.themeSat !== 'undefined') {
+                baseSat = window.gameSettings.themeSat;
+            }
+        }
+
+        // 2. DOYGUNLUK HESABI (Enerjiye göre değişir ama TEMA limitiyle çarpılır)
+        // Eğer tema beyazsa (baseSat = 0), sonuç her zaman 0 olur (Gri tonlama)
+        // Eğer tema kırmızıysa (baseSat ~80-100), sonuç enerjiye göre 0-100 arası değişir
         const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
-        const saturation = Math.floor(energyRatio * 90); 
+        
+        // Formül: Enerji Oranı (0.0-1.0) * Tema Doygunluğu (0-100)
+        const saturation = Math.floor(energyRatio * baseSat); 
+        
         const lightness = 60; 
         const alpha = 0.9;
         
-        const dynamicStroke = `hsla(199, ${saturation}%, ${lightness}%, ${alpha})`;
-        const dynamicShadow = `hsla(199, ${saturation}%, ${lightness}%, 0.8)`;
-        const dynamicLight = `hsla(199, ${saturation}%, 50%, 1)`; 
+        // HUE ve SATURATION değerlerini dinamik kullan
+        const dynamicStroke = `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${alpha})`;
+        const dynamicShadow = `hsla(${baseHue}, ${saturation}%, ${lightness}%, 0.8)`;
+        const dynamicLight = `hsla(${baseHue}, ${saturation}%, 50%, 1)`; 
 
         const isHidden = window.gameSettings && window.gameSettings.hidePlayer;
 
@@ -463,7 +484,8 @@ class VoidRay {
 
             let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
             
-            ctx.fillStyle = `hsla(220, ${saturation * 0.3}%, 10%, 0.95)`; 
+            // Gövde rengi de temaya uysun ama daha koyu
+            ctx.fillStyle = `hsla(${baseHue}, ${saturation * 0.3}%, 10%, 0.95)`; 
             
             ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
             
@@ -488,7 +510,8 @@ class VoidRay {
             ctx.fillStyle = hpPct > 0.5 ? "#10b981" : (hpPct > 0.2 ? "#f59e0b" : "#ef4444");
             ctx.fillRect(-barW/2 + 1, offset + 1, (barW - 2) * hpPct, barH);
             const epPct = this.energy / this.maxEnergy;
-            ctx.fillStyle = "#38bdf8"; 
+            // Enerji barı da tema renginde olsun
+            ctx.fillStyle = dynamicLight; 
             ctx.fillRect(-barW/2 + 1, offset + barH + 1, (barW - 2) * epPct, barH);
             ctx.restore();
         }
