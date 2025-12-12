@@ -374,10 +374,13 @@ function loop() {
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
+        // --- ARKA PLAN KATMANLARI (SIRASI ÖNEMLİ) ---
+        // 1. Yıldızlar (En arkada)
         if (entityManager) {
             entityManager.drawStars(ctx, width, height, window.cameraFocus || window.cameraTarget);
         }
         
+        // 2. Kamera Transformasyonunu Başlat
         ctx.save(); 
         
         let targetOffsetX = window.gameSettings.cameraOffsetX;
@@ -435,6 +438,11 @@ function loop() {
         }
 
         ctx.translate(-window.cameraFocus.x, -window.cameraFocus.y);
+        
+        // 3. Uzay Izgarası (Dünya koordinatlarında, yıldızların üzerinde ama gezegenlerin altında)
+        if (entityManager) {
+            entityManager.drawGrid(ctx, width, height, window.cameraFocus.x, window.cameraFocus.y, currentZoom);
+        }
         
         if (entityManager) {
             entityManager.drawPlanets(ctx, player, echoRay, width, height, currentZoom);
