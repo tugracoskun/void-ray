@@ -5,7 +5,6 @@
             <canvas id="big-map-canvas"></canvas>
             
             <!-- KOORDİNAT GÖSTERGESİ -->
-            <!-- GÜNCELLEME: Sabit Tailwind renkleri kaldırıldı, dinamik tema değişkenleri eklendi -->
             <div id="big-map-coords" class="absolute bottom-4 left-4 text-xs font-mono bg-black/50 px-3 py-1 rounded border backdrop-blur-sm pointer-events-none" style="color: var(--hud-color); border-color: var(--hud-color-dim);">
                 0 : 0
             </div>
@@ -44,7 +43,7 @@
         </div>
         <div class="big-map-info-overlay">
             <h3 class="text-white font-light tracking-widest text-lg mb-4 border-b border-white/10 pb-2">LEJANT</h3>
-            <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #38bdf8;"></div> SİZ</div>
+            <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid var(--hud-color);"></div> SİZ</div>
             <div class="legend-item"><div class="l-dot" style="background:#fff; border:2px solid #fff;"></div> NEXUS</div>
             <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div>
             <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> DEPO MERKEZİ</div>
@@ -63,16 +62,16 @@
 <div id="context-overlay" class="overlay-base">
     <div class="context-window compact">
         <div class="context-header">
-            <!-- Bu başlıklar da tema rengine çekilebilir, şimdilik orijinal bırakıldı -->
-            <h2 class="text-sm font-bold tracking-widest text-sky-300">BAĞLAMLAR</h2>
+            <h2 class="text-sm font-bold tracking-widest" style="color: var(--hud-color);">BAĞLAMLAR</h2>
             <div class="ui-close-btn" onclick="closeContext()">✕</div>
         </div>
         <div class="context-content">
             <div class="ctx-grid">
-                <div class="ctx-item full" style="background: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.2);">
+                <!-- Dinamik arka plan ve kenarlık rengi -->
+                <div class="ctx-item full" style="background: var(--hud-color-dim); border-color: var(--hud-color);">
                     <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-1">
-                        <span class="ctx-lbl text-sky-300">MAKSİMUM HIZ HESAPLAMASI</span>
-                        <span id="ctx-speed-val" class="ctx-val text-lg">0 KM/S</span>
+                        <span class="ctx-lbl" style="color: var(--hud-text);">MAKSİMUM HIZ HESAPLAMASI</span>
+                        <span id="ctx-speed-val" class="ctx-val text-lg" style="color: #fff;">0 KM/S</span>
                     </div>
                     <div id="ctx-speed-formula" class="font-mono text-xs space-y-1"></div>
                 </div>
@@ -113,13 +112,7 @@
 
 <div id="stats-overlay" class="overlay-base">
     <div class="stats-window">
-        <div class="stats-header">
-            <h2 class="text-2xl font-light tracking-widest text-white">İSTATİSTİKLER</h2>
-            <div class="ui-close-btn" onclick="closeStats()">✕</div>
-        </div>
-        <div class="stats-content">
-            <table class="stats-table" id="stats-table-content"></table>
-        </div>
+        <!-- JS tarafından dolduruluyor (stats.js) -->
     </div>
 </div>
 
@@ -138,27 +131,6 @@
     </div>
 </div>
 
-<style>
-.achievement-item {
-    display: flex; gap: 10px; align-items: center;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.05);
-    background: rgba(255,255,255,0.02);
-    transition: 0.2s;
-    min-height: 50px;
-}
-.achievement-item.unlocked {
-    background: rgba(16, 185, 129, 0.05);
-    border-color: rgba(16, 185, 129, 0.2);
-}
-.ach-list-icon { font-size: 1.2rem; width: 30px; text-align: center; }
-.ach-list-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-.ach-list-title { font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 2px; }
-.ach-list-desc { font-size: 0.7rem; line-height: 1.2; opacity: 0.8; }
-.ach-check { color: #10b981; font-weight: bold; font-size: 1rem; }
-</style>
-
 <div id="storage-overlay" class="overlay-base">
     <div class="nexus-window" style="height: 800px;"> 
         <div class="nexus-header">
@@ -171,23 +143,23 @@
         <div class="nexus-content active" style="display:flex; gap:20px; height:100%; overflow:hidden;">
             <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
                 <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                    <h3 class="text-sky-300 tracking-widest">GEMİ KARGOSU</h3>
+                    <h3 class="tracking-widest" style="color: var(--hud-color);">GEMİ KARGOSU</h3>
                     <span id="storage-ship-cap" class="text-xs text-gray-400">0 / 150</span>
                 </div>
                 <div id="storage-ship-list" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
                 <div class="p-4 border-t border-white/10">
-                    <button onclick="depositAllToStorage()" class="w-full bg-white/5 hover:bg-white/10 text-sky-300 border border-sky-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ DEPOLA</button>
+                    <button onclick="depositAllToStorage()" class="w-full bg-white/5 hover:bg-white/10 border py-2 rounded text-xs tracking-widest transition" style="color: var(--hud-color); border-color: var(--hud-color-dim);">TÜMÜNÜ DEPOLA</button>
                 </div>
             </div>
             <div class="flex flex-col justify-center items-center text-gray-500"><div class="text-2xl">⇄</div></div>
             <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
                 <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                    <h3 class="text-purple-300 tracking-widest">MERKEZ DEPO</h3>
+                    <h3 class="tracking-widest" style="color: var(--color-storage);">MERKEZ DEPO</h3>
                     <span id="storage-center-count" class="text-xs text-gray-400">0 EŞYA</span>
                 </div>
                 <div id="storage-center-list" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
                 <div class="p-4 border-t border-white/10">
-                    <button onclick="withdrawAllFromStorage()" class="w-full bg-white/5 hover:bg-white/10 text-purple-300 border border-purple-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AL</button>
+                    <button onclick="withdrawAllFromStorage()" class="w-full bg-white/5 hover:bg-white/10 border py-2 rounded text-xs tracking-widest transition" style="color: var(--color-storage); border-color: rgba(168, 85, 247, 0.3);">TÜMÜNÜ AL</button>
                 </div>
             </div>
         </div>
@@ -225,23 +197,23 @@
         <div class="nexus-content active" style="display:flex; gap:20px; height:100%; overflow:hidden;">
             <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
                 <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                    <h3 class="text-sky-300 tracking-widest">GEMİ KARGOSU</h3>
+                    <h3 class="tracking-widest" style="color: var(--hud-color);">GEMİ KARGOSU</h3>
                     <span id="echo-player-cap" class="text-xs text-gray-400">0 / 150</span>
                 </div>
                 <div id="echo-player-grid" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
                 <div class="p-4 border-t border-white/10">
-                    <button onclick="transferAllToEcho()" class="w-full bg-white/5 hover:bg-white/10 text-sky-300 border border-sky-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AKTAR</button>
+                    <button onclick="transferAllToEcho()" class="w-full bg-white/5 hover:bg-white/10 border py-2 rounded text-xs tracking-widest transition" style="color: var(--hud-color); border-color: var(--hud-color-dim);">TÜMÜNÜ AKTAR</button>
                 </div>
             </div>
             <div class="flex flex-col justify-center items-center text-cyan-500"><div class="text-2xl">⇄</div></div>
             <div class="storage-col" style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; flex-direction:column;">
                 <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                    <h3 class="text-cyan-300 tracking-widest">YANKI DEPOSU</h3>
+                    <h3 class="tracking-widest" style="color: var(--echo-color);">YANKI DEPOSU</h3>
                     <span id="echo-storage-cap" class="text-xs text-gray-400">0 / 0</span>
                 </div>
                 <div id="echo-storage-grid" class="p-4 overflow-y-auto flex-1 space-y-2"></div>
                 <div class="p-4 border-t border-white/10">
-                    <button onclick="transferAllToPlayer()" class="w-full bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-300/30 py-2 rounded text-xs tracking-widest transition">TÜMÜNÜ AL</button>
+                    <button onclick="transferAllToPlayer()" class="w-full bg-white/5 hover:bg-white/10 border py-2 rounded text-xs tracking-widest transition" style="color: var(--echo-color); border-color: rgba(103, 232, 249, 0.3);">TÜMÜNÜ AL</button>
                 </div>
             </div>
         </div>
@@ -270,8 +242,9 @@
         </div>
         <div id="tab-upgrades" class="nexus-content">
             <div class="upgrade-grid">
-                <div><div class="upgrade-col-title text-sky-300">VOID RAY (SİZ)</div><div id="upg-player-list"></div></div>
-                <div><div class="upgrade-col-title text-cyan-300">ECHO RAY (YANKI)</div><div id="upg-echo-list"></div></div>
+                <!-- nexus.js içinde dinamik oluşturuluyor, orada da style="color: var(--hud-color)" yapılacak -->
+                <div><div class="upgrade-col-title" style="color: var(--hud-color);">VOID RAY (SİZ)</div><div id="upg-player-list"></div></div>
+                <div><div class="upgrade-col-title" style="color: var(--echo-color);">ECHO RAY (YANKI)</div><div id="upg-echo-list"></div></div>
             </div>
         </div>
     </div>

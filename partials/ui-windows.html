@@ -3,12 +3,12 @@
     <div class="profile-window rpg-style">
         <div class="profile-rpg-header">
             <div class="p-rpg-avatar">
-                <div class="p-rpg-img">⏣</div>
+                <div class="p-rpg-img" style="color: var(--hud-color);">⏣</div>
             </div>
             <div class="p-rpg-info">
-                <div class="p-rpg-title">KARAKTER</div>
-                <div class="p-rpg-name">VOID RAY</div>
-                <div id="profile-rank-text" class="p-rpg-rank">ACEMİ PİLOT</div>
+                <div class="p-rpg-title" style="color: var(--hud-text-dim);">KARAKTER</div>
+                <div class="p-rpg-name" style="color: var(--hud-color);">VOID RAY</div>
+                <div id="profile-rank-text" class="p-rpg-rank" style="color: var(--hud-text-dim);">ACEMİ PİLOT</div>
             </div>
             <div class="ui-close-btn" onclick="closeProfile()">✕</div>
         </div>
@@ -18,16 +18,16 @@
             <div id="p-tab-summary" class="profile-tab-content active">
                 <div class="p-rpg-level-strip">
                     <div class="p-rpg-lvl-box">
-                        <span class="lbl">SEVİYE</span>
-                        <span id="level-val" class="val">1</span>
+                        <span class="lbl" style="color: var(--hud-text-dim);">SEVİYE</span>
+                        <span id="level-val" class="val" style="color: var(--hud-text);">1</span>
                     </div>
                     <div class="p-rpg-lvl-box">
-                        <span class="lbl">MEVCUT XP</span>
-                        <span id="xp-current" class="val">0</span>
+                        <span class="lbl" style="color: var(--hud-text-dim);">MEVCUT XP</span>
+                        <span id="xp-current" class="val" style="color: var(--hud-text);">0</span>
                     </div>
                     <div class="p-rpg-lvl-box">
-                        <span class="lbl">GEREKLİ XP</span>
-                        <span id="xp-max" class="val">100</span>
+                        <span class="lbl" style="color: var(--hud-text-dim);">GEREKLİ XP</span>
+                        <span id="xp-max" class="val" style="color: var(--hud-text);">100</span>
                     </div>
                 </div>
                 
@@ -106,9 +106,9 @@
 
             <!-- SEKME 2: BAŞARIMLAR -->
             <div id="p-tab-achievements" class="profile-tab-content" style="display: none; padding: 15px;">
-                <div class="flex justify-between items-center mb-3 pb-2 border-b border-dashed border-[#94d8c3]/30">
-                    <span class="text-xs text-[#94a3b8] tracking-widest font-mono">GÖREV DURUMU</span>
-                    <span id="ach-progress-text" class="text-xs text-[#94d8c3] font-mono">0 / 0</span>
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-dashed" style="border-color: var(--hud-color-dim);">
+                    <span class="text-xs tracking-widest font-mono" style="color: var(--hud-text-dim);">GÖREV DURUMU</span>
+                    <span id="ach-progress-text" class="text-xs font-mono" style="color: var(--hud-color);">0 / 0</span>
                 </div>
                 <div id="profile-achievements-list" class="space-y-2">
                     <!-- JS ile doldurulacak -->
@@ -123,7 +123,7 @@
     </div>
 </div>
 
-<!-- YENİ: EKİPMAN PENCERESİ -->
+<!-- EKİPMAN PENCERESİ -->
 <div id="equipment-overlay" class="overlay-base">
     <div class="equipment-window">
         <div class="equip-header">
