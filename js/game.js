@@ -286,7 +286,13 @@ function loop() {
             if (window.gameSettings.showFps) {
                 const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
                 document.getElementById('debug-fps-val').innerText = fps;
-                const objCount = (entityManager ? entityManager.planets.length : 0) + particleSystem.count + (entityManager ? entityManager.stars.length : 0);
+                
+                // --- FIX: Güvenli Nesne Sayımı ---
+                let pCount = (entityManager && entityManager.planets) ? entityManager.planets.length : 0;
+                let wCount = (entityManager && entityManager.wormholes) ? entityManager.wormholes.length : 0;
+                let partCount = particleSystem ? particleSystem.count : 0;
+                
+                const objCount = pCount + wCount + partCount;
                 document.getElementById('debug-obj-val').innerText = objCount;
             }
             frameCount = 0;
