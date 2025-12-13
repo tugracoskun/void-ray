@@ -1,5 +1,5 @@
 /* * PANELS.CSS
- * Nexus, Depo ve Bağlam Analizi.
+ * Nexus, Depo, Bağlam Analizi ve Kontroller.
  */
 
 /* WINDOWS GENEL YAPISI */
@@ -90,3 +90,74 @@
     margin-bottom: 4px; transition: all 0.2s;
 }
 .storage-item:hover { border-color: var(--hud-color-dim); background: rgba(255,255,255,0.05); }
+
+/* --- CONTROLS / HELP WINDOW (YENİ) --- */
+.controls-window {
+    width: 550px;
+    height: auto;
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color-dim);
+    background-image: var(--wireframe-gradient);
+    background-size: 10px 10px;
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    display: flex; flex-direction: column;
+    position: relative;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.controls-header {
+    height: 45px;
+    display: flex; align-items: center; padding: 0 15px;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--hud-color-dim);
+    background: rgba(148, 216, 195, 0.05);
+    cursor: move;
+    user-select: none;
+}
+
+.controls-title {
+    font-size: 0.9rem; color: var(--hud-color); font-weight: bold; letter-spacing: 2px;
+}
+
+.controls-content {
+    padding: 25px;
+}
+
+.controls-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+}
+
+.ctrl-col {
+    display: flex; flex-direction: column; gap: 12px;
+}
+
+.ctrl-row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.75rem; color: var(--hud-text-dim);
+    white-space: nowrap;
+}
+
+.ctrl-key {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hud-color-dim);
+    padding: 4px 8px;
+    border-radius: 2px;
+    color: var(--hud-color);
+    font-weight: bold;
+    min-width: 28px;
+    text-align: center;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+    font-family: monospace;
+    transition: 0.2s;
+}
+.ctrl-key:hover {
+    border-color: var(--hud-color);
+    box-shadow: 0 0 10px var(--hud-color-dim);
+    transform: translateY(-1px);
+}
+.ctrl-key.wide { min-width: 60px; }

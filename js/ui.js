@@ -1,11 +1,31 @@
 /**
  * Void Ray - Kullanıcı Arayüzü (UI) Yönetimi
- * GÜNCELLEME: Ekipman penceresi sürüklenebilir pencereler listesine eklendi.
- * GÜNCELLEME: Ana menüye dinamik GitHub güncelleme tarihi, mesajı ve versiyonu eklendi.
+ * GÜNCELLEME: Kontrol penceresi ve sürükleme entegrasyonu.
  */
 
 let isHudVisible = true;
 let windowGlobalZ = 5000; 
+
+// --- YENİ: KONTROLLER PENCERESİ YÖNETİMİ ---
+let controlsOpen = false;
+
+window.toggleControls = function() {
+    if(controlsOpen) closeControls();
+    else openControls();
+}
+
+window.openControls = function() {
+    controlsOpen = true;
+    document.getElementById('controls-overlay').classList.add('open');
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-controls-icon', true);
+}
+
+window.closeControls = function() {
+    controlsOpen = false;
+    document.getElementById('controls-overlay').classList.remove('open');
+    if (typeof setHudButtonActive === 'function') setHudButtonActive('btn-controls-icon', false);
+}
+// ---------------------------------------------------
 
 const globalTooltip = document.createElement('div');
 globalTooltip.id = 'global-tooltip';
@@ -438,7 +458,7 @@ window.initDraggableWindows = function() {
         { 
             container: '#equipment-overlay .equipment-window', 
             handle: '.equip-header', 
-            getPos: (w, h, elW, elH) => ({ x: (w - elW) / 2, y: (h - elH) / 2 }) // Merkeze konumlandır
+            getPos: (w, h, elW, elH) => ({ x: (w - elW) / 2, y: (h - elH) / 2 })
         },
         { 
             container: '#stats-overlay .stats-window', 
@@ -459,6 +479,12 @@ window.initDraggableWindows = function() {
             container: '#settings-panel', 
             handle: '#settings-header',
             getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: 70 })
+        },
+        // YENİ: KONTROLLER PENCERESİ (MERKEZLİ)
+        { 
+            container: '#controls-overlay .controls-window', 
+            handle: '.controls-header',
+            getPos: (w, h, elW, elH) => ({ x: (w - elW) / 2, y: (h - elH) / 2 })
         },
         { container: '#nexus-overlay .nexus-window', handle: '.nexus-header' },
         { container: '#storage-overlay .nexus-window', handle: '.nexus-header' },

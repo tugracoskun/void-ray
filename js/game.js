@@ -402,6 +402,8 @@ function loop() {
             else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
             else if (typeof contextOpen !== 'undefined' && contextOpen) closeContext(); 
             else if (typeof profileOpen !== 'undefined' && profileOpen) closeProfile();
+            // YENİ: Kontrol Penceresini Kapatma
+            else if (typeof controlsOpen !== 'undefined' && controlsOpen) closeControls();
             else togglePause();
             keys.Escape = false;
         }
