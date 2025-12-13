@@ -508,8 +508,10 @@ input:checked + .slider:before { transform: translateX(16px); background-color: 
     border: 1px solid var(--hud-color-dim);
     font-family: monospace;
     font-size: 10px;
-    color: var(--hud-color); /* Tema rengine bağlandı */
-    pointer-events: none;
+    color: var(--hud-color);
+    pointer-events: auto; /* Tıklanabilir yapıldı */
+    cursor: move;         /* Taşıma imleci eklendi */
+    user-select: none;    /* Sürüklerken metin seçilmesin */
     display: none;
     z-index: 100;
     backdrop-filter: blur(2px);

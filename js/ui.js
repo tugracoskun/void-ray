@@ -392,7 +392,6 @@ window.initDraggableWindows = function() {
             handle: '.inv-header', 
             getPos: (w, h, elW, elH) => ({ x: w - elW - 20, y: (h - elH) / 2 }) 
         },
-        // --- YENİ EKLENEN: EKİPMAN PENCERESİ ---
         { 
             container: '#equipment-overlay .equipment-window', 
             handle: '.equip-header', 
@@ -421,7 +420,8 @@ window.initDraggableWindows = function() {
         { container: '#nexus-overlay .nexus-window', handle: '.nexus-header' },
         { container: '#storage-overlay .nexus-window', handle: '.nexus-header' },
         { container: '#echo-inventory-overlay .nexus-window', handle: '.nexus-header' },
-        { container: '#achievements-overlay .stats-window', handle: '.stats-header' }
+        { container: '#achievements-overlay .stats-window', handle: '.stats-header' },
+        { container: '#debug-fps-panel', handle: '#debug-fps-panel' }
     ];
 
     windows.forEach(win => {
