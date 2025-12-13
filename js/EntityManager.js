@@ -164,16 +164,41 @@ class EntityManager {
         triggerWormholeEffect();
         if (typeof audio !== 'undefined' && audio) audio.playChime({id: 'legendary'}); 
         showNotification({name: MESSAGES.UI.WORMHOLE_ENTER, type:{color: GAME_CONFIG.WORMHOLE.COLOR_CORE}}, MESSAGES.UI.WORMHOLE_DESC);
+        
         const margin = GAME_CONFIG.WORMHOLE.TELEPORT_SAFE_DISTANCE;
         const newX = Utils.random(margin, WORLD_SIZE - margin);
         const newY = Utils.random(margin, WORLD_SIZE - margin);
-        player.x = newX; player.y = newY;
+        
+        // Konum Güncelleme
+        player.x = newX; 
+        player.y = newY;
+        
+        // Hız Sıfırlama: Işınlanma sonrası savrulmayı önler
+        player.vx = 0; 
+        player.vy = 0;
+        
+        // Kuyruk ve Kamera Güncelleme
         player.tail.forEach(t => { t.x = newX; t.y = newY; });
         if (window.cameraFocus) { window.cameraFocus.x = newX; window.cameraFocus.y = newY; }
+        
+        // Otopilot ve Görev Yönetimi (Düzeltildi)
         if (typeof autopilot !== 'undefined' && autopilot) {
-            autopilot = false;
+            // Eğer belirli bir hedefe (Travel Modu) gidiliyorsa, hedef artık geçersiz olduğu için iptal et.
+            if (typeof aiMode !== 'undefined' && aiMode === 'travel') {
+                autopilot = false;
+                if (typeof manualTarget !== 'undefined') manualTarget = null;
+                showNotification({name: "SEYİR İPTAL EDİLDİ", type:{color:'#ef4444'}}, "Konum Değişti");
+            } 
+            // Toplama (Gather), Üs (Base) veya Depo (Deposit) modundaysa göreve devam et
+            else {
+                // Keşif hedefini sıfırla ki gemi eski bölgeye geri dönmeye çalışmasın
+                if (player.scoutTarget) player.scoutTarget = null;
+                showNotification({name: "SİSTEMLER YENİDEN HESAPLANIYOR", type:{color:'#38bdf8'}}, "Otopilot Devam Ediyor");
+            }
+            
             if (typeof updateAIButton === 'function') updateAIButton();
         }
+        
         this.lastTeleportTime = Date.now();
     }
 
