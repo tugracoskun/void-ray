@@ -1,6 +1,6 @@
 /**
  * Void Ray - Kontrol Sistemi
- * GÜNCELLEME: HUD Butonları için aç/kapa (toggle) mantığı eklendi.
+ * GÜNCELLEME: Profil butonu listener'ı güçlendirildi.
  */
 
 // Tuş Durumları (Global erişim için)
@@ -27,7 +27,6 @@ function initControls() {
         // --- KAMERA DEĞİŞTİRME (C TUŞU) ---
         if(e.key.toLowerCase() === 'c') {
             if (typeof echoRay !== 'undefined' && echoRay && !echoRay.attached) {
-                
                 // Utils güncellemesi:
                 const dist = Utils.distEntity(player, echoRay);
                 const maxRange = player.radarRadius;
@@ -67,9 +66,8 @@ function initControls() {
 
         // --- PROFİL (P TUŞU) ---
         if(e.key.toLowerCase() === 'p') {
-            if (typeof profileOpen !== 'undefined') {
-                if (profileOpen) closeProfile();
-                else openProfile();
+            if (typeof toggleProfile === 'function') {
+                toggleProfile();
             }
             keys.p = false;
         }
@@ -238,17 +236,26 @@ function initControls() {
         });
     }
 
-    // PROFİL BUTONU (HTML ONCLICK OVERRIDE)
+    // PROFİL BUTONU (GÜNCELLENDİ: addEventListener kullanılarak daha sağlam yapıldı)
     const btnProfile = document.getElementById('btn-profile-icon');
     if(btnProfile) {
-        btnProfile.onclick = function(e) {
+        // Eski onclick varsa temizle (Çakışmayı önlemek için)
+        btnProfile.onclick = null;
+        
+        btnProfile.addEventListener('click', function(e) {
             e.preventDefault();
-            if (typeof toggleProfile === 'function') {
-                toggleProfile();
-            } else if (typeof openProfile === 'function') {
-                if(typeof profileOpen !== 'undefined' && profileOpen) closeProfile(); 
-                else openProfile();
+            if (typeof window.toggleProfile === 'function') {
+                window.toggleProfile();
+            } else if (typeof window.openProfile === 'function') {
+                // Fallback (Toggle yoksa manuel kontrol)
+                if (typeof profileOpen !== 'undefined' && profileOpen) {
+                    window.closeProfile();
+                } else {
+                    window.openProfile();
+                }
+            } else {
+                console.error("Profile functions not found! check profile.js");
             }
-        };
+        });
     }
 }

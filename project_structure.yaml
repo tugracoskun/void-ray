@@ -12,6 +12,7 @@ css:
   - panels.css
   - stats.css
   - inventory.css
+  - equipment.css # YENİ
   - chat.css
   - profile.css
   - world.css
@@ -43,6 +44,7 @@ js:
 
   windows:
     - inventory.js
+    - equipment.js
     - stats.js
     - settings.js
     - storage.js
@@ -62,7 +64,7 @@ js:
     - RepairStation.js
     - Planet.js
     - Particle.js
-    - Wormhole.js # YENİ
+    - Wormhole.js
 
 partials:
   - ui-core.html

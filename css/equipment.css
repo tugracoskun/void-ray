@@ -1,0 +1,220 @@
+/* * EQUIPMENT.CSS
+ * Ekipman penceresi ve slot stilleri.
+ * Düzeltilmiş Layout & Z-Index & Minimalist İkonlar
+ */
+
+.equipment-window {
+    width: 460px;
+    height: 620px;
+    
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color-dim);
+    
+    background-image: var(--wireframe-gradient);
+    background-size: 10px 10px;
+    background-position: top left, top left, bottom right, bottom right;
+    background-repeat: no-repeat;
+
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    border-radius: 0;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.equip-header {
+    height: 50px;
+    display: flex; align-items: center; padding: 0 20px;
+    flex-shrink: 0;
+    border-bottom: 1px dashed var(--hud-color-dim);
+    background: rgba(148, 216, 195, 0.05);
+    justify-content: space-between;
+    cursor: move;
+    user-select: none;
+}
+
+.equip-title {
+    font-size: 1rem; color: var(--hud-color); 
+    font-weight: bold; letter-spacing: 3px;
+    text-shadow: 0 0 5px var(--hud-color-dim);
+}
+
+.equip-content {
+    flex: 1;
+    position: relative;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+}
+
+/* GEMİ SİLÜETİ VE SLOT YERLEŞİMİ */
+.ship-silhouette-container {
+    width: 320px;
+    height: 380px;
+    position: relative;
+    margin: 10px auto;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 60%);
+    display: block; 
+}
+
+/* Silüet - En arkada */
+.ship-silhouette {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px; height: 240px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0; 
+}
+.ship-silhouette path {
+    fill: none;
+    stroke: var(--ray-color);
+    stroke-width: 2;
+    filter: drop-shadow(0 0 5px var(--ray-color));
+}
+
+/* SLOT WRAPPER - Konumlandırma ve Katman */
+.equip-slot-wrapper {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 20; /* Silüetin kesinlikle üzerinde */
+    width: 60px; /* Hizalama için sabit genişlik */
+}
+
+/* --- POZİSYONLAR --- */
+
+/* Kalkan: En Tepe */
+.slot-shield { 
+    top: 20px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+}
+
+/* Silahlar: Yanlar ve Biraz Yukarı */
+.slot-weapon-l { 
+    top: 100px; 
+    left: 20px; 
+}
+
+.slot-weapon-r { 
+    top: 100px; 
+    right: 20px; 
+}
+
+/* Gövde ve Radar: Yanlar ve Aşağı */
+.slot-hull { 
+    bottom: 100px; 
+    left: 30px; 
+}
+
+.slot-sensor { 
+    bottom: 100px; 
+    right: 30px; 
+}
+
+/* Motor: En Alt */
+.slot-engine { 
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+}
+
+
+/* SLOT GÖRÜNÜMÜ */
+.equip-slot {
+    width: 54px; height: 54px;
+    background: rgba(10, 12, 14, 0.95); 
+    border: 1px solid var(--hud-color-dim);
+    display: flex; justify-content: center; align-items: center;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    /* Köşeleri keskin yap (Wireframe teması) */
+    border-radius: 0; 
+}
+
+.equip-slot:hover {
+    border-color: var(--hud-color);
+    box-shadow: 0 0 20px var(--hud-color-dim);
+    background: rgba(148, 216, 195, 0.15);
+    transform: scale(1.1);
+    z-index: 30;
+}
+
+.equip-slot.filled {
+    border-color: var(--ray-color);
+    background: rgba(56, 189, 248, 0.15);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.slot-icon {
+    font-size: 1.4rem; /* Biraz küçültüldü */
+    color: var(--hud-text-dim);
+    opacity: 0.6;
+    transition: 0.2s;
+    /* Fontu monospace yaparak sembollerin ortalanmasını sağla */
+    font-family: monospace; 
+    line-height: 1;
+}
+
+.equip-slot.filled .slot-icon {
+    color: #fff;
+    opacity: 1;
+    text-shadow: 0 0 10px var(--ray-color);
+}
+
+.slot-label {
+    font-size: 0.6rem;
+    color: var(--hud-text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: rgba(5, 5, 5, 0.9);
+    padding: 3px 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0; /* Köşeli */
+    white-space: nowrap;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+
+/* STATS ÖZETİ */
+.equip-stats-summary {
+    width: 100%;
+    margin-top: auto;
+    border-top: 1px solid var(--hud-color-dim);
+    padding-top: 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.estat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border-left: 2px solid transparent;
+    transition: 0.2s;
+}
+.estat-row:hover {
+    background: rgba(255,255,255,0.06);
+    border-left-color: var(--hud-color);
+}
+
+.estat-name { color: var(--hud-text-dim); letter-spacing: 1px; font-size: 0.65rem; }
+.estat-val { color: var(--hud-text); font-weight: bold; font-family: monospace; }
+.estat-bonus { color: var(--color-success); font-size: 0.65rem; margin-left: 6px; font-weight: bold; }

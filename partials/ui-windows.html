@@ -123,6 +123,65 @@
     </div>
 </div>
 
+<!-- YENİ: EKİPMAN PENCERESİ -->
+<div id="equipment-overlay" class="overlay-base">
+    <div class="equipment-window">
+        <div class="equip-header">
+            <div class="equip-title">DONANIM & MODÜLLER</div>
+            <div class="cursor-pointer text-xl opacity-50 hover:opacity-100" onclick="closeEquipment()">✕</div>
+        </div>
+        
+        <div class="equip-content">
+            <!-- GEMİ SİLÜETİ VE SLOTLAR -->
+            <div class="ship-silhouette-container">
+                <svg class="ship-silhouette" viewBox="0 0 100 140" fill="none">
+                    <path d="M50 20 C 70 40, 90 70, 80 110 L 50 130 L 20 110 C 10 70, 30 40, 50 20 Z" />
+                    <path d="M50 20 L 50 130" stroke-opacity="0.3" stroke-dasharray="4 2"/>
+                    <path d="M20 110 L 80 110" stroke-opacity="0.3" stroke-dasharray="4 2"/>
+                </svg>
+
+                <div class="equip-slot-wrapper slot-engine" id="slot-engine">
+                    <div class="equip-slot"><span class="slot-icon">🚀</span></div>
+                    <span class="slot-label">MOTOR</span>
+                </div>
+                
+                <div class="equip-slot-wrapper slot-shield" id="slot-shield">
+                    <div class="equip-slot"><span class="slot-icon">🛡️</span></div>
+                    <span class="slot-label">KALKAN</span>
+                </div>
+
+                <div class="equip-slot-wrapper slot-weapon-l" id="slot-weapon_l">
+                    <div class="equip-slot"><span class="slot-icon">🔫</span></div>
+                    <span class="slot-label">SİLAH L</span>
+                </div>
+
+                <div class="equip-slot-wrapper slot-weapon-r" id="slot-weapon_r">
+                    <div class="equip-slot"><span class="slot-icon">🔫</span></div>
+                    <span class="slot-label">SİLAH R</span>
+                </div>
+
+                <div class="equip-slot-wrapper slot-sensor" id="slot-sensor">
+                    <div class="equip-slot"><span class="slot-icon">📡</span></div>
+                    <span class="slot-label">RADAR</span>
+                </div>
+
+                <div class="equip-slot-wrapper slot-hull" id="slot-hull">
+                    <div class="equip-slot"><span class="slot-icon">⬢</span></div>
+                    <span class="slot-label">GÖVDE</span>
+                </div>
+            </div>
+
+            <!-- STAT ÖZETİ -->
+            <div class="equip-stats-summary">
+                <div class="estat-row"><span class="estat-name">SALDIRI GÜCÜ</span><span id="estat-atk" class="estat-val">0</span></div>
+                <div class="estat-row"><span class="estat-name">SAVUNMA</span><span id="estat-def" class="estat-val">0</span></div>
+                <div class="estat-row"><span class="estat-name">HIZ</span><div class="flex items-center"><span id="estat-spd" class="estat-val">0</span><span class="estat-bonus"></span></div></div>
+                <div class="estat-row"><span class="estat-name">ENERJİ</span><span id="estat-nrg" class="estat-val">0</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- CHAT PANELİ -->
 <div id="chat-panel">
     <div class="chat-header">

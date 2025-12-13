@@ -21,10 +21,9 @@ const GAME_CONFIG = {
         PLANET_COUNT: 1200,      // Toplam gezegen sayısı
         STAR_COUNT: 5000,        // Arka plan yıldız sayısı
         SAFE_ZONE_RADIUS: 2000,  // Başlangıçta gezegen oluşmayacak alan
-        WORMHOLE_COUNT: 25       // YENİ: Haritadaki solucan deliği sayısı
+        WORMHOLE_COUNT: 25       // Haritadaki solucan deliği sayısı
     },
     
-    // YENİ: SOLUCAN DELİĞİ AYARLARI
     WORMHOLE: {
         RADIUS: 150,             // Etkileşim yarıçapı
         COLOR_CORE: "#8b5cf6",   // Merkez rengi (Violet)
@@ -35,7 +34,7 @@ const GAME_CONFIG = {
         GRAVITY_FORCE: 180       // Çekim gücü katsayısı (Yaklaştıkça artar)
     },
 
-    // KAMERA AYARLARI (YENİ)
+    // KAMERA AYARLARI
     CAMERA: {
         INITIAL_ZOOM: 0.2,       // Oyun açılışındaki uzaklık
         DEFAULT_ZOOM: 1.0,       // Normal oyun içi zoom
@@ -115,7 +114,7 @@ const INTRO_SEQUENCE = [
     { time: 3500, text: "Hoş geldin, Pilot. Motorlar aktif.", type: "loot" }
 ];
 
-// OYUN İÇİ METİNLER (YENİ)
+// OYUN İÇİ METİNLER
 const MESSAGES = {
     ECHO: {
         SPAWN: "YANKI DOĞDU",
@@ -136,8 +135,8 @@ const MESSAGES = {
         SAFE_ZONE_ENTER_DESC: "Nexus Koruma Alanı",
         SAFE_ZONE_EXIT: "GÜVENLİ BÖLGEDEN AYRILDINIZ",
         SAFE_ZONE_EXIT_DESC: "Dikkatli Olun",
-        WORMHOLE_ENTER: "SOLUCAN DELİĞİ TESPİT EDİLDİ", // YENİ
-        WORMHOLE_DESC: "Uzay-Zaman Atlaması Başlatılıyor..." // YENİ
+        WORMHOLE_ENTER: "SOLUCAN DELİĞİ TESPİT EDİLDİ",
+        WORMHOLE_DESC: "Uzay-Zaman Atlaması Başlatılıyor..."
     }
 };
 
@@ -153,6 +152,15 @@ const INITIAL_PLAYER_DATA = {
         echoRange: 0, 
         echoDurability: 0,
         echoCapacity: 0
+    },
+    // YENİ: EKİPMAN ŞEMASI
+    equipment: {
+        shield: null,
+        engine: null,
+        weaponL: null,
+        weaponR: null,
+        sensor: null,
+        hull: null
     },
     stats: { 
         maxSpeed: 0, 
@@ -206,7 +214,7 @@ const UPGRADES = {
 
 const TIPS = [
     "Enerjinizi yenilemek için Tardigradlar çok değerlidir.",
-    "Solucan delikleri (Mor Girdaplar) sizi haritanın rastgele bir yerine fırlatır.", // YENİ İPUCU
+    "Solucan delikleri (Mor Girdaplar) sizi haritanın rastgele bir yerine fırlatır.",
     "Mor sinyaller değerli kayıp kargoları işaret eder.",
     "Veri Sislerinden (Yeşil Bulutlar) uzak durun, gemiye zarar verir.",
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
@@ -242,7 +250,7 @@ const MAP_CONFIG = {
         repair: "#10b981",     // Yeşil
         storage: "#a855f7",    // Mor
         echo: "#67e8f9",       // Turkuaz
-        wormhole: "#8b5cf6",   // YENİ: Solucan Deliği Rengi
+        wormhole: "#8b5cf6",   // Solucan Deliği Rengi
         target: "#ef4444",     // Kırmızı
         scanArea: "rgba(16, 185, 129, 0.05)",
         radarArea: "rgba(251, 191, 36, 0.03)",
@@ -283,8 +291,8 @@ const DEFAULT_GAME_SETTINGS = {
     enableCRT: false,    // Retro Scanline Efekti
     crtIntensity: 50,    // CRT Efekt Yoğunluğu (%50 Varsayılan)
     showStars: true,     // Arka Plan Yıldızları
-    starBrightness: 100, // YENİ: Yıldız Parlaklığı (%100)
-    showGrid: true,      // YENİ: Uzay Izgarası
+    starBrightness: 100, // Yıldız Parlaklığı (%100)
+    showGrid: true,      // Uzay Izgarası
     themeColor: '#94d8c3', // Varsayılan Tema Rengi (Turkuaz)
     themeHue: 162,         // Varsayılan Tema Tonu
     themeSat: 47           // Varsayılan Tema Doygunluğu

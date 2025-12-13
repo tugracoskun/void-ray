@@ -203,3 +203,9 @@ function renderAchievements() {
     const progressEl = document.getElementById('ach-progress-text');
     if (progressEl) progressEl.innerText = `${unlockedCount} / ${total} TAMAMLANDI`;
 }
+
+// Global erişim için window nesnesine atamalar
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+window.switchProfileTab = switchProfileTab;
+window.renderAchievements = renderAchievements;
