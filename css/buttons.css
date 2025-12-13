@@ -197,6 +197,13 @@
     transform: scale(1.1);
 }
 
+/* YENİ: Tıklama (Active) Efekti */
+.ui-close-btn:active {
+    transform: scale(0.95); /* Tıklayınca hafifçe içe gömülme hissi */
+    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* Kırmızı Vurgu (Opsiyonel) */
 .ui-close-btn.danger:hover {
     color: var(--hud-danger);
