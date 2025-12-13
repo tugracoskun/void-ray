@@ -84,6 +84,20 @@
         linear-gradient(to top, var(--hud-danger) 2px, transparent 2px);
 }
 
+/* YENİ: UYARI MODU (Izgara Desenli) */
+.system-modal.warning {
+    border-color: var(--color-warning);
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.15);
+    
+    /* Wireframe Grid Pattern (Sarı/Turuncu) */
+    background-image: 
+        linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: center;
+    background-repeat: repeat;
+}
+
 .modal-header {
     padding: 10px 20px;
     background: rgba(148, 216, 195, 0.05);
@@ -98,9 +112,43 @@
     color: var(--hud-danger);
 }
 
+/* YENİ: UYARI BAŞLIĞI */
+.modal-header.warning {
+    background: rgba(245, 158, 11, 0.05);
+    border-bottom-color: var(--color-warning);
+    color: var(--color-warning);
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
 .modal-content {
     padding: 30px;
     display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+
+/* YENİ: UYARI İKONU VE BUTONLARI */
+.warning-icon {
+    font-size: 3rem;
+    color: var(--color-warning);
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px var(--color-warning);
+    animation: blinkText 2s infinite;
+}
+
+/* Uyarı penceresi içindeki butonu özelleştir */
+.system-modal.warning .menu-btn {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+.system-modal.warning .menu-btn:hover {
+    background-color: var(--color-warning);
+    color: #000;
+    box-shadow: 0 0 20px var(--color-warning);
+}
+
+.system-modal.warning .menu-btn::before, 
+.system-modal.warning .menu-btn::after {
+    background-color: var(--color-warning);
 }
 
 /* --- OVERLAYS --- */
