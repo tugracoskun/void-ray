@@ -5,7 +5,8 @@
             <canvas id="big-map-canvas"></canvas>
             
             <!-- KOORDİNAT GÖSTERGESİ -->
-            <div id="big-map-coords" class="absolute bottom-4 left-4 text-xs font-mono text-sky-300 bg-black/50 px-3 py-1 rounded border border-sky-500/30 backdrop-blur-sm pointer-events-none">
+            <!-- GÜNCELLEME: Sabit Tailwind renkleri kaldırıldı, dinamik tema değişkenleri eklendi -->
+            <div id="big-map-coords" class="absolute bottom-4 left-4 text-xs font-mono bg-black/50 px-3 py-1 rounded border backdrop-blur-sm pointer-events-none" style="color: var(--hud-color); border-color: var(--hud-color-dim);">
                 0 : 0
             </div>
 
@@ -15,7 +16,7 @@
                     ◎
                 </button>
 
-                <!-- HEDEF VEKTÖRLERİ GÖSTER BUTONU (YENİ) -->
+                <!-- HEDEF VEKTÖRLERİ GÖSTER BUTONU -->
                 <button id="btn-map-targets" onclick="toggleMapTargets()" class="bg-white/10 hover:bg-white/20 text-white w-8 h-8 flex items-center justify-center rounded border border-white/10 backdrop-blur-sm transition active:scale-95" title="Hedef Vektörleri">
                     ⇢
                 </button>
@@ -48,7 +49,7 @@
             <div class="legend-item"><div class="l-dot" style="background:#10b981;"></div> TAMİR İSTASYONU</div>
             <div class="legend-item"><div class="l-dot" style="background:#a855f7;"></div> DEPO MERKEZİ</div>
             <div class="legend-item"><div class="l-dot" style="background:#67e8f9;"></div> YANKI</div>
-            <div class="legend-item"><div class="l-dot" style="border:2px solid #8b5cf6;"></div> SOLUCAN DELİĞİ</div> <!-- YENİ -->
+            <div class="legend-item"><div class="l-dot" style="border:2px solid #8b5cf6;"></div> SOLUCAN DELİĞİ</div>
             <div class="legend-item"><div class="l-dot" style="background:rgba(255,255,255,0.5);"></div> Kaynak</div>
             <div class="legend-item"><div class="l-dot" style="background:#84cc16;"></div> Zehirli Bölge</div>
             <div class="legend-item"><div class="l-dot" style="background:#C7C0AE;"></div> Tardigrad</div>
@@ -58,10 +59,11 @@
     </div>
 </div>
 
-<!-- Diğer Pencereler Aynı Kalır -->
+<!-- BAĞLAM PENCERESİ -->
 <div id="context-overlay" class="overlay-base">
     <div class="context-window compact">
         <div class="context-header">
+            <!-- Bu başlıklar da tema rengine çekilebilir, şimdilik orijinal bırakıldı -->
             <h2 class="text-sm font-bold tracking-widest text-sky-300">BAĞLAMLAR</h2>
             <div class="ui-close-btn" onclick="closeContext()">✕</div>
         </div>

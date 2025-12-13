@@ -78,10 +78,20 @@ function updateTrackButtonState() {
     if (!btn) return;
     
     if (bigMapState.isTracking) {
+        // GÜNCELLEME: Sabit sky (mavi) renkleri yerine CSS değişkenleri kullanıldı
         btn.classList.remove('text-white', 'bg-white/10');
-        btn.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+        // Aktif durum stili (Tema Rengi)
+        btn.style.color = 'var(--hud-color)';
+        btn.style.borderColor = 'var(--hud-color)';
+        btn.style.backgroundColor = 'var(--hud-color-dim)';
+        btn.style.boxShadow = '0 0 10px var(--hud-color-dim)';
     } else {
-        btn.classList.remove('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+        // Pasif durum stili (Sıfırla)
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.style.backgroundColor = '';
+        btn.style.boxShadow = '';
+        
         btn.classList.add('text-white', 'bg-white/10');
     }
 }
@@ -91,10 +101,20 @@ function updateTargetButtonState() {
     if (!btn) return;
     
     if (bigMapState.showTargets) {
+        // GÜNCELLEME: Sabit sky (mavi) renkleri yerine CSS değişkenleri kullanıldı
         btn.classList.remove('text-white', 'bg-white/10');
-        btn.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+        // Aktif durum stili (Tema Rengi)
+        btn.style.color = 'var(--hud-color)';
+        btn.style.borderColor = 'var(--hud-color)';
+        btn.style.backgroundColor = 'var(--hud-color-dim)';
+        btn.style.boxShadow = '0 0 10px var(--hud-color-dim)';
     } else {
-        btn.classList.remove('text-sky-400', 'bg-sky-500/20', 'border-sky-500/50');
+        // Pasif durum stili (Sıfırla)
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.style.backgroundColor = '';
+        btn.style.boxShadow = '';
+        
         btn.classList.add('text-white', 'bg-white/10');
     }
 }
