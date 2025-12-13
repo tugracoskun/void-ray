@@ -1,6 +1,7 @@
 /**
  * Void Ray - Varlık Yöneticisi (Entity Manager)
  * GÜNCELLEME: Çarpışma anında (Loot Drop) yeni item sistemini kullanacak şekilde güncellendi.
+ * GÜNCELLEME 2: Wormhole için 'Güvenli İniş Protokolü' eklendi.
  */
 class EntityManager {
     constructor() {
@@ -160,38 +161,72 @@ class EntityManager {
         }
     }
 
+    // YENİ: Güvenli Işınlanma Noktası Bulucu
+    findSafeTeleportLocation() {
+        const margin = GAME_CONFIG.WORMHOLE.TELEPORT_SAFE_DISTANCE;
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while(attempts < maxAttempts) {
+            const rx = Utils.random(margin, WORLD_SIZE - margin);
+            const ry = Utils.random(margin, WORLD_SIZE - margin);
+            
+            // Bölgedeki tehditleri kontrol et (1500 birim yarıçap)
+            // SpatialHash grid'ini kullanarak o bölgedeki nesneleri sorgula
+            const threats = this.grid.query(rx, ry, 1500);
+            const hasToxic = threats.some(p => p.type.id === 'toxic');
+            
+            // Eğer zehirli bölge yoksa burası güvenlidir
+            if (!hasToxic) {
+                return { x: rx, y: ry };
+            }
+            
+            attempts++;
+        }
+        
+        // Eğer güvenli yer bulunamazsa (çok düşük ihtimal), haritanın ortasına güvenli bir mesafeye at
+        return { 
+            x: WORLD_SIZE / 2 + Utils.random(-1000, 1000), 
+            y: WORLD_SIZE / 2 + Utils.random(-1000, 1000) 
+        };
+    }
+
     handleWormholeEntry(wormhole) {
         triggerWormholeEffect();
         if (typeof audio !== 'undefined' && audio) audio.playChime({id: 'legendary'}); 
         showNotification({name: MESSAGES.UI.WORMHOLE_ENTER, type:{color: GAME_CONFIG.WORMHOLE.COLOR_CORE}}, MESSAGES.UI.WORMHOLE_DESC);
         
-        const margin = GAME_CONFIG.WORMHOLE.TELEPORT_SAFE_DISTANCE;
-        const newX = Utils.random(margin, WORLD_SIZE - margin);
-        const newY = Utils.random(margin, WORLD_SIZE - margin);
+        // GÜNCELLEME: Rastgele yerine güvenli nokta hesapla
+        const newPos = this.findSafeTeleportLocation();
         
         // Konum Güncelleme
-        player.x = newX; 
-        player.y = newY;
+        player.x = newPos.x; 
+        player.y = newPos.y;
         
         // Hız Sıfırlama: Işınlanma sonrası savrulmayı önler
         player.vx = 0; 
         player.vy = 0;
         
-        // Kuyruk ve Kamera Güncelleme
-        player.tail.forEach(t => { t.x = newX; t.y = newY; });
-        if (window.cameraFocus) { window.cameraFocus.x = newX; window.cameraFocus.y = newY; }
+        // GÜNCELLEME: Kısa süreliğine Ghost Mode (Görünmezlik/Hasar Almama) ver
+        // Bu sayede ani bir çarpışmadan korunur
+        player.isGhost = true;
+        player.currentAlpha = 0.5;
+        // 3 saniye sonra ghost modu kapatmak için timeout kurabiliriz ama
+        // oyun döngüsü idleTimer ile bunu zaten yönetiyor. 
+        // Ani koruma için manuel olarak alpha'yı düşürmek görsel bir ipucu verir.
         
-        // Otopilot ve Görev Yönetimi (Düzeltildi)
+        // Kuyruk ve Kamera Güncelleme
+        player.tail.forEach(t => { t.x = newPos.x; t.y = newPos.y; });
+        if (window.cameraFocus) { window.cameraFocus.x = newPos.x; window.cameraFocus.y = newPos.y; }
+        
+        // Otopilot ve Görev Yönetimi
         if (typeof autopilot !== 'undefined' && autopilot) {
-            // Eğer belirli bir hedefe (Travel Modu) gidiliyorsa, hedef artık geçersiz olduğu için iptal et.
             if (typeof aiMode !== 'undefined' && aiMode === 'travel') {
                 autopilot = false;
                 if (typeof manualTarget !== 'undefined') manualTarget = null;
                 showNotification({name: "SEYİR İPTAL EDİLDİ", type:{color:'#ef4444'}}, "Konum Değişti");
             } 
-            // Toplama (Gather), Üs (Base) veya Depo (Deposit) modundaysa göreve devam et
             else {
-                // Keşif hedefini sıfırla ki gemi eski bölgeye geri dönmeye çalışmasın
                 if (player.scoutTarget) player.scoutTarget = null;
                 showNotification({name: "SİSTEMLER YENİDEN HESAPLANIYOR", type:{color:'#38bdf8'}}, "Otopilot Devam Ediyor");
             }
