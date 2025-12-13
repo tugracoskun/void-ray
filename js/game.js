@@ -361,6 +361,7 @@ function loop() {
             entityManager.update(dt);
         }
 
+        // --- TUŞ KONTROLLERİ (Pencere Kapatma / Pause) ---
         if (keys.Escape) { 
             if (typeof inventoryOpen !== 'undefined' && inventoryOpen) closeInventory();
             else if (typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory();
@@ -368,6 +369,7 @@ function loop() {
             else if (typeof storageOpen !== 'undefined' && storageOpen) closeStorage(); 
             else if (typeof mapOpen !== 'undefined' && mapOpen) closeMap();
             else if (typeof statsOpen !== 'undefined' && statsOpen) closeStats();
+            else if (typeof equipmentOpen !== 'undefined' && equipmentOpen) closeEquipment(); 
             else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
             else if (typeof contextOpen !== 'undefined' && contextOpen) closeContext(); 
             else if (typeof profileOpen !== 'undefined' && profileOpen) closeProfile();
