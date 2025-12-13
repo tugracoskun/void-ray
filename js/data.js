@@ -1,14 +1,12 @@
 /**
  * Void Ray - Veri ve Konfigürasyon (Data Source)
- * Bu dosya oyunun tüm sabitlerini, ayarlarını ve içerik veritabanını içerir.
- * MANTIK İÇERMEZ. Sadece saf veri ve konfigürasyon barındırır.
+ * GÜNCELLEME: Emojiler teknik sembollerle (Wireframe uyumlu) değiştirildi.
  */
 
 const WORLD_SIZE = 120000; 
 
 // Oyun dengesini sağlayan temel sayılar
 const GAME_CONFIG = {
-    // Sabit Konumlar (Harita Tasarımı)
     LOCATIONS: {
         NEXUS:          { x: 3000, y: 3000 },
         STORAGE_CENTER: { x: 2400, y: 2400 },
@@ -18,58 +16,57 @@ const GAME_CONFIG = {
     },
     
     WORLD_GEN: {
-        PLANET_COUNT: 1200,      // Toplam gezegen sayısı
-        STAR_COUNT: 5000,        // Arka plan yıldız sayısı
-        SAFE_ZONE_RADIUS: 2000,  // Başlangıçta gezegen oluşmayacak alan
-        WORMHOLE_COUNT: 25       // Haritadaki solucan deliği sayısı
+        PLANET_COUNT: 1200,
+        STAR_COUNT: 5000,
+        SAFE_ZONE_RADIUS: 2000,
+        WORMHOLE_COUNT: 25
     },
     
     WORMHOLE: {
-        RADIUS: 150,             // Etkileşim yarıçapı
-        COLOR_CORE: "#8b5cf6",   // Merkez rengi (Violet)
-        COLOR_OUTER: "#c4b5fd",  // Dış hare rengi
-        TELEPORT_SAFE_DISTANCE: 5000, // Işınlanılacak yerin kenarlardan uzaklığı
-        SPIN_SPEED: 0.05,        // Dönüş hızı
-        GRAVITY_RADIUS: 3500,    // Çekim alanı yarıçapı (Geniş alan)
-        GRAVITY_FORCE: 180       // Çekim gücü katsayısı (Yaklaştıkça artar)
+        RADIUS: 150,
+        COLOR_CORE: "#8b5cf6",
+        COLOR_OUTER: "#c4b5fd",
+        TELEPORT_SAFE_DISTANCE: 5000,
+        SPIN_SPEED: 0.05,
+        GRAVITY_RADIUS: 3500,
+        GRAVITY_FORCE: 180
     },
 
-    // KAMERA AYARLARI
     CAMERA: {
-        INITIAL_ZOOM: 0.2,       // Oyun açılışındaki uzaklık
-        DEFAULT_ZOOM: 1.0,       // Normal oyun içi zoom
-        LERP_SPEED: 0.05,        // Kamera takip yumuşaklığı (Düşük = Daha yumuşak)
-        ADAPTIVE_FACTOR: 30,     // Hıza göre kameranın ne kadar önüne bakacağı
-        MAX_OFFSET: 400          // Kameranın merkezden maksimum sapma mesafesi
+        INITIAL_ZOOM: 0.2,
+        DEFAULT_ZOOM: 1.0,
+        LERP_SPEED: 0.05,
+        ADAPTIVE_FACTOR: 30,
+        MAX_OFFSET: 400
     },
     
     PLAYER: {
-        BASE_XP: 150,            // Level atlamak için gereken taban XP
-        BASE_HEALTH: 100,        // Başlangıç canı
-        BASE_ENERGY: 100,        // Başlangıç enerjisi
-        BASE_CAPACITY: 150,      // Başlangıç envanter kapasitesi
-        CAPACITY_PER_LEVEL: 25,  // Yükseltme başına artan kapasite
-        SCAN_RADIUS: 4000,       // Tarama (Görünürlük) menzili
-        RADAR_RADIUS: 10000,     // Radar (Sinyal) menzili
-        BASE_TAIL_COUNT: 20,     // Normal kuyruk uzunluğu
-        BOOST_TAIL_COUNT: 50,    // Hızlanınca kuyruk uzunluğu
+        BASE_XP: 150,
+        BASE_HEALTH: 100,
+        BASE_ENERGY: 100,
+        BASE_CAPACITY: 150,
+        CAPACITY_PER_LEVEL: 25,
+        SCAN_RADIUS: 4000,
+        RADAR_RADIUS: 10000,
+        BASE_TAIL_COUNT: 20,
+        BOOST_TAIL_COUNT: 50,
         ENERGY_COST: {
-            BOOST: 0.05,         // Space tuşu tüketimi
-            MOVE: 0.002,         // Hareket tüketimi
-            REGEN: 0.01          // Enerji dolum hızı
+            BOOST: 0.05,
+            MOVE: 0.002,
+            REGEN: 0.01
         }
     },
     
     ECHO: {
         BASE_ENERGY: 100,
-        BASE_CAPACITY: 80,       // Yankı başlangıç kapasitesi
-        CAPACITY_PER_LEVEL: 10,  // Yankı yükseltme başına artan kapasite
+        BASE_CAPACITY: 80,
+        CAPACITY_PER_LEVEL: 10,
         SCAN_RADIUS: 4000,
         RADAR_RADIUS: 10000,
-        DRAIN_RATE: 0.005,       // Normal enerji tüketimi
-        OUT_OF_BOUNDS_DRAIN: 0.5, // Radyasyon alanı tüketimi
-        INTERACTION_DIST: 350,   // Oyuncu ile birleşme mesafesi
-        SIGNAL_INTERFERENCE_START: 0.6  // Sinyal parazit başlangıç oranı
+        DRAIN_RATE: 0.005,
+        OUT_OF_BOUNDS_DRAIN: 0.5,
+        INTERACTION_DIST: 350,
+        SIGNAL_INTERFERENCE_START: 0.6
     },
     
     PLANETS: {
@@ -78,43 +75,33 @@ const GAME_CONFIG = {
             TOXIC: 500,
             LOST: 80,
             TARDIGRADE: 50,
-            BASE: 40,            // Standart gezegen taban yarıçapı
-            VARIANCE: 60         // Rastgele eklenebilecek ek yarıçap
+            BASE: 40,
+            VARIANCE: 60
         }
     },
     
-    // Ekonomi ve İlerleme Çarpanları
     ECONOMY: {
-        UPGRADE_COST_MULTIPLIER: 1.5, // Her seviyede fiyat artış oranı
-        LEVEL_XP_MULTIPLIER: 1.5,     // Her seviyede zorluk artış oranı
-        // XP Varyansı: Gezegenlerden gelen XP'nin rastgelelik aralığı (0.5 = %50 ile %150 arası)
+        UPGRADE_COST_MULTIPLIER: 1.5,
+        LEVEL_XP_MULTIPLIER: 1.5,
         XP_VARIANCE_MIN: 0.5,
         XP_VARIANCE_MAX: 1.5
     },
     
-    // Kaynak Düşme Olasılıkları (Ağırlıklı Dağılım)
-    // count: Düşecek eşya sayısı, weight: Olasılık ağırlığı
     LOOT_DISTRIBUTION: [
-        { count: 0, weight: 20 }, // %20 ihtimalle BOŞ (Sadece XP)
-        { count: 1, weight: 45 }, // %45 ihtimalle 1 kaynak
-        { count: 2, weight: 25 }, // %25 ihtimalle 2 kaynak
-        { count: 3, weight: 7 },  // %7 ihtimalle 3 kaynak
-        { count: 4, weight: 3 }   // %3 ihtimalle 4 kaynak (Jackpot!)
+        { count: 0, weight: 20 },
+        { count: 1, weight: 45 },
+        { count: 2, weight: 25 },
+        { count: 3, weight: 7 },
+        { count: 4, weight: 3 }
     ]
 };
 
-// ==========================================
-// 2. İÇERİK, EKONOMİ VE GANİMET SİSTEMİ
-// ==========================================
-
-// OYUN AÇILIŞ SENARYOSU
 const INTRO_SEQUENCE = [
     { time: 0, text: "Sistem başlatılıyor...", type: "system" },
     { time: 1000, text: "Optik sensörler kalibre ediliyor...", type: "info" },
     { time: 3500, text: "Hoş geldin, Pilot. Motorlar aktif.", type: "loot" }
 ];
 
-// OYUN İÇİ METİNLER
 const MESSAGES = {
     ECHO: {
         SPAWN: "YANKI DOĞDU",
@@ -140,39 +127,19 @@ const MESSAGES = {
     }
 };
 
-// OYUNCU VERİ ŞEMASI
 const INITIAL_PLAYER_DATA = {
     stardust: 0, 
     upgrades: { 
-        playerSpeed: 0, 
-        playerTurn: 0, 
-        playerMagnet: 0, 
-        playerCapacity: 0,
-        echoSpeed: 0, 
-        echoRange: 0, 
-        echoDurability: 0,
-        echoCapacity: 0
+        playerSpeed: 0, playerTurn: 0, playerMagnet: 0, playerCapacity: 0,
+        echoSpeed: 0, echoRange: 0, echoDurability: 0, echoCapacity: 0
     },
-    // YENİ: EKİPMAN ŞEMASI
     equipment: {
-        shield: null,
-        engine: null,
-        weaponL: null,
-        weaponR: null,
-        sensor: null,
-        hull: null
+        shield: null, engine: null, weaponL: null, weaponR: null, sensor: null, hull: null
     },
     stats: { 
-        maxSpeed: 0, 
-        echoMaxSpeed: 0, 
-        totalResources: 0, 
-        distance: 0, 
-        totalStardust: 0,
-        totalSpentStardust: 0,
-        totalEnergySpent: 0,
-        timeIdle: 0,
-        timeMoving: 0,
-        timeAI: 0
+        maxSpeed: 0, echoMaxSpeed: 0, totalResources: 0, distance: 0, 
+        totalStardust: 0, totalSpentStardust: 0, totalEnergySpent: 0,
+        timeIdle: 0, timeMoving: 0, timeAI: 0
     }
 };
 
@@ -196,6 +163,52 @@ const LOOT_DB = {
     lost: ["KAYIP SİNYAL"]
 };
 
+// --- RPG EŞYA SİSTEMİ (TEKNİK SEMBOLLER) ---
+// Emojiler yerine geometrik ve teknik semboller
+
+const ITEM_TYPES = {
+    WEAPON: { id: 'weapon', label: 'Lazer Modülü', icon: '⌖' }, // Crosshair (Nişangah)
+    ENGINE: { id: 'engine', label: 'İyon Motoru', icon: '▲' }, // Üçgen (İtici)
+    SHIELD: { id: 'shield', label: 'Enerji Kalkanı', icon: '◊' }, // Eşkenar Dörtgen (Kalkan Alanı)
+    SENSOR: { id: 'sensor', label: 'Radar Ünitesi', icon: '◎' }, // İç İçe Daire (Radar)
+    HULL:   { id: 'hull',   label: 'Nano Kaplama',  icon: '⬢' }  // Altıgen (Gövde Yapısı)
+};
+
+const RPG_ITEMS = {
+    weapon: ["Foton Işını", "Plazma Topu", "Kuantum Lazeri", "Anti-Madde Projektörü", "Void Kesicisi"],
+    engine: ["Warp Sürücüsü", "İyon İticisi", "Füzyon Reaktörü", "Karanlık Madde Motoru", "Hiper Sürücü"],
+    shield: ["Manyetik Kalkan", "Plazma Bariyeri", "Saptırıcı Kalkan", "Ayna Alan Üreteci"],
+    sensor: ["Derin Uzay Radarı", "Spektral Tarayıcı", "Biyo-Sensör", "Uzun Menzil Dizisi"],
+    hull:   ["Titanyum Zırh", "Karbon Fiber Gövde", "Reaktif Zırh", "Kristal Kaplama"]
+};
+
+// Efsunlar (Bonuslar)
+const BONUS_TYPES = [
+    // Hız ve Hareket
+    { id: 'thrust', name: 'İtici Güç', unit: '%', min: 2, max: 20, weight: 25 },
+    { id: 'maneuver', name: 'Manevra Kabiliyeti', unit: '%', min: 5, max: 30, weight: 20 },
+    
+    // Enerji ve Verimlilik
+    { id: 'energy_max', name: 'Max Enerji', unit: '', min: 20, max: 200, weight: 25 },
+    { id: 'energy_regen', name: 'Enerji Yenilenmesi', unit: '%', min: 5, max: 25, weight: 20 },
+    { id: 'fuel_save', name: 'Yakıt Tasarrufu', unit: '%', min: 5, max: 30, weight: 15 },
+    
+    // Keşif ve Radar
+    { id: 'radar_range', name: 'Radar Menzili', unit: 'km', min: 1, max: 10, weight: 20 },
+    { id: 'scan_speed', name: 'Tarama Hızı', unit: '%', min: 5, max: 40, weight: 15 },
+    
+    // Ganimet ve Ekonomi
+    { id: 'magnet', name: 'Çekim Alanı', unit: '%', min: 5, max: 50, weight: 25 },
+    { id: 'xp_gain', name: 'Veri Analizi (XP)', unit: '%', min: 5, max: 30, weight: 20 },
+    { id: 'cargo', name: 'Kargo Kapasitesi', unit: '', min: 10, max: 100, weight: 20 },
+    
+    // Dayanıklılık ve Direnç
+    { id: 'hull_hp', name: 'Gövde Bütünlüğü', unit: '', min: 50, max: 500, weight: 30 },
+    { id: 'shield_cap', name: 'Kalkan Kapasitesi', unit: '', min: 20, max: 200, weight: 20 },
+    { id: 'gravity_res', name: 'Çekim Direnci', unit: '%', min: 5, max: 25, weight: 15 },
+    { id: 'rad_res', name: 'Radyasyon Koruması', unit: '%', min: 5, max: 30, weight: 15 }
+];
+
 const UPGRADES = {
     playerSpeed: { name: "İyon Motorları", desc: "Maksimum uçuş hızı.", baseCost: 100, max: 5 },
     playerTurn:  { name: "Manevra İticileri", desc: "Dönüş kabiliyeti.", baseCost: 150, max: 5 },
@@ -208,92 +221,33 @@ const UPGRADES = {
     echoCapacity: { name: "Yankı Deposu", desc: "Yankı'nın taşıma kapasitesini artırır.", baseCost: 250, max: 5 }
 };
 
-// ==========================================
-// 3. UI METİNLERİ VE YARDIMCI BİLGİLER
-// ==========================================
-
 const TIPS = [
     "Enerjinizi yenilemek için Tardigradlar çok değerlidir.",
     "Solucan delikleri (Mor Girdaplar) sizi haritanın rastgele bir yerine fırlatır.",
-    "Mor sinyaller değerli kayıp kargoları işaret eder.",
-    "Veri Sislerinden (Yeşil Bulutlar) uzak durun, gemiye zarar verir.",
+    "Nadir gezegenlerden Efsunlu Eşyalar düşebilir!",
+    "Efsunlu motorlar İtici Güç bonusu ile geminizi hızlandırır.",
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
     "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın."
 ];
 
-// ==========================================
-// 4. GÖRSELLEŞTİRME VE KULLANICI AYARLARI
-// ==========================================
-
-// Harita ve Minimap Renk/Grid Ayarları
 const MAP_CONFIG = {
-    grid: {
-        major: 20000,    // Ana grid çizgileri
-        minor: 5000,     // Ara grid çizgileri
-        rings: [5000, 10000] // Oyuncu etrafındaki mesafe halkaları
-    },
-    minimap: {
-        size: 180,           // Piksel cinsinden boyut
-        bg: "rgba(0, 0, 0, 0.8)",
-        border: "rgba(255,255,255,0.1)",
-        scanColor: "rgba(16, 185, 129, 0.4)", // Yeşilimsi
-        radius: 90           // size / 2
-    },
-    bigmap: {
-        bgOverlay: "rgba(0,0,0,0.4)",
-        gridColor: "rgba(255,255,255,0.1)",
-        margin: 50
-    },
+    grid: { major: 20000, minor: 5000, rings: [5000, 10000] },
+    minimap: { size: 180, bg: "rgba(0, 0, 0, 0.8)", border: "rgba(255,255,255,0.1)", scanColor: "rgba(16, 185, 129, 0.4)", radius: 90 },
+    bigmap: { bgOverlay: "rgba(0,0,0,0.4)", gridColor: "rgba(255,255,255,0.1)", margin: 50 },
     colors: {
-        player: "#38bdf8",     // Açık Mavi
-        nexus: "#ffffff",      // Beyaz
-        repair: "#10b981",     // Yeşil
-        storage: "#a855f7",    // Mor
-        echo: "#67e8f9",       // Turkuaz
-        wormhole: "#8b5cf6",   // Solucan Deliği Rengi
-        target: "#ef4444",     // Kırmızı
-        scanArea: "rgba(16, 185, 129, 0.05)",
-        radarArea: "rgba(251, 191, 36, 0.03)",
-        radarStroke: "rgba(251, 191, 36, 0.6)"
+        player: "#38bdf8", nexus: "#ffffff", repair: "#10b981", storage: "#a855f7",
+        echo: "#67e8f9", wormhole: "#8b5cf6", target: "#ef4444",
+        scanArea: "rgba(16, 185, 129, 0.05)", radarArea: "rgba(251, 191, 36, 0.03)", radarStroke: "rgba(251, 191, 36, 0.6)"
     },
-    zoom: {
-        min: 0.5,
-        max: 1.5,
-        speed: 0.001
-    }
+    zoom: { min: 0.5, max: 1.5, speed: 0.001 }
 };
 
-// Varsayılan Oyun Ayarları (Başlangıç Değerleri)
 const DEFAULT_GAME_SETTINGS = {
-    showNexusArrow: true,
-    showRepairArrow: false,
-    showStorageArrow: false,
-    showEchoArrow: true, 
-    hudOpacity: 1.0,
-    windowOpacity: 1.0, 
-    hudHoverEffect: false,
-    showShipBars: false,
-    cameraOffsetX: 0, 
-    cameraOffsetY: 0,
-    adaptiveCamera: false,
-    smoothCameraTransitions: true,
-    developerMode: false,
-    enableConsole: false, 
-    showGravityFields: false,
-    showHitboxes: false,
-    showVectors: false,
-    showTargetVectors: false,
-    showFps: false,
-    godMode: false,
-    hidePlayer: false,
-    
-    // GÖRÜNÜM AYARLARI
-    enableCRT: false,    // Retro Scanline Efekti
-    crtIntensity: 50,    // CRT Efekt Yoğunluğu (%50 Varsayılan)
-    showStars: true,     // Arka Plan Yıldızları
-    starBrightness: 100, // Yıldız Parlaklığı (%100)
-    showGrid: true,      // Uzay Izgarası
-    themeColor: '#94d8c3', // Varsayılan Tema Rengi (Turkuaz)
-    themeHue: 162,         // Varsayılan Tema Tonu
-    themeSat: 47           // Varsayılan Tema Doygunluğu
+    showNexusArrow: true, showRepairArrow: false, showStorageArrow: false, showEchoArrow: true, 
+    hudOpacity: 1.0, windowOpacity: 1.0, hudHoverEffect: false, showShipBars: false,
+    cameraOffsetX: 0, cameraOffsetY: 0, adaptiveCamera: false, smoothCameraTransitions: true,
+    developerMode: false, enableConsole: false, showGravityFields: false, showHitboxes: false,
+    showVectors: false, showTargetVectors: false, showFps: false, godMode: false, hidePlayer: false,
+    enableCRT: false, crtIntensity: 50, showStars: true, starBrightness: 100, showGrid: true,
+    themeColor: '#94d8c3', themeHue: 162, themeSat: 47
 };
