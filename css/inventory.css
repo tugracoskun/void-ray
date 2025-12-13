@@ -142,7 +142,11 @@
     font-weight: 800;
     color: rgba(255, 255, 255, 0.95);
     font-size: 1rem;
-    font-family: 'Outfit', sans-serif;
+    
+    /* GÜNCELLEME: Font tutarlılığı için Monospace */
+    /* Outfit yerine teknik/bilimsel görünüm için monospace kullanıyoruz */
+    font-family: 'Courier New', Courier, monospace; 
+    
     user-select: none;
 }
 
