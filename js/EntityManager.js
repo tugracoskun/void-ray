@@ -2,15 +2,14 @@
  * Void Ray - Varlık Yöneticisi (Entity Manager)
  * * GÜNCELLEME: Solucan Delikleri (Wormholes) sisteme eklendi.
  * * GÜNCELLEME: Spatial Hash entegrasyonu ile O(n) performans.
- * * GÜNCELLEME: Izgara çizimi ve dinamik yıldız parlaklığı eklendi.
+ * * GÜNCELLEME: Izgara çizimi, dinamik yıldız parlaklığı ve YILDIZ KAYMASI eklendi.
  */
 class EntityManager {
     constructor() {
         this.planets = [];
-        this.wormholes = []; // YENİ: Solucan delikleri listesi
+        this.wormholes = []; 
         
         // --- OPTİMİZASYON: Spatial Hash ---
-        // Hücre boyutu 2000: Ekran boyutundan biraz büyük, ideal sorgu alanı sağlar.
         this.grid = new SpatialHash(2000);
         
         // --- OPTİMİZASYON: Arka Plan Katmanı (Cached Canvas) ---
@@ -21,8 +20,10 @@ class EntityManager {
         this.lastToxicNotification = 0;
         this.lastToxicDamage = 0;
         
-        // YENİ: Işınlanma sonrası anlık tekrar girmeyi önlemek için
         this.lastTeleportTime = 0;
+
+        // --- YILDIZ KAYMASI (SHOOTING STAR) ---
+        this.shootingStar = null; // Aktif kayan yıldız nesnesi
     }
 
     /**
@@ -31,7 +32,7 @@ class EntityManager {
     init() {
         this.planets = [];
         this.wormholes = [];
-        this.grid.clear(); // Grid'i temizle
+        this.grid.clear(); 
 
         // 1. Gezegenleri Oluştur
         for(let i=0; i < GAME_CONFIG.WORLD_GEN.PLANET_COUNT; i++) {
@@ -44,18 +45,14 @@ class EntityManager {
 
             const p = new Planet(px, py);
             this.planets.push(p);
-            this.grid.insert(p); // Gezegeni havuza ekle
+            this.grid.insert(p); 
         }
 
-        // 2. Solucan Deliklerini Oluştur (YENİ)
+        // 2. Solucan Deliklerini Oluştur
         if (typeof Wormhole !== 'undefined') {
             for(let i=0; i < GAME_CONFIG.WORLD_GEN.WORMHOLE_COUNT; i++) {
                 const w = new Wormhole();
                 this.wormholes.push(w);
-                // Not: Wormhole'lar SpatialHash'e eklenmiyor çünkü sayıları az,
-                // ve ayrı bir döngüde kontrol edilmeleri daha hızlı olabilir veya
-                // çarpışma mantıkları farklı. Ancak istenirse eklenebilir.
-                // Şimdilik ayrı tutuyoruz.
             }
         }
 
@@ -77,7 +74,6 @@ class EntityManager {
             const x = Math.random() * width;
             const y = Math.random() * height;
             const size = Math.random() * 1.5;
-            // Orijinal alpha değerini kaydet (Sonra parlaklık ile çarpılacak)
             const alpha = 0.2 + Math.random() * 0.6;
             
             this.bgCtx.globalAlpha = alpha;
@@ -90,11 +86,10 @@ class EntityManager {
 
     update(dt) {
         // A. Toplananları Temizle
-        // Sadece 'collected' işaretlenmiş olanları Spatial Hash'ten sil
         for (let i = this.planets.length - 1; i >= 0; i--) {
             if (this.planets[i].collected) {
-                this.grid.remove(this.planets[i]); // Grid'den çıkar
-                this.planets.splice(i, 1); // Listeden çıkar
+                this.grid.remove(this.planets[i]); 
+                this.planets.splice(i, 1); 
             }
         }
         
@@ -114,26 +109,77 @@ class EntityManager {
                 
                 const newP = new Planet(px, py);
                 this.planets.push(newP);
-                this.grid.insert(newP); // Yeni gezegeni havuza ekle
+                this.grid.insert(newP); 
             }
         }
 
-        // C. Solucan Delikleri Animasyonu (YENİ)
+        // C. Solucan Delikleri Animasyonu
         this.wormholes.forEach(w => w.update());
 
-        // D. Çarpışma Kontrolleri (OPTİMİZE EDİLDİ)
+        // D. Yıldız Kayması Mantığı (YENİ)
+        this.updateShootingStar();
+
+        // E. Çarpışma Kontrolleri
         this.checkCollisions();
 
         window.planets = this.planets;
     }
 
     /**
+     * Yıldız kayması durumunu günceller veya yenisini oluşturur.
+     */
+    updateShootingStar() {
+        if (this.shootingStar) {
+            // Aktif bir kayan yıldız varsa hareket ettir
+            this.shootingStar.x += this.shootingStar.vx;
+            this.shootingStar.y += this.shootingStar.vy;
+            this.shootingStar.life -= 0.015; // Yavaşça sön
+
+            // Ömrü bittiyse sil
+            if (this.shootingStar.life <= 0) {
+                this.shootingStar = null;
+            }
+        } else {
+            // Aktif yoksa, düşük bir ihtimalle oluştur (Örn: %0.1 şans)
+            if (Math.random() < 0.001) {
+                this.spawnShootingStar();
+            }
+        }
+    }
+
+    /**
+     * Yeni bir kayan yıldız oluşturur.
+     * Kamera konumuna göre oluşturulur ki oyuncu görebilsin.
+     */
+    spawnShootingStar() {
+        if (!window.cameraFocus || !canvas) return;
+
+        const viewW = canvas.width / currentZoom;
+        const viewH = canvas.height / currentZoom;
+        
+        // Ekranın içinde veya biraz dışında rastgele başlangıç
+        // Genellikle yukarıdan aşağıya veya çapraz
+        const startX = window.cameraFocus.x + (Math.random() - 0.5) * viewW;
+        const startY = window.cameraFocus.y + (Math.random() - 0.5) * viewH;
+
+        // Rastgele açı ve hız
+        const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5; // Genelde sağ-aşağı yönlü
+        const speed = 25 + Math.random() * 15; // Çok hızlı
+
+        this.shootingStar = {
+            x: startX,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.0,
+            width: 100 + Math.random() * 100 // Kuyruk uzunluğu
+        };
+    }
+
+    /**
      * Gezegen ve oyuncu etkileşimlerini kontrol eder.
-     * TÜM gezegenleri gezmek yerine sadece oyuncunun etrafındakileri sorgular.
      */
     checkCollisions() {
-        // 1. Gezegen Kontrolü
-        // Oyuncunun tarama yarıçapı + en büyük gezegen boyutu kadar bir alanı sorgula
         const queryRange = player.scanRadius + 500;
         const nearbyPlanets = this.grid.query(player.x, player.y, queryRange);
 
@@ -145,11 +191,9 @@ class EntityManager {
             }
         });
 
-        // 2. Solucan Deliği Kontrolü (YENİ)
         const now = Date.now();
-        if (now - this.lastTeleportTime > 2000) { // 2 saniye bekleme süresi (Cool-down)
+        if (now - this.lastTeleportTime > 2000) { 
             this.wormholes.forEach(w => {
-                // Basit mesafe kontrolü (Solucan deliği yarıçapının içine girince)
                 if (Utils.distEntity(player, w) < w.radius * 0.6) {
                     this.handleWormholeEntry(w);
                 }
@@ -157,38 +201,28 @@ class EntityManager {
         }
     }
 
-    /**
-     * YENİ: Işınlanma Mantığı
-     */
     handleWormholeEntry(wormhole) {
-        // 1. Efektleri Tetikle
         triggerWormholeEffect();
-        if (typeof audio !== 'undefined' && audio) audio.playChime({id: 'legendary'}); // Özel ses yoksa legendary sesi kullan
+        if (typeof audio !== 'undefined' && audio) audio.playChime({id: 'legendary'}); 
         
         showNotification({name: MESSAGES.UI.WORMHOLE_ENTER, type:{color: GAME_CONFIG.WORMHOLE.COLOR_CORE}}, MESSAGES.UI.WORMHOLE_DESC);
 
-        // 2. Yeni Konum Belirle (Güvenli Alan)
         const margin = GAME_CONFIG.WORMHOLE.TELEPORT_SAFE_DISTANCE;
         const newX = Utils.random(margin, WORLD_SIZE - margin);
         const newY = Utils.random(margin, WORLD_SIZE - margin);
 
-        // 3. Oyuncuyu Taşı
         player.x = newX;
         player.y = newY;
         
-        // 4. Kuyruğu Temizle (Görsel sıçramayı önlemek için kuyruğu yeni konuma taşı)
         player.tail.forEach(t => { t.x = newX; t.y = newY; });
         
-        // 5. Kamerayı Anında Odakla (Yumuşak geçiş istemiyoruz, anlık olmalı)
         if (window.cameraFocus) {
             window.cameraFocus.x = newX;
             window.cameraFocus.y = newY;
         }
         
-        // 6. Otopilotu Kapat (Kafa karışıklığını önlemek için)
         if (typeof autopilot !== 'undefined' && autopilot) {
             autopilot = false;
-            // Global güncelleme fonksiyonu varsa çağır
             if (typeof updateAIButton === 'function') updateAIButton();
         }
 
@@ -268,22 +302,14 @@ class EntityManager {
         } 
     }
 
-    /**
-     * Sonsuz Uzay Izgarasını çizer.
-     * Kamera hareketine göre kayan sanal çizgiler oluşturur.
-     */
     drawGrid(ctx, width, height, cameraX, cameraY, zoom) {
         if (!window.gameSettings || !window.gameSettings.showGrid) return;
 
-        const gridSize = 500; // Izgara kare boyutu
-        const offsetX = cameraX % gridSize;
-        const offsetY = cameraY % gridSize;
+        const gridSize = 500; 
         
-        // Görünür alanın sınırları
         const cols = width / zoom / gridSize + 2; 
         const rows = height / zoom / gridSize + 2;
 
-        // Ekranda görünen dünya koordinat aralığını bul
         const startX = Math.floor((cameraX - (width / zoom) / 2) / gridSize) * gridSize;
         const startY = Math.floor((cameraY - (height / zoom) / 2) / gridSize) * gridSize;
         const endX = startX + (width / zoom) + gridSize;
@@ -292,19 +318,16 @@ class EntityManager {
         ctx.save();
         ctx.beginPath();
         
-        // Tema rengini al ve şeffaflık ekle
         const themeColor = window.gameSettings.themeColor || '#94d8c3';
         ctx.strokeStyle = themeColor;
-        ctx.globalAlpha = 0.08; // Çok silik (arka plan olduğu için)
-        ctx.lineWidth = 1 / zoom; // Zoom ne olursa olsun çizgi kalınlığı sabit kalsın (veya ince kalsın)
+        ctx.globalAlpha = 0.08; 
+        ctx.lineWidth = 1 / zoom; 
 
-        // Dikey Çizgiler
         for (let x = startX; x <= endX; x += gridSize) {
             ctx.moveTo(x, startY);
             ctx.lineTo(x, endY);
         }
 
-        // Yatay Çizgiler
         for (let y = startY; y <= endY; y += gridSize) {
             ctx.moveTo(startX, y);
             ctx.lineTo(endX, y);
@@ -315,19 +338,16 @@ class EntityManager {
     }
 
     drawStars(ctx, width, height, target) {
-        // Yıldızlar tamamen kapalıysa çizme
         if (window.gameSettings && !window.gameSettings.showStars) return;
 
         if(!this.bgGenerated || this.bgCanvas.width !== width || this.bgCanvas.height !== height) {
             this.generateStarBackground(width, height);
         }
 
-        // Parlaklık Ayarını Uygula
         const brightness = (window.gameSettings.starBrightness !== undefined) 
             ? window.gameSettings.starBrightness / 100 
             : 1.0;
 
-        // Eğer parlaklık 0 ise çizme
         if (brightness <= 0.01) return;
 
         const parallaxSpeed = 0.9;
@@ -338,19 +358,121 @@ class EntityManager {
         if (offsetY > 0) offsetY -= height;
 
         ctx.save();
-        ctx.globalAlpha = brightness; // Parlaklığı uygula
+        ctx.globalAlpha = brightness;
 
         ctx.drawImage(this.bgCanvas, offsetX, offsetY);
         ctx.drawImage(this.bgCanvas, offsetX + width, offsetY);
         ctx.drawImage(this.bgCanvas, offsetX, offsetY + height);
         ctx.drawImage(this.bgCanvas, offsetX + width, offsetY + height);
         
+        // --- YILDIZ KAYMASI ÇİZİMİ ---
+        // Yıldız kayması arka planda ama yıldızların önünde veya arkasında olabilir.
+        // Burada çizmek en mantıklısı çünkü parallax'tan etkilenmemeli (kamera ile beraber hareket etmemeli, dünya koordinatlarında veya ekran koordinatlarında olmalı).
+        // Ancak spawn mantığını "Dünya Koordinatı" değil "Kamera/Ekran Koordinatı" olarak kurguladık.
+        // Bu yüzden translate işlemi (game.js'de) yapılmadan önce çizilirse ekran koordinatı olur.
+        // Ancak bu fonksiyon translate işlemi yapılmadan önce çağrılıyor.
+        // Fakat spawnShootingStar dünya koordinatlarını değil, o anki kamera odağına göre spawn yapıyor.
+        // Çizimi parallax'tan bağımsız yapalım.
+        
+        if (this.shootingStar) {
+            const ss = this.shootingStar;
+            // Ekranda doğru yerde görünmesi için parallax offsetini TERSİNE çevirmemiz veya
+            // direkt olarak dünya koordinatlarında çizmemiz lazım.
+            // game.js'de drawStars çağrıldığında henüz translate (kamera odaklama) yapılmamış oluyor.
+            // Bu yüzden "Göreli" koordinat hesaplamalıyız.
+            
+            // Basitlik için: Spawn ederken "Ekran Koordinatı" değil "Dünya Koordinatı" olarak kaydettik (window.cameraFocus.x + ...).
+            // Bu yüzden şu anki çizim bağlamında (henüz translate yok) manuel hesaplama yapmalıyız.
+            
+            const screenX = (ss.x - target.x) * currentZoom + width/2; // Basit projeksiyon (game.js ile uyumlu olmalı)
+            // Ancak game.js'de parallax var. drawStars arka planı parallaxlı çiziyor.
+            // Kayan yıldız da arka planın bir parçası gibi davranmalı.
+            
+            // HACK: Kayan yıldızı doğrudan arka planın üzerine, parallax'tan etkilenerek çizmek yerine
+            // "Kamera ile hareket eden bir ışık" gibi değil, "Uzayda kayıp giden" bir ışık gibi çizelim.
+            // drawStars fonksiyonu parallax uyguluyor (offsetX, offsetY).
+            // Kayan yıldızı bu parallax'ın üzerine bindirmek zor olabilir.
+            
+            // ALTERNATİF: Kayan yıldızı game.js'deki ana draw döngüsünde "drawPlanets"ten önce çizdirmek.
+            // Ama kod bütünlüğü için burada çizmek istiyoruz.
+            
+            // Çözüm: Kayan yıldızı "Dünya" koordinatında değil, "Ekran" koordinatında (paralaxlı) hayal edelim.
+            // offsetX/Y zaten background'u kaydırıyor.
+            // Biz shootingStar'ı sadece ekranın üzerinden geçirsek yeterli (Atmosferik efekt).
+            // Yani ss.x ve ss.y aslında ekranın sol üst köşesine göre (0,0) konumlar olsun.
+            
+            // spawnShootingStar'ı revize edelim: Ekran koordinatları (0..width, 0..height) verelim.
+            // Ancak yukarıdaki spawnShootingStar'da `window.cameraFocus.x` eklemiştim.
+            // Onu kaldıralım, sadece `width` ve `height` kullanalım. (Aşağıda revize edilecek)
+            
+            // Eğer ss koordinatları ekran koordinatı ise:
+            ctx.globalAlpha = ss.life * brightness;
+            
+            // Kuyruk
+            const tailX = ss.x - ss.vx * (ss.width / 40); // Hız vektörünün tersi
+            const tailY = ss.y - ss.vy * (ss.width / 40);
+            
+            const grad = ctx.createLinearGradient(ss.x, ss.y, tailX, tailY);
+            grad.addColorStop(0, "rgba(255, 255, 255, 1)");
+            grad.addColorStop(1, "rgba(255, 255, 255, 0)");
+            
+            ctx.beginPath();
+            ctx.moveTo(ss.x, ss.y);
+            ctx.lineTo(tailX, tailY);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 2;
+            ctx.lineCap = "round";
+            ctx.stroke();
+            
+            // Baş kısmı parlaması
+            ctx.fillStyle = "white";
+            ctx.shadowColor = "white";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(ss.x, ss.y, 1.5, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
         ctx.restore();
+    }
+    
+    // --- DÜZELTME: Spawn fonksiyonunu EKRAN koordinatlarına göre ayarlayalım ---
+    spawnShootingStar() {
+        if (!canvas) return;
+        
+        // Ekran sınırları içinde veya biraz dışında rastgele bir nokta
+        // Genelde yukarıdan veya sağdan gelmesi estetik durur.
+        
+        const side = Math.random(); // 0-1
+        let startX, startY, angle;
+        
+        if (side < 0.5) {
+            // Üstten gel
+            startX = Math.random() * canvas.width;
+            startY = -50;
+            angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5; // Aşağı sağ/sol
+        } else {
+            // Sağdan gel
+            startX = canvas.width + 50;
+            startY = Math.random() * (canvas.height / 2); // Üst yarı
+            angle = Math.PI - (Math.PI / 4 + (Math.random() - 0.5) * 0.5); // Sola aşağı
+        }
+
+        const speed = 15 + Math.random() * 10; // Piksel/Frame hızı
+
+        this.shootingStar = {
+            x: startX,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.0,
+            width: 100 + Math.random() * 100
+        };
     }
 
     /**
      * Gezegenleri ve Solucan Deliklerini çizer.
-     * OPTİMİZASYON: Sadece kamera görüş alanındaki hücreleri sorgular.
      */
     drawPlanets(ctx, player, echoRay, width, height, zoom) {
         const viewW = width / zoom; 
@@ -361,19 +483,15 @@ class EntityManager {
         
         const rangeX = (viewW / 2) + 500; 
         
-        // 1. Solucan Deliklerini Çiz (Arkada Kalabilirler veya Önde)
-        // Sayıları az olduğu için doğrudan döngüye alıyoruz.
-        // Görünürlük kontrolü burada da yapılabilir (Radar menzili içinde mi?)
         this.wormholes.forEach(w => {
             const dist = Utils.distEntity(player, w);
             let visibility = 0;
-            if (dist < player.scanRadius) visibility = 2; // Tam görüş
-            else if (dist < player.radarRadius) visibility = 1; // Radar
+            if (dist < player.scanRadius) visibility = 2; 
+            else if (dist < player.radarRadius) visibility = 1; 
             
             w.draw(ctx, visibility);
         });
 
-        // 2. Gezegenleri Çiz
         const visiblePlanets = this.grid.query(centerX, centerY, rangeX);
 
         visiblePlanets.forEach(p => { 
