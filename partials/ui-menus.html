@@ -85,12 +85,24 @@
             <span>SOURCE</span>
         </a>
 
-        <!-- YENİ: DESTEK BUTONU EKLENDİ -->
+        <!-- YENİ: DESTEK BUTONU -->
         <div style="width: 1px; height: 25px; background: var(--hud-color-dim);"></div>
         
         <a href="https://github.com/tugracoskun/void-ray/issues" target="_blank" class="github-link-btn" title="Sorun Bildir / İletişim" style="text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; letter-spacing: 1.5px;">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             <span>DESTEK</span>
+        </a>
+
+        <!-- YENİ: GÜNCELLEME VAKTİ VE DETAYI -->
+        <div id="update-separator" style="width: 1px; height: 25px; background: var(--hud-color-dim); display:none;"></div>
+        
+        <a href="https://github.com/tugracoskun/void-ray/commits" target="_blank" id="update-container" class="dev-info-item link-hover" title="Son Değişiklikler" style="text-decoration: none; display: none; flex-direction: column; align-items: flex-end; max-width: 250px;">
+            <div style="display:flex; gap:6px; align-items:center;">
+                <span class="dev-label">GÜNCELLEME</span>
+                <span id="commit-sha" style="font-size: 0.55rem; color: var(--hud-color); opacity: 0.8; font-family: monospace; background: rgba(148, 216, 195, 0.1); padding: 1px 4px; border-radius: 2px;"></span>
+            </div>
+            <span class="dev-name" id="update-date" style="font-size: 0.7rem; margin-bottom: 2px;">...</span>
+            <span id="commit-msg" style="display: block; font-size: 0.6rem; color: var(--hud-text-dim); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; max-width: 220px; opacity: 0.7; font-style: italic;">...</span>
         </a>
     </div>
 </div>

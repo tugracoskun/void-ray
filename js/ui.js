@@ -1,6 +1,7 @@
 /**
  * Void Ray - Kullanıcı Arayüzü (UI) Yönetimi
  * GÜNCELLEME: Ekipman penceresi sürüklenebilir pencereler listesine eklendi.
+ * GÜNCELLEME: Ana menüye dinamik GitHub güncelleme tarihi, mesajı ve versiyonu eklendi.
  */
 
 let isHudVisible = true;
@@ -274,6 +275,48 @@ window.initMainMenu = function() {
             });
         }
     }
+
+    // --- GITHUB SON GÜNCELLEME KONTROLÜ (DİNAMİK) ---
+    const repoOwner = 'tugracoskun';
+    const repoName = 'void-ray';
+    
+    fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/commits?per_page=1`)
+        .then(response => {
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.length > 0 && data[0].commit) {
+                const commit = data[0].commit;
+                const sha = data[0].sha.substring(0, 7); // Kısa SHA (Versiyon kodu)
+                const date = new Date(commit.committer.date);
+                const dateStr = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+                
+                // Mesajın sadece ilk satırını al
+                let message = commit.message.split('\n')[0];
+                // Kısaltma işlemini CSS'e bıraktık, JS'de tam metni tutuyoruz.
+
+                const container = document.getElementById('update-container');
+                const separator = document.getElementById('update-separator');
+                const dateEl = document.getElementById('update-date');
+                const msgEl = document.getElementById('commit-msg');
+                const shaEl = document.getElementById('commit-sha');
+                
+                if (container && dateEl) {
+                    dateEl.innerText = dateStr;
+                    
+                    if(msgEl) {
+                        msgEl.innerText = message;
+                        msgEl.title = message; // Hover için tam metni ekle
+                    }
+                    if(shaEl) shaEl.innerText = `v.${sha}`; // Versiyon formatı
+                    
+                    container.style.display = 'flex';
+                    if(separator) separator.style.display = 'block';
+                }
+            }
+        })
+        .catch(error => console.log("Github update fetch error:", error));
 }
 
 window.startGameSession = function(loadSave) {
