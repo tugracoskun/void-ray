@@ -155,7 +155,12 @@
     font-size: 0.8rem;
 }
 .buy-btn:hover:not(:disabled) { background: var(--hud-color); color: black; }
-.buy-btn:disabled { opacity: 0.3; border-color: #475569; color: #475569; cursor: not-allowed; }
+.buy-btn:disabled { 
+    opacity: 0.4; 
+    border-color: var(--hud-text-dim); 
+    color: var(--hud-text-dim); 
+    cursor: not-allowed; 
+}
 
 /* --- STORAGE BUTTONS --- */
 .storage-btn-s {
