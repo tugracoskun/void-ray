@@ -284,16 +284,39 @@ function loop() {
         frameCount++;
         if (now - lastFpsTime >= 1000) {
             if (window.gameSettings.showFps) {
+                // 1. FPS
                 const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
-                document.getElementById('debug-fps-val').innerText = fps;
+                const fpsEl = document.getElementById('debug-fps-val');
+                if(fpsEl) fpsEl.innerText = fps;
                 
-                // --- FIX: Güvenli Nesne Sayımı ---
+                // 2. MS (Frame Time)
+                const ms = (1000 / Math.max(1, fps)).toFixed(1);
+                const msEl = document.getElementById('debug-ms-val');
+                if(msEl) msEl.innerText = ms;
+
+                // 3. OBJE SAYILARI
                 let pCount = (entityManager && entityManager.planets) ? entityManager.planets.length : 0;
                 let wCount = (entityManager && entityManager.wormholes) ? entityManager.wormholes.length : 0;
                 let partCount = particleSystem ? particleSystem.count : 0;
                 
-                const objCount = pCount + wCount + partCount;
-                document.getElementById('debug-obj-val').innerText = objCount;
+                const totalObj = pCount + wCount + partCount;
+                
+                const objEl = document.getElementById('debug-obj-val');
+                if(objEl) objEl.innerText = totalObj;
+                
+                const partEl = document.getElementById('debug-part-val');
+                if(partEl) partEl.innerText = partCount;
+
+                // 4. MEMORY
+                const memEl = document.getElementById('debug-mem-val');
+                if(memEl) {
+                    if (performance && performance.memory) {
+                        const memUsed = Math.round(performance.memory.usedJSHeapSize / 1048576);
+                        memEl.innerText = memUsed + "MB";
+                    } else {
+                        memEl.innerText = "N/A";
+                    }
+                }
             }
             frameCount = 0;
             lastFpsTime = now;

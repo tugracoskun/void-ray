@@ -475,6 +475,8 @@ input:checked + .slider:before { transform: translateX(16px); background-color: 
 }
 .coords { font-family: monospace; font-size: 0.65rem; color: var(--hud-text-dim); letter-spacing: 1px; margin-top: 2px; }
 
+/* ... existing code ... */
+
 /* --- GLOBAL TOOLTIP --- */
 #global-tooltip {
     position: fixed; 
@@ -502,18 +504,42 @@ input:checked + .slider:before { transform: translateX(16px); background-color: 
     position: absolute;
     top: 10px;
     left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 5px 10px;
-    border-radius: 4px;
+    
+    /* Arka plan: Biraz daha koyu ve bulanık */
+    background: rgba(5, 5, 5, 0.9);
+    backdrop-filter: blur(4px);
+    
+    /* Sınırlar ve Şekil */
     border: 1px solid var(--hud-color-dim);
-    font-family: monospace;
-    font-size: 10px;
-    color: var(--hud-color);
-    pointer-events: auto; /* Tıklanabilir yapıldı */
-    cursor: move;         /* Taşıma imleci eklendi */
-    user-select: none;    /* Sürüklerken metin seçilmesin */
+    border-radius: 2px; /* Keskin köşeler (Wireframe teması) */
+    padding: 6px 12px;
+    
+    /* Tipografi */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    color: var(--hud-text-dim); /* Etiket rengi (Sönük) */
+    line-height: 1.4;
+    white-space: nowrap;
+    
+    /* Etkileşim */
+    pointer-events: auto;
+    cursor: move;
+    user-select: none;
+    
+    /* Görünürlük ve Katman */
     display: none;
     z-index: 100;
-    backdrop-filter: blur(2px);
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+/* Değerler için tek tip stil (Tema Rengi) */
+.dbg-val { 
+    font-weight: bold; 
+    color: var(--hud-color); /* Temaya uyumlu renk */
+    margin-right: 10px;      /* Değerler arası boşluk */
+}
+
+/* Son elemanın sağ boşluğunu sıfırla */
+.dbg-val:last-child {
+    margin-right: 0;
 }
