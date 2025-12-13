@@ -165,7 +165,7 @@
         </div>
 
         <!-- CRT YOĞUNLUK SLIDER'I -->
-        <div id="crt-intensity-wrapper" style="display: none; margin-top: 5px; margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--hud-color-dim);">
+        <div id="crt-intensity-wrapper" style="display: none; margin-top: 5px; margin-bottom: 10px; padding-left: 10px; border-left: 2px solid" style="border-color: var(--hud-color-dim);">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'YOĞUNLUK: Scanline efektinin opaklığını ayarlar.')" onmouseleave="hideTooltip()"><span>YOĞUNLUK</span><span id="val-crt-intensity">50%</span></div>
             <input type="range" id="vol-crt-intensity" class="smart-slider" data-default="50" min="10" max="100" value="50">
         </div>
@@ -198,7 +198,7 @@
         <p class="text-xs text-gray-400 mb-4">Oyun her 30 saniyede bir otomatik kaydedilir. Kaydınızı yedekleyebilir veya başka bir cihaza taşıyabilirsiniz.</p>
         
         <div class="flex flex-col gap-3">
-            <button onclick="actionExportSave()" class="bg-white/5 hover:bg-white/10 text-[#94d8c3] border border-[#94d8c3]/30 py-2 px-4 rounded text-xs tracking-widest transition flex items-center justify-center gap-2" style="color: var(--hud-color); border-color: var(--hud-color-dim);">
+            <button onclick="actionExportSave()" class="bg-white/5 hover:bg-white/10 border py-2 px-4 rounded text-xs tracking-widest transition flex items-center justify-center gap-2" style="color: var(--hud-color); border-color: var(--hud-color-dim);">
                 <span>DIŞA AKTAR (KOPYALA)</span>
             </button>
             
