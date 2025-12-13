@@ -64,7 +64,7 @@ canvas {
 /* SCROLLBAR (Ortak Tasarım) */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
-::-webkit-scrollbar-thumb { background: var(--hud-color-dim); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--hud-color-dim); border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: var(--hud-color); }
 
 /* --- GLOBAL YARDIMCILAR --- */
