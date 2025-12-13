@@ -1,229 +1,205 @@
 /**
  * Void Ray - Oyun Kuralları ve Mantığı (Logic Layer)
- * * Bu dosya, oyunun mantıksal hesaplamalarını ve formüllerini içerir.
- * * Veriler (konumlar, oranlar vb.) MUTLAKA data.js (GAME_CONFIG) üzerinden alınır.
+ * GÜNCELLEME: Efsunlu Eşya Oluşturma Mantığı İyileştirildi.
  */
 
 const GameRules = {
-    // Performans için önbellek (Runtime'da hesaplanır)
     _cachedTotalWeight: null,
 
-    // ==========================================
-    // 1. KONUM ERİŞİMİ
-    // ==========================================
-    
-    get LOCATIONS() {
-        return GAME_CONFIG.LOCATIONS;
-    },
+    get LOCATIONS() { return GAME_CONFIG.LOCATIONS; },
 
-    // ==========================================
-    // 2. HESAPLAMA METOTLARI (MATEMATİKSEL)
-    // ==========================================
-
-    /**
-     * Bir geliştirmenin o anki seviyesine göre maliyetini hesaplar.
-     * Formül: Base * (Çarpan ^ Seviye)
-     */
     calculateUpgradeCost: function(baseCost, currentLevel) {
         return Math.floor(baseCost * Math.pow(GAME_CONFIG.ECONOMY.UPGRADE_COST_MULTIPLIER, currentLevel));
     },
 
-    /**
-     * Bir sonraki level için gereken toplam XP'yi hesaplar.
-     */
     calculateNextLevelXp: function(currentMaxXp) {
         return Math.floor(currentMaxXp * GAME_CONFIG.ECONOMY.LEVEL_XP_MULTIPLIER);
     },
 
-    /**
-     * data.js içindeki LOOT_DISTRIBUTION ağırlıklarına göre rastgele kaynak sayısı hesaplar.
-     * @returns {number} Üretilecek kaynak sayısı
-     */
     calculateLootCount: function() {
         const distribution = GAME_CONFIG.LOOT_DISTRIBUTION;
-
-        // 1. Toplam ağırlığı hesapla (Eğer daha önce hesaplanmadıysa)
         if (this._cachedTotalWeight === null) {
             this._cachedTotalWeight = distribution.reduce((sum, item) => sum + item.weight, 0);
         }
-        
-        // 2. Rastgele sayı seç
         let random = Math.random() * this._cachedTotalWeight;
-        
-        // 3. Hangi dilime denk geldiğini bul
         for (const item of distribution) {
-            if (random < item.weight) {
-                return item.count;
-            }
+            if (random < item.weight) return item.count;
             random -= item.weight;
         }
-        
-        return 1; // Teorik olarak buraya ulaşılmaz ama fonksiyon yapısı gereği kalabilir
+        return 1;
     },
 
-    // ==========================================
-    // 3. ÇEVRESEL ETKİLER (RADYASYON & VOID)
-    // ==========================================
+    generateRandomDrop: function(rarityType) {
+        // Efsanevi gezegenlerin ekipman atma şansı daha yüksek.
+        let equipmentChance = 0.05; // %5 Taban şans
+        
+        if (rarityType.id === 'rare') equipmentChance = 0.15;
+        if (rarityType.id === 'epic') equipmentChance = 0.30;
+        if (rarityType.id === 'legendary') equipmentChance = 0.60;
+        
+        if (Math.random() < equipmentChance) {
+            return this.createRandomEquipment(rarityType);
+        } else {
+            return this.createResource(rarityType);
+        }
+    },
 
-    /**
-     * Radyasyon alanında (harita dışı) kalınan süreye göre hasarı hesaplar.
-     * @param {number} timer - outOfBoundsTimer değeri (tick sayısı)
-     * @returns {number} Uygulanacak hasar miktarı
-     */
+    createResource: function(rarityType) {
+        const nameList = LOOT_DB[rarityType.id] || LOOT_DB['common'];
+        const name = Utils.randomChoice(nameList);
+        return {
+            category: 'resource',
+            name: name,
+            type: rarityType,
+            count: 1,
+            desc: "İşlenmemiş hammadde."
+        };
+    },
+
+    createRandomEquipment: function(rarityType) {
+        const typeKeys = Object.keys(RPG_ITEMS);
+        const randomTypeKey = Utils.randomChoice(typeKeys);
+        const typeDef = ITEM_TYPES[randomTypeKey.toUpperCase()];
+        const nameList = RPG_ITEMS[randomTypeKey];
+        const baseName = Utils.randomChoice(nameList);
+        
+        let plusLevel = 0;
+        if (rarityType.id === 'common') plusLevel = Utils.randomInt(0, 3);
+        else if (rarityType.id === 'rare') plusLevel = Utils.randomInt(2, 5);
+        else if (rarityType.id === 'epic') plusLevel = Utils.randomInt(4, 7);
+        else if (rarityType.id === 'legendary') plusLevel = Utils.randomInt(6, 9);
+        
+        const fullName = `${baseName} +${plusLevel}`;
+
+        let bonusCount = 0;
+        if (rarityType.id === 'common') bonusCount = Math.random() < 0.2 ? 1 : 0;
+        else if (rarityType.id === 'rare') bonusCount = Utils.randomInt(1, 2);
+        else if (rarityType.id === 'epic') bonusCount = Utils.randomInt(2, 3);
+        else if (rarityType.id === 'legendary') bonusCount = Utils.randomInt(3, 5);
+
+        const bonuses = [];
+        // BONUS_TYPES'ı klonla ki orijinal dizi bozulmasın
+        const availableBonuses = JSON.parse(JSON.stringify(BONUS_TYPES));
+        
+        for (let i = 0; i < bonusCount; i++) {
+            if (availableBonuses.length === 0) break;
+            
+            // Ağırlıklı rastgele seçim (Weight)
+            let totalWeight = availableBonuses.reduce((sum, b) => sum + b.weight, 0);
+            let randomWeight = Math.random() * totalWeight;
+            let selectedBonus = null;
+            let selectedIndex = -1;
+
+            for (let j = 0; j < availableBonuses.length; j++) {
+                if (randomWeight < availableBonuses[j].weight) {
+                    selectedBonus = availableBonuses[j];
+                    selectedIndex = j;
+                    break;
+                }
+                randomWeight -= availableBonuses[j].weight;
+            }
+
+            if (selectedBonus) {
+                const val = Utils.randomInt(selectedBonus.min, selectedBonus.max);
+                bonuses.push({
+                    name: selectedBonus.name,
+                    val: val,
+                    unit: selectedBonus.unit,
+                    id: selectedBonus.id
+                });
+                // Seçilen bonusu listeden çıkar (Aynı bonus tekrar gelmesin)
+                availableBonuses.splice(selectedIndex, 1);
+            }
+        }
+
+        return {
+            category: 'equipment',
+            name: fullName,
+            baseName: baseName, 
+            level: plusLevel,
+            slot: typeDef.id, 
+            type: rarityType, 
+            stats: bonuses, 
+            icon: typeDef.icon,
+            desc: "Efsunlu uzay ekipmanı."
+        };
+    },
+
     calculateRadiationDamage: function(timer) {
-        // Taban hasar (0.2) + Her tick için artan hasar (0.005)
         return 0.2 + (timer * 0.005);
     },
 
-    /**
-     * Radyasyon alanında (harita dışı) kalınan süreye göre merkeze itme kuvvetini hesaplar.
-     * @param {number} timer - outOfBoundsTimer değeri (tick sayısı)
-     * @returns {number} İtme kuvveti (force)
-     */
     calculateVoidPushForce: function(timer) {
-        // Taban itme (0.5) + Her tick için artan kuvvet (0.002)
         return 0.5 + (timer * 0.002);
     },
 
-    // ==========================================
-    // 4. OYNANIŞ MANTIĞI (GAMEPLAY LOGIC)
-    // ==========================================
-
-    /**
-     * Gezegenin türüne göre rastgele XP hesaplar.
-     * Varyans değerleri data.js -> ECONOMY'den alınır.
-     */
     calculatePlanetXp: function(type) {
         if (!type || !type.xp) return 0;
-
         const min = GAME_CONFIG.ECONOMY.XP_VARIANCE_MIN;
         const max = GAME_CONFIG.ECONOMY.XP_VARIANCE_MAX;
-        
-        // Örn: 0.5 ile 1.5 arasında rastgele bir çarpan
         const variance = Math.random() * (max - min) + min;
-        
         return Math.floor(type.xp * variance);
     },
 
-    /**
-     * Oyuncunun güncel taşıma kapasitesini hesaplar.
-     * Geliştirmeler (Upgrades) hesaba katılır.
-     */
     getPlayerCapacity: function() {
         const base = GAME_CONFIG.PLAYER.BASE_CAPACITY;
         const perLevel = GAME_CONFIG.PLAYER.CAPACITY_PER_LEVEL;
-        
-        // playerData game.js'de tanımlıdır
         const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
             ? (playerData.upgrades.playerCapacity * perLevel) 
             : 0;
         return base + added;
     },
 
-    /**
-     * Yankı'nın güncel taşıma kapasitesini hesaplar.
-     */
     getEchoCapacity: function() {
         const base = GAME_CONFIG.ECHO.BASE_CAPACITY;
         const perLevel = GAME_CONFIG.ECHO.CAPACITY_PER_LEVEL;
-
         const added = (typeof playerData !== 'undefined' && playerData.upgrades) 
             ? (playerData.upgrades.echoCapacity * perLevel) 
             : 0;
         return base + added;
     },
 
-    // ==========================================
-    // 5. DURUM KONTROLLERİ (STATE CHECKS)
-    // ==========================================
-
-    /**
-     * Envanterin dolu olup olmadığını kontrol eder.
-     * @param {number} currentCount - Mevcut eşya sayısı
-     * @returns {boolean} Doluysa true
-     */
     isInventoryFull: function(currentCount) {
         return currentCount >= this.getPlayerCapacity();
     },
 
-    /**
-     * Bir varlığın (gemi veya yankı) güvenli bölge sınırları içinde olup olmadığını kontrol eder.
-     * @param {Object} entity - Kontrol edilecek varlık {x, y}
-     * @param {Object} nexus - Nexus varlığı {x, y}
-     * @returns {boolean} Güvenli bölgedeyse true
-     */
     isInSafeZone: function(entity, nexus) {
         if (!entity || !nexus) return false;
         const dx = entity.x - nexus.x;
         const dy = entity.y - nexus.y;
-        // Basit öklid mesafesi karesiyle kontrol (karekök almaktan daha hızlı)
         const distSq = dx*dx + dy*dy;
         const safeR = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
         return distSq < safeR * safeR;
     },
 
-    /**
-     * Yankı'nın birleşme mesafesinde olup olmadığını kontrol eder.
-     * @param {number} distance - Oyuncu ile Yankı arasındaki mesafe
-     * @returns {boolean} Birleşebilir ise true
-     */
     canEchoMerge: function(distance) {
         return distance < GAME_CONFIG.ECHO.INTERACTION_DIST;
     },
 
-    /**
-     * Kamera mesafesine göre sinyal parazit (noise) oranını hesaplar.
-     * @param {number} dist - Oyuncu ile Yankı arası mesafe
-     * @param {number} maxRange - Maksimum sinyal menzili
-     * @returns {number} 0.0 (Temiz) ile 1.0 (Kopuk) arası değer
-     */
     calculateSignalInterference: function(dist, maxRange) {
         const threshold = GAME_CONFIG.ECHO.SIGNAL_INTERFERENCE_START;
         const interferenceStart = maxRange * threshold;
-        
         if (dist <= interferenceStart) return 0;
         if (dist >= maxRange) return 1.0;
-        
         return (dist - interferenceStart) / (maxRange - interferenceStart);
     },
 
-    /**
-     * İki varlığın etkileşime girip giremeyeceğini kontrol eder.
-     * (Nexus girişi, Depo açma vb. için kullanılır)
-     * @param {Object} source - Etkileşimi başlatan (Genelde Player)
-     * @param {Object} target - Hedef (Nexus, Storage vb.)
-     * @param {number} buffer - Hedef yarıçapına eklenecek ek mesafe (tolerans)
-     */
     canInteract: function(source, target, buffer = 0) {
         if (!source || !target) return false;
-        // Utils global bir araçtır, burada kullanılabilir
         const dist = Math.hypot(source.x - target.x, source.y - target.y);
         const targetRadius = target.radius || 0;
         return dist <= targetRadius + buffer;
     },
 
-    /**
-     * Gezegenin oyuncu ve yankıya göre görünürlük seviyesini hesaplar.
-     * @param {Planet} p - Gezegen nesnesi
-     * @param {VoidRay} player - Oyuncu nesnesi
-     * @param {EchoRay | null} echo - Yankı nesnesi
-     * @returns {number} 0: Görünmez, 1: Radar (Sinyal), 2: Tarama (Tam Görüş)
-     */
     getPlanetVisibility: function(p, player, echo) {
         let visibility = 0;
-        
         const dPlayer = Math.hypot(player.x - p.x, player.y - p.y);
-        
-        // Oyuncu Tarama Alanı (Tam Görüş)
         if (dPlayer < player.scanRadius) return 2; 
-        // Oyuncu Radar Alanı (Sinyal)
         else if (dPlayer < player.radarRadius) visibility = 1; 
 
         if (echo) {
             const dEcho = Math.hypot(echo.x - p.x, echo.y - p.y);
-            // Yankı Tarama Alanı (Tam Görüş)
             if (dEcho < echo.scanRadius) return 2; 
-            // Yankı Radar Alanı (Sinyal)
             else if (dEcho < echo.radarRadius) {
                 if (visibility < 1) visibility = 1; 
             }

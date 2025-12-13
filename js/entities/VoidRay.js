@@ -2,6 +2,7 @@
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
  * * GÜNCELLEME: Çizim rengi (Hue) artık ayarlardan dinamik olarak alınıyor.
  * * GÜNCELLEME: Solucan deliği çekim kuvveti ve görsel uyarı eklendi.
+ * * GÜNCELLEME: Ekipman statları (Efsunlar) fiziksel hesaplamalara entegre edildi.
  */
 class VoidRay {
     constructor() {
@@ -18,6 +19,8 @@ class VoidRay {
         this.xp = 0; 
         
         this.maxXp = GAME_CONFIG.PLAYER.BASE_XP; 
+        
+        // Başlangıç değerlerini ata (Update döngüsünde güncellenecek)
         this.energy = GAME_CONFIG.PLAYER.BASE_ENERGY; 
         this.maxEnergy = GAME_CONFIG.PLAYER.BASE_ENERGY;
         this.health = GAME_CONFIG.PLAYER.BASE_HEALTH;
@@ -39,14 +42,38 @@ class VoidRay {
 
         // AI Hedefleri
         this.scoutTarget = null;
-        this.debugTarget = null; // Anlık gidilen hedef (Haritada çizgi için kullanılacak)
+        this.debugTarget = null; 
         
-        // Çekim Uyarı Durumu (Görsel Efekt İçin)
+        // Çekim Uyarı Durumu
         this.gravityPull = null; 
     }
     
+    // --- YENİ: STAT HESAPLAMA YARDIMCISI ---
+    /**
+     * Giyili ekipmanlardan gelen toplam bonus değerini hesaplar.
+     * @param {string} statId - Hesaplanacak statın ID'si (örn: 'thrust')
+     * @returns {number} Toplam bonus değeri
+     */
+    getStatBonus(statId) {
+        let total = 0;
+        if (typeof playerData !== 'undefined' && playerData.equipment) {
+            Object.values(playerData.equipment).forEach(item => {
+                if (item && item.stats) {
+                    item.stats.forEach(stat => {
+                        if (stat.id === statId) total += stat.val;
+                    });
+                }
+            });
+        }
+        return total;
+    }
+
     gainXp(amount) { 
-        this.xp += amount; 
+        // EXP Bonusu varsa uygula
+        const xpBonus = this.getStatBonus('xp_gain');
+        const finalAmount = amount * (1 + xpBonus / 100);
+        
+        this.xp += finalAmount; 
         if(this.xp >= this.maxXp) this.levelUp(); 
         this.updateUI(); 
     }
@@ -55,14 +82,21 @@ class VoidRay {
         this.level++; 
         this.xp = 0; 
         this.maxXp = GameRules.calculateNextLevelXp(this.maxXp);
-        this.maxHealth += 20; 
+        
+        // Can bonusu ver (Bu base değere eklenir, equipment bonusu ayrıca hesaplanır)
+        // Burada kalıcı bir iyileştirme yapmıyoruz, maxHealth update döngüsünde hesaplanıyor.
+        // Sadece mevcut canı fullüyoruz.
         this.health = this.maxHealth; 
+        
         window.eventBus.emit('player:levelup', { level: this.level });
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
     }
     
     takeDamage(amount) {
         if (window.gameSettings && window.gameSettings.godMode) return;
+        
+        // Kalkan kapasitesi hasar azaltımı olarak kullanılabilir (Basit mantık)
+        // Veya doğrudan can havuzundan düşülür. Şimdilik can havuzu.
         this.health = Math.max(0, this.health - amount);
         
         if (typeof showDamageEffect === 'function') {
@@ -80,6 +114,7 @@ class VoidRay {
     }
 
     respawn() {
+        this.updateStats(); // Statları güncelle
         this.health = this.maxHealth;
         this.energy = this.maxEnergy;
         this.vx = 0; this.vy = 0;
@@ -109,27 +144,81 @@ class VoidRay {
         const dustAmt = document.getElementById('stardust-amount');
         if(dustAmt) dustAmt.innerText = playerData.stardust;
     }
+
+    // Maksimum Can ve Enerji gibi dinamik statları güncelle
+    updateStats() {
+        // Base değerler
+        const baseMaxHealth = GAME_CONFIG.PLAYER.BASE_HEALTH + ((this.level - 1) * 20);
+        const baseMaxEnergy = GAME_CONFIG.PLAYER.BASE_ENERGY;
+
+        // Bonuslar
+        const bonusHP = this.getStatBonus('hull_hp');
+        const bonusEnergy = this.getStatBonus('energy_max');
+
+        // Yeni Maksimumlar
+        const newMaxHealth = baseMaxHealth + bonusHP;
+        const newMaxEnergy = baseMaxEnergy + bonusEnergy;
+
+        // Değerler değiştiyse oranla
+        if (this.maxHealth !== newMaxHealth) {
+            const ratio = this.health / this.maxHealth;
+            this.maxHealth = newMaxHealth;
+            this.health = this.maxHealth * ratio;
+        } else {
+            this.maxHealth = newMaxHealth;
+        }
+
+        if (this.maxEnergy !== newMaxEnergy) {
+            // Enerji genellikle fullenir veya korunur
+            this.maxEnergy = newMaxEnergy;
+            if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
+        } else {
+            this.maxEnergy = newMaxEnergy;
+        }
+    }
     
     update(dt = 16) { 
-        const spdMult = 1 + (playerData.upgrades.playerSpeed * 0.15);
-        const turnMult = 1 + (playerData.upgrades.playerTurn * 0.2);
-        const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.1);
-        
-        this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult;
-        this.radarRadius = GAME_CONFIG.PLAYER.RADAR_RADIUS * magnetMult;
+        // Her frame'de statları kontrol et (Ekipman değişimi anında yansıması için)
+        this.updateStats();
 
+        // --- BONUSLARI HESAPLA ---
+        const bonusSpeedPct = this.getStatBonus('thrust'); // % olarak
+        const bonusTurnPct = this.getStatBonus('maneuver');
+        const bonusMagnetPct = this.getStatBonus('magnet');
+        const bonusRadarKm = this.getStatBonus('radar_range');
+        const bonusEnergyRegenPct = this.getStatBonus('energy_regen');
+        const bonusRadResPct = this.getStatBonus('rad_res');
+        const bonusGravityResPct = this.getStatBonus('gravity_res');
+        const bonusFuelSavePct = this.getStatBonus('fuel_save');
+
+        // Çarpanlar
+        const spdMult = (1 + (playerData.upgrades.playerSpeed * 0.15)) * (1 + bonusSpeedPct / 100);
+        const turnMult = (1 + (playerData.upgrades.playerTurn * 0.2)) * (1 + bonusTurnPct / 100);
+        const magnetMult = (1 + (playerData.upgrades.playerMagnet * 0.1)) * (1 + bonusMagnetPct / 100);
+        
+        // Menziller
+        this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult;
+        this.radarRadius = (GAME_CONFIG.PLAYER.RADAR_RADIUS + (bonusRadarKm * 1000)) * magnetMult;
+
+        // Hareket Değerleri
         const BOOST = keys[" "] ? 0.6 : 0; 
-        let ACCEL = 0.2 + BOOST;
+        let ACCEL = (0.2 + BOOST) * (1 + bonusSpeedPct / 200); // İvmelenmeye de hafif etki
         
         const MAX_SPEED = (keys[" "] ? 18 : 10) * spdMult; 
         const TURN_SPEED = 0.05 * turnMult; 
         
+        // --- RADYASYON (SINIR DIŞI) ---
         const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
         
         if (isOutOfBounds) {
             this.outOfBoundsTimer++;
             
-            const damage = GameRules.calculateRadiationDamage(this.outOfBoundsTimer);
+            // Radyasyon direnci hasarı azaltır
+            let damage = GameRules.calculateRadiationDamage(this.outOfBoundsTimer);
+            if (bonusRadResPct > 0) {
+                damage *= Math.max(0.1, 1 - (bonusRadResPct / 100)); // Max %90 koruma
+            }
+
             this.takeDamage(damage);
 
             if (this.outOfBoundsTimer > 120) {
@@ -157,18 +246,26 @@ class VoidRay {
             if(radWarn) radWarn.style.display = 'none';
         }
 
+        // --- ENERJİ YÖNETİMİ ---
         const isBoosting = keys[" "] && this.energy > 0 && !window.cinematicMode;
+        
+        // Yakıt Tasarrufu Çarpanı (Ters orantılı, %10 tasarruf = 0.9 tüketim)
+        const fuelConsumptionMult = Math.max(0.1, 1 - (bonusFuelSavePct / 100));
 
         if (isBoosting) {
-                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST;
+                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST * fuelConsumptionMult;
                 if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost); 
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
-                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE;
+                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE * fuelConsumptionMult;
                 if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost);
                 if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
-                if (!isOutOfBounds) this.energy = Math.min(this.maxEnergy, this.energy + GAME_CONFIG.PLAYER.ENERGY_COST.REGEN);
+                if (!isOutOfBounds) {
+                    // Enerji Yenilenme Bonusu
+                    const regenAmount = GAME_CONFIG.PLAYER.ENERGY_COST.REGEN * (1 + bonusEnergyRegenPct / 100);
+                    this.energy = Math.min(this.maxEnergy, this.energy + regenAmount);
+                }
         }
         
         if (this.energy < 10 && !lowEnergyWarned) lowEnergyWarned = true;
@@ -176,7 +273,7 @@ class VoidRay {
 
         if (this.energy <= 0 && keys[" "]) ACCEL = 0.2; 
 
-        // --- OTO-PİLOT MANTIĞI ---
+        // UI Barlar
         const energyBar = document.getElementById('energy-bar-fill');
         if(energyBar) {
             energyBar.style.width = (this.energy/this.maxEnergy*100) + '%';
@@ -193,6 +290,7 @@ class VoidRay {
             else healthBar.style.background = '#10b981'; 
         }
 
+        // --- HAREKET VE FİZİK ---
         let targetRoll = 0; let targetWingState = 0;
 
         if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
@@ -232,7 +330,7 @@ class VoidRay {
             this.wingPhase += 0.02; targetWingState = 0; 
         } else if (autopilot) {
             let targetX, targetY, doThrust = true;
-            const cap = GameRules.getPlayerCapacity();
+            const cap = GameRules.getPlayerCapacity(); // Buna da bonus eklenebilir ama şu an data.js'de yok
             
             if (collectedItems.length >= cap && aiMode !== 'deposit' && aiMode !== 'base') {
                 aiMode = 'deposit'; 
@@ -355,11 +453,18 @@ class VoidRay {
                 if(!p.collected && p.type.id !== 'toxic') {
                     const dx = p.x - this.x; const dy = p.y - this.y;
                     const distSq = dx*dx + dy*dy;
-                    const magnetMult = 1 + (playerData.upgrades.playerMagnet * 0.5);
+                    // Çekim gücünü bonuslarla azalt
+                    let magnetMult = (1 + (playerData.upgrades.playerMagnet * 0.5));
                     const gravityRadius = p.radius * 4 * magnetMult;
 
                     if(distSq < gravityRadius**2 && distSq > p.radius**2) {
-                        const force = (p.radius * 5) / distSq; 
+                        let force = (p.radius * 5) / distSq;
+                        
+                        // Çekim Direnci Uygula (Gezegen çekimi için de geçerli)
+                        if (bonusGravityResPct > 0) {
+                            force *= Math.max(0.1, 1 - (bonusGravityResPct / 100));
+                        }
+
                         this.vx += (dx / Math.sqrt(distSq)) * force;
                         this.vy += (dy / Math.sqrt(distSq)) * force;
                     }
@@ -367,12 +472,10 @@ class VoidRay {
             });
         }
 
-        // --- SOLUCAN DELİĞİ ÇEKİMİ (YENİ) ---
-        // Her frame sıfırla, eğer çekim varsa aşağıda doldurulacak
+        // --- SOLUCAN DELİĞİ ÇEKİMİ ---
         this.gravityPull = null; 
 
         if (typeof entityManager !== 'undefined' && entityManager.wormholes) {
-            // Config'den değerleri al, yoksa varsayılan kullan
             const wGravityRadius = (GAME_CONFIG.WORMHOLE && GAME_CONFIG.WORMHOLE.GRAVITY_RADIUS) || 3500;
             const wGravityForce = (GAME_CONFIG.WORMHOLE && GAME_CONFIG.WORMHOLE.GRAVITY_FORCE) || 180;
 
@@ -381,17 +484,18 @@ class VoidRay {
                 const dy = w.y - this.y;
                 const distSq = dx*dx + dy*dy;
                 
-                // Çekim alanı içinde mi? (Çok yakınsa çekmeyi bırakabilir veya devam ettirebiliriz, >100 sınırı çarpışma içindir)
                 if (distSq < wGravityRadius * wGravityRadius && distSq > 100) { 
                     const dist = Math.sqrt(distSq);
-                    // Formül: Sabit / Mesafe (Yaklaştıkça artar)
-                    const force = wGravityForce / dist; 
+                    let force = wGravityForce / dist; 
+                    
+                    // Çekim Direnci (Gravity Res)
+                    if (bonusGravityResPct > 0) {
+                        force *= Math.max(0.1, 1 - (bonusGravityResPct / 100));
+                    }
                     
                     this.vx += (dx / dist) * force;
                     this.vy += (dy / dist) * force;
 
-                    // Görsel efekt için en güçlü çekim kaynağını kaydet
-                    // Eğer birden fazla varsa, en yakın olanı (en güçlü kuvveti) tercih et
                     if (!this.gravityPull || force > this.gravityPull.force) {
                         this.gravityPull = {
                             angle: Math.atan2(dy, dx),
@@ -458,7 +562,6 @@ class VoidRay {
         let baseSat = 100; // Varsayılan Tam Doygunluk
 
         if (window.gameSettings) {
-            // HUE kontrolü: 0 değeri falsy olduğu için "typeof" ile kontrol şart
             if (typeof window.gameSettings.themeHue !== 'undefined') {
                 baseHue = window.gameSettings.themeHue;
             }
@@ -467,18 +570,11 @@ class VoidRay {
             }
         }
 
-        // 2. DOYGUNLUK HESABI (Enerjiye göre değişir ama TEMA limitiyle çarpılır)
-        // Eğer tema beyazsa (baseSat = 0), sonuç her zaman 0 olur (Gri tonlama)
-        // Eğer tema kırmızıysa (baseSat ~80-100), sonuç enerjiye göre 0-100 arası değişir
         const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
-        
-        // Formül: Enerji Oranı (0.0-1.0) * Tema Doygunluğu (0-100)
         const saturation = Math.floor(energyRatio * baseSat); 
-        
         const lightness = 60; 
         const alpha = 0.9;
         
-        // HUE ve SATURATION değerlerini dinamik kullan
         const dynamicStroke = `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${alpha})`;
         const dynamicShadow = `hsla(${baseHue}, ${saturation}%, ${lightness}%, 0.8)`;
         const dynamicLight = `hsla(${baseHue}, ${saturation}%, 50%, 1)`; 
@@ -523,7 +619,6 @@ class VoidRay {
 
             let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
             
-            // Gövde rengi de temaya uysun ama daha koyu
             ctx.fillStyle = `hsla(${baseHue}, ${saturation * 0.3}%, 10%, 0.95)`; 
             
             ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
@@ -541,48 +636,36 @@ class VoidRay {
 
         ctx.restore();
 
-        // --- ÇEKİM KUVVETİ UYARI SİNYALİ (YENİ) ---
-        // Geminin merkezine (translate'den sonra değil, önce) çizilir.
-        // Yukarıda ctx.restore() ile translate sıfırlandı, bu yüzden tekrar translate yapıyoruz.
         if (this.gravityPull && !isHidden) {
             ctx.save();
             ctx.translate(this.x, this.y);
-            // Açıyı çekim yönüne çevir
             ctx.rotate(this.gravityPull.angle);
             
-            // Mor renkli uyarı okları (Chevrons)
-            ctx.strokeStyle = "rgba(167, 139, 250, 0.9)"; // Açık mor
+            ctx.strokeStyle = "rgba(167, 139, 250, 0.9)"; 
             ctx.lineWidth = 2;
             ctx.shadowBlur = 5;
             ctx.shadowColor = "rgba(139, 92, 246, 0.8)";
             
-            // Animasyon: Okların gemiden uzaklaşıyormuş (veya çekime doğru gidiyormuş) gibi akması
             const time = Date.now() / 200;
-            const offset = (time % 1) * 15; // 0 ile 15px arası kayma
+            const offset = (time % 1) * 15; 
             
-            // 3 Adet ok çiz
             for(let i=0; i<3; i++) {
-                const xDist = 60 + (i * 12) + offset; // Gemiden 60px uzakta başla
-                
+                const xDist = 60 + (i * 12) + offset; 
                 ctx.beginPath();
                 ctx.moveTo(xDist, -6);
-                ctx.lineTo(xDist + 8, 0); // Sivri uç sağa (çekim yönüne) bakar
+                ctx.lineTo(xDist + 8, 0); 
                 ctx.lineTo(xDist, 6);
                 ctx.stroke();
             }
             
-            // Metin Uyarısı
             ctx.fillStyle = "rgba(196, 181, 253, 0.9)";
             ctx.font = "bold 10px monospace";
             ctx.textAlign = "center";
-            // Okların hemen altında/üstünde metin
             ctx.save();
-            ctx.rotate(-Math.PI/2); // Metni dik çevirip okun yanında yazmak yerine düz tutalım
-            // Ama gemi dönüyor, metin de döner. Okun üstünde dursun.
+            ctx.rotate(-Math.PI/2); 
             ctx.restore();
             
             ctx.fillText("GRAVITY", 80, -12);
-            
             ctx.restore();
         }
 
@@ -594,7 +677,6 @@ class VoidRay {
             ctx.fillStyle = hpPct > 0.5 ? "#10b981" : (hpPct > 0.2 ? "#f59e0b" : "#ef4444");
             ctx.fillRect(-barW/2 + 1, offset + 1, (barW - 2) * hpPct, barH);
             const epPct = this.energy / this.maxEnergy;
-            // Enerji barı da tema renginde olsun
             ctx.fillStyle = dynamicLight; 
             ctx.fillRect(-barW/2 + 1, offset + barH + 1, (barW - 2) * epPct, barH);
             ctx.restore();
