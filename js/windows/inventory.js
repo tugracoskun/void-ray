@@ -52,7 +52,7 @@ function renderInventory() {
         invHeader.innerHTML = `
             <div class="inv-header-top">
                 <div class="inv-title-main">KARGO</div>
-                <div class="window-close-btn" onclick="closeInventory()">✕</div>
+                <div class="ui-close-btn" onclick="closeInventory()">✕</div>
             </div>
             <div class="inv-info-row">
                 <div class="inv-cap-text"><span style="color:${capColor}; font-weight:bold;">${count}</span> / ${totalCapacity}</div>

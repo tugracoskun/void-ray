@@ -52,7 +52,7 @@ function initStatsDOM(windowEl) {
                 <div class="stats-main-title">VERİ GÜNLÜĞÜ</div>
                 <div class="stats-sub-title">UÇUŞ KAYITLARI VE METRİKLER</div>
             </div>
-            <div class="stats-close-btn" onclick="closeStats()">✕</div>
+            <div class="ui-close-btn" onclick="closeStats()">✕</div>
         </div>
         
         <div class="stats-wireframe-content">

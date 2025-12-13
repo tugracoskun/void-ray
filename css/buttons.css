@@ -168,3 +168,38 @@
 .btn-deposit:hover { background: var(--ray-color); color: #000; }
 .btn-withdraw { background: transparent; color: var(--color-storage); border-color: var(--color-storage); }
 .btn-withdraw:hover { background: var(--color-storage); color: #000; }
+
+/* --- GLOBAL UI CLOSE BUTTON (MERKEZİ KAPATMA TUŞU) --- */
+.ui-close-btn {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-family: sans-serif;
+    line-height: 1;
+    color: var(--hud-text); /* Varsayılan renk */
+    
+    /* Standart Boyutlar */
+    width: 32px; 
+    height: 32px;
+    font-size: 1.2rem;
+    border-radius: 4px;
+}
+
+/* Hover Efekti */
+.ui-close-btn:hover {
+    opacity: 1;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 10px currentColor;
+    transform: scale(1.1);
+}
+
+/* Kırmızı Vurgu (Opsiyonel) */
+.ui-close-btn.danger:hover {
+    color: var(--hud-danger);
+    background: rgba(239, 68, 68, 0.15);
+    text-shadow: 0 0 10px var(--hud-danger);
+}

@@ -53,15 +53,6 @@
 .p-rpg-name { font-size: 0.9rem; color: var(--hud-color); font-weight: bold; letter-spacing: 2px; }
 .p-rpg-rank { font-size: 0.6rem; color: var(--hud-text-dim); margin-left: auto; }
 
-.profile-rpg-header .cursor-pointer {
-    color: var(--hud-color);
-    opacity: 0.7;
-    font-size: 1rem;
-    font-family: sans-serif;
-    margin-left: auto; 
-}
-.profile-rpg-header .cursor-pointer:hover { opacity: 1; text-shadow: 0 0 5px var(--hud-color); }
-
 .profile-content {
     flex: 1; 
     overflow-y: auto;

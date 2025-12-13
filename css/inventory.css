@@ -76,18 +76,6 @@
 .inv-currency-val { font-family: monospace; font-size: 0.8rem; color: var(--hud-text); font-weight: bold; }
 .inv-currency-label { font-size: 0.6rem; color: var(--hud-text-dim); }
 
-/* Kapat Butonu */
-.window-close-btn {
-    color: var(--hud-color); /* Tema rengi */
-    opacity: 0.7;
-    font-size: 0.8rem; cursor: pointer; transition: 0.2s;
-    width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
-    border: 1px solid transparent;
-}
-.window-close-btn:hover { 
-    opacity: 1; text-shadow: 0 0 5px var(--hud-color);
-}
-
 /* --- GRID SİSTEMİ --- */
 .inv-table-container { 
     flex: 1; padding: 0; 

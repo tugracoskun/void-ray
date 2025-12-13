@@ -2,6 +2,7 @@
 <div id="settings-panel">
     <div id="settings-header" class="flex justify-between items-center mb-2 border-b border-white/10 pb-2 cursor-move">
         <h3 class="text-sm font-bold tracking-widest pointer-events-none" style="color: var(--hud-text);">AYARLAR</h3>
+        <div class="ui-close-btn" onclick="closeSettings()" title="Kapat">✕</div>
     </div>
     
     <div class="settings-tabs">
@@ -163,7 +164,7 @@
             </label>
         </div>
 
-        <!-- EKLENDİ: CRT YOĞUNLUK SLIDER'I (Başlangıçta gizli) -->
+        <!-- CRT YOĞUNLUK SLIDER'I -->
         <div id="crt-intensity-wrapper" style="display: none; margin-top: 5px; margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--hud-color-dim);">
             <div class="flex justify-between text-xs text-gray-400 tracking-widest" onmouseenter="showInfoTooltip(event, 'YOĞUNLUK: Scanline efektinin opaklığını ayarlar.')" onmouseleave="hideTooltip()"><span>YOĞUNLUK</span><span id="val-crt-intensity">50%</span></div>
             <input type="range" id="vol-crt-intensity" class="smart-slider" data-default="50" min="10" max="100" value="50">

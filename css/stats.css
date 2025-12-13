@@ -67,20 +67,6 @@
     line-height: 1;
 }
 
-/* Kapatma Butonu: Z-Index ve Pointer Events Garantisi */
-.stats-close-btn {
-    color: var(--hud-color); 
-    opacity: 0.7; 
-    font-size: 1rem; 
-    cursor: pointer;
-    transition: 0.2s; 
-    padding: 8px; /* Tıklama alanı artırıldı */
-    z-index: 50; /* Üstte kalmasını garantile */
-    position: relative;
-    user-select: none;
-}
-.stats-close-btn:hover { opacity: 1; text-shadow: 0 0 8px var(--hud-color); transform: scale(1.1); }
-
 /* İçerik Alanı */
 .stats-wireframe-content {
     flex: 1; 
