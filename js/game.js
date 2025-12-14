@@ -415,7 +415,7 @@ function loop() {
             keys.Escape = false;
         }
 
-        // --- ARKA PLAN (SİYAH YAPILDI) ---
+        // --- ARKA PLAN (SİYAH) ---
         ctx.fillStyle = "#000000"; ctx.fillRect(0,0,width,height);
         
         // --- ARKA PLAN ÇİZİMİ ---
@@ -505,16 +505,56 @@ function loop() {
         particleSystem.update();
         particleSystem.draw(ctx);
         
+        // --- YENİ: ETİKETLİ HALKA ÇİZİM FONKSİYONU ---
+        const drawLabeledRing = (x, y, radius, color, labelText) => {
+            ctx.strokeStyle = color; 
+            ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI*2); ctx.stroke();
+            
+            // Etiket Mantığı: Kameranın odak noktasına (merkeze) en yakın noktayı bul
+            const cx = window.cameraFocus.x;
+            const cy = window.cameraFocus.y;
+            
+            // Merkezden halka merkezine olan açı
+            const angle = Math.atan2(cy - y, cx - x);
+            
+            // Bu açı doğrultusunda, halka yarıçapı kadar ilerle
+            const lx = x + Math.cos(angle) * radius;
+            const ly = y + Math.sin(angle) * radius;
+            
+            ctx.save();
+            
+            // Metin rengini halkanın ana rengine göre belirle (Daha opak ve net)
+            let textColor = "#fff";
+            if(color.includes("16, 185, 129")) textColor = "#34d399"; // Yeşil tonu
+            else if(color.includes("245, 158, 11")) textColor = "#fbbf24"; // Turuncu tonu
+            
+            ctx.font = "bold 10px monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            const metrics = ctx.measureText(labelText);
+            const w = metrics.width + 8;
+            const h = 16;
+            
+            // Metin arka planı (Okunabilirlik için)
+            ctx.fillStyle = "rgba(0,0,0,0.8)";
+            ctx.fillRect(lx - w/2, ly - h/2, w, h);
+            
+            // Metni çiz
+            ctx.fillStyle = textColor;
+            ctx.fillText(labelText, lx, ly);
+            
+            ctx.restore();
+        };
+
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; 
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.scanRadius, 0, Math.PI*2); ctx.stroke();
-        
-        ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; 
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.radarRadius, 0, Math.PI*2); ctx.stroke();
+        // Eski çizimler yerine fonksiyon kullanımı
+        drawLabeledRing(player.x, player.y, player.scanRadius, "rgba(16, 185, 129, 0.2)", "VATOZ TARAMA");
+        drawLabeledRing(player.x, player.y, player.radarRadius, "rgba(245, 158, 11, 0.15)", "VATOZ RADAR");
 
         if(echoRay) {
-            ctx.strokeStyle = "rgba(16, 185, 129, 0.2)"; ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.scanRadius, 0, Math.PI*2); ctx.stroke();
-            ctx.strokeStyle = "rgba(245, 158, 11, 0.15)"; ctx.beginPath(); ctx.arc(echoRay.x, echoRay.y, echoRay.radarRadius, 0, Math.PI*2); ctx.stroke();
+            drawLabeledRing(echoRay.x, echoRay.y, echoRay.scanRadius, "rgba(16, 185, 129, 0.2)", "YANKI TARAMA");
+            drawLabeledRing(echoRay.x, echoRay.y, echoRay.radarRadius, "rgba(245, 158, 11, 0.15)", "YANKI RADAR");
             
             if (echoRay.mode === 'return') {
                 const distToEcho = Utils.distEntity(player, echoRay);
@@ -588,9 +628,11 @@ function loop() {
 
         const navOrigin = window.cameraFocus || window.cameraTarget;
         if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow && window.cameraTarget !== echoRay) {
+            // YANKI etiketi KALDIRILDI
             drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
+             // VATOZ etiketi KALDIRILDI
              drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, player, MAP_CONFIG.colors.player);
         }
         if (window.gameSettings.showNexusArrow) drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);

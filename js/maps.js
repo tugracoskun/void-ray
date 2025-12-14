@@ -10,6 +10,7 @@
 
 /**
  * Hedef göstergesini çizer.
+ * DÜZELTME: Yanlış anlaşılan isim etiketi (label) özelliği kaldırıldı.
  */
 function drawTargetIndicator(ctx, origin, view, target, color) {
     const dx = target.x - origin.x;
@@ -18,24 +19,39 @@ function drawTargetIndicator(ctx, origin, view, target, color) {
     const screenHalfW = (view.width / view.zoom) / 2;
     const screenHalfH = (view.height / view.zoom) / 2;
     
+    // Sadece ekran dışındaysa çiz
     if (Math.abs(dx) > screenHalfW || Math.abs(dy) > screenHalfH) {
         const angle = Math.atan2(dy, dx);
+        
+        // Ekran kenarına sabitleme
         const borderW = screenHalfW * 0.9;
         const borderH = screenHalfH * 0.9;
         
-        let tx = Math.cos(angle) * borderW;
-        let ty = Math.sin(angle) * borderH;
+        let tx, ty;
         
-        if (Math.abs(tx) > borderW) tx = Math.sign(tx) * borderW;
-        if (Math.abs(ty) > borderH) ty = Math.sign(ty) * borderH;
+        // Dikdörtgen sınırlara oturtma (Clamp) - Daha hassas köşe hesabı
+        const absCos = Math.abs(Math.cos(angle));
+        const absSin = Math.abs(Math.sin(angle));
+        
+        // Eğer açı yatay eksene daha yakınsa (sağ/sol kenar)
+        if (borderW * absSin < borderH * absCos) {
+            tx = Math.sign(Math.cos(angle)) * borderW;
+            ty = tx * Math.tan(angle);
+        } else {
+            // Eğer açı dikey eksene daha yakınsa (üst/alt kenar)
+            ty = Math.sign(Math.sin(angle)) * borderH;
+            tx = ty / Math.tan(angle);
+        }
         
         const screenX = view.width/2 + tx * view.zoom;
         const screenY = view.height/2 + ty * view.zoom;
         const distKM = Math.round(Math.hypot(dx, dy) / 100); 
         
         ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0); 
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Identity matrix (ekran koordinatları)
         ctx.translate(screenX, screenY);
+        
+        // Oku çiz (Hedefe dönük)
         ctx.rotate(angle + Math.PI/2);
         
         ctx.fillStyle = color;
@@ -48,10 +64,21 @@ function drawTargetIndicator(ctx, origin, view, target, color) {
         ctx.lineTo(-6, 6);
         ctx.fill();
         
+        // Yazı Çizimi (Döndürmeyi iptal et ve merkeze doğru konumlandır)
         ctx.rotate(-(angle + Math.PI/2));
-        ctx.fillStyle = color;
+        
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
         ctx.font = "bold 10px monospace";
-        ctx.fillText(distKM + "m", 10, 0);
+        
+        // Metin Konumu: Okun "iç" tarafına (Merkeze doğru)
+        const textDist = 25;
+        const textX = Math.cos(angle + Math.PI) * textDist;
+        const textY = Math.sin(angle + Math.PI) * textDist;
+        
+        // Mesafe
+        ctx.fillStyle = color;
+        ctx.fillText(distKM + "km", textX, textY);
         
         ctx.restore();
     }
