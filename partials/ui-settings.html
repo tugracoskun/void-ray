@@ -143,11 +143,11 @@
         </div>
 
         <div id="manual-camera-controls" style="transition: opacity 0.3s;">
-            <div class="mb-2" onmouseenter="showInfoTooltip(event, 'YATAY KONUM: Kamerayı yatay eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
+            <div class="mb-2" onmouseenter="showCamTooltip(event, 'YATAY KONUM: Kamerayı yatay eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
                 <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>YATAY (X)</span><span id="val-cam-x">0</span></div>
                 <input type="range" id="cam-offset-x" class="smart-slider" data-default="0" min="-400" max="400" value="0">
             </div>
-            <div class="mb-4" onmouseenter="showInfoTooltip(event, 'DİKEY KONUM: Kamerayı dikey eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
+            <div class="mb-4" onmouseenter="showCamTooltip(event, 'DİKEY KONUM: Kamerayı dikey eksende manuel kaydırır.')" onmouseleave="hideTooltip()">
                 <div class="flex justify-between text-xs text-gray-400 tracking-widest"><span>DİKEY (Y)</span><span id="val-cam-y">0</span></div>
                 <input type="range" id="cam-offset-y" class="smart-slider" data-default="0" min="-300" max="300" value="0">
             </div>

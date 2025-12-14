@@ -1,8 +1,7 @@
 /**
  * Void Ray - Pencere: Ayarlar
  * * Oyun ayarlarını, ses kontrollerini ve görünüm tercihlerini yönetir.
- * * GÜNCELLEME: Tema rengi (Hue) ve Doygunluğu (Sat) gemiye doğru şekilde aktarılır.
- * * GÜNCELLEME: Izgara ve Yıldız Parlaklığı ayarları eklendi. (Eski yıldız toggle'ı kaldırıldı)
+ * * GÜNCELLEME: Kamera kontrolleri için Adaptif Mod bilgilendirmesi eklendi.
  */
 
 let settingsOpen = false;
@@ -12,7 +11,7 @@ if (!window.gameSettings) {
     window.gameSettings = typeof DEFAULT_GAME_SETTINGS !== 'undefined' ? Object.assign({}, DEFAULT_GAME_SETTINGS) : {};
 }
 
-// Eksik ayarları tamamla (Geriye dönük uyumluluk)
+// Eksik ayarları tamamla
 if (typeof window.gameSettings.windowOpacity === 'undefined') window.gameSettings.windowOpacity = 1.0;
 if (typeof window.gameSettings.crtIntensity === 'undefined') window.gameSettings.crtIntensity = 50;
 if (typeof window.gameSettings.themeColor === 'undefined') window.gameSettings.themeColor = '#94d8c3';
@@ -21,10 +20,21 @@ if (typeof window.gameSettings.themeSat === 'undefined') window.gameSettings.the
 if (typeof window.gameSettings.showGrid === 'undefined') window.gameSettings.showGrid = true;
 if (typeof window.gameSettings.starBrightness === 'undefined') window.gameSettings.starBrightness = 100;
 
+// --- YENİ: KAMERA TOOLTIP YARDIMCISI ---
+// HTML tarafından çağrılır. Eğer adaptif mod açıksa uyarı verir, değilse normal açıklamayı gösterir.
+window.showCamTooltip = function(e, defaultText) {
+    if (window.gameSettings.adaptiveCamera) {
+        // Kullanıcıyı bilgilendiren özel mesaj
+        showInfoTooltip(e, "ADAPTİF MOD AÇIK: Manuel kamera ayarları devre dışı bırakıldı. Kamera hıza göre otomatik konumlanır.");
+    } else {
+        showInfoTooltip(e, defaultText);
+    }
+};
+
 function initSettings() {
     console.log("Ayarlar paneli başlatılıyor...");
     
-    // --- BAŞLANGIÇ TEMASINI UYGULA (Gemi rengi için kritik) ---
+    // --- BAŞLANGIÇ TEMASINI UYGULA ---
     const startColor = window.gameSettings.themeColor || '#94d8c3';
     setGameTheme(startColor, true); 
 
@@ -50,7 +60,7 @@ function initSettings() {
     
     const crtToggle = document.getElementById('toggle-crt');
     const crtIntensityWrapper = document.getElementById('crt-intensity-wrapper');
-    const gridToggle = document.getElementById('toggle-grid'); // YENİ
+    const gridToggle = document.getElementById('toggle-grid');
     
     const devModeToggle = document.getElementById('toggle-dev-mode');
     const gravityToggle = document.getElementById('toggle-gravity-debug');
@@ -61,9 +71,35 @@ function initSettings() {
     const godModeToggle = document.getElementById('toggle-god-mode');
     const hidePlayerToggle = document.getElementById('toggle-hide-player');
     
-    const manualCamControls = document.getElementById('manual-camera-controls');
-    const camXInput = document.getElementById('cam-offset-x');
-    const camYInput = document.getElementById('cam-offset-y');
+    // --- KAMERA KONTROLLERİ DURUM GÜNCELLEME ---
+    const updateCamControlsState = () => {
+        const manualCamControls = document.getElementById('manual-camera-controls');
+        const camXInput = document.getElementById('cam-offset-x');
+        const camYInput = document.getElementById('cam-offset-y');
+
+        if (manualCamControls) {
+            if (window.gameSettings.adaptiveCamera) {
+                // Pasif Durum
+                manualCamControls.classList.add('disabled-area');
+                manualCamControls.style.opacity = '0.5'; // Tamamen gizleme, sönük yap
+                // ÖNEMLİ: pointer-events: none YAPMIYORUZ. Yoksa tooltip çalışmaz.
+                // Sadece inputları disable ediyoruz.
+                
+                if(camXInput) camXInput.disabled = true;
+                if(camYInput) camYInput.disabled = true;
+            } else {
+                // Aktif Durum
+                manualCamControls.classList.remove('disabled-area');
+                manualCamControls.style.opacity = '1';
+                
+                if(camXInput) camXInput.disabled = false;
+                if(camYInput) camYInput.disabled = false;
+            }
+        }
+    };
+
+    // Başlangıç durumunu ayarla
+    updateCamControlsState();
 
     // --- OPAK KONTROLÜ İÇİN YAPI ---
     const hudSelectors = ['.hud-icon-group', '#xp-container', '#speedometer', '#minimap-wrapper', '#btn-settings', '#merge-prompt', '#echo-vision-indicator'];
@@ -177,7 +213,6 @@ function initSettings() {
             if (picker) picker.value = color;
         });
         
-        // Başlangıçta seçili rengi işaretle
         if (opt.getAttribute('data-color') === startColor) {
             opt.style.borderColor = '#fff';
             opt.style.transform = 'scale(1.2)';
@@ -222,7 +257,6 @@ function initSettings() {
         });
     }
 
-    // CRT
     const updateCRT = () => {
         const overlay = document.getElementById('crt-overlay');
         if (!overlay) return;
@@ -246,7 +280,6 @@ function initSettings() {
         });
     }
 
-    // GRID
     if (gridToggle) {
         gridToggle.addEventListener('change', (e) => {
             window.gameSettings.showGrid = e.target.checked;
@@ -256,19 +289,8 @@ function initSettings() {
     if (adaptiveCamToggle) {
         adaptiveCamToggle.addEventListener('change', (e) => {
             window.gameSettings.adaptiveCamera = e.target.checked;
-            if (manualCamControls) {
-                if (window.gameSettings.adaptiveCamera) {
-                    manualCamControls.style.opacity = '0.3';
-                    manualCamControls.style.pointerEvents = 'none';
-                    if(camXInput) camXInput.disabled = true;
-                    if(camYInput) camYInput.disabled = true;
-                } else {
-                    manualCamControls.style.opacity = '1';
-                    manualCamControls.style.pointerEvents = 'auto';
-                    if(camXInput) camXInput.disabled = false;
-                    if(camYInput) camYInput.disabled = false;
-                }
-            }
+            // UI durumunu güncelle
+            updateCamControlsState();
         });
     }
 
@@ -386,7 +408,7 @@ function initSettings() {
                 if(disp) disp.innerText = val + '%';
                 updateCRT();
             }
-            else if (id === 'vol-star-bright') { // YENİ
+            else if (id === 'vol-star-bright') {
                 window.gameSettings.starBrightness = val;
                 const disp = document.getElementById('val-star-bright');
                 if(disp) disp.innerText = val + '%';
@@ -439,7 +461,7 @@ function setGameTheme(colorHex, silent = false) {
     if (typeof Utils !== 'undefined' && Utils.hexToHSL) {
         const hsl = Utils.hexToHSL(colorHex);
         window.gameSettings.themeHue = hsl.h;
-        window.gameSettings.themeSat = hsl.s; // YENİ: Saturation kaydediliyor
+        window.gameSettings.themeSat = hsl.s; 
     }
 
     // 4. UI Güncellemesi
