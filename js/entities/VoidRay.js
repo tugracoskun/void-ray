@@ -1,8 +1,6 @@
 /**
  * Void Ray - Varlık Sınıfı: VOID RAY (OYUNCU)
- * * GÜNCELLEME: Çizim rengi (Hue) artık ayarlardan dinamik olarak alınıyor.
- * * GÜNCELLEME: Solucan deliği çekim kuvveti ve görsel uyarı eklendi.
- * * GÜNCELLEME: Ekipman statları (Efsunlar) fiziksel hesaplamalara entegre edildi.
+ * * GÜNCELLEME: AI çağrısı window.AIManager üzerinden güvenli hale getirildi.
  */
 class VoidRay {
     constructor() {
@@ -40,20 +38,14 @@ class VoidRay {
         this.isGhost = false;
         this.currentAlpha = 1.0; 
 
-        // AI Hedefleri
-        this.scoutTarget = null;
+        // AI Hedefleri (Görsel çizim referansları)
         this.debugTarget = null; 
+        this.scoutTarget = null; 
         
         // Çekim Uyarı Durumu
         this.gravityPull = null; 
     }
     
-    // --- YENİ: STAT HESAPLAMA YARDIMCISI ---
-    /**
-     * Giyili ekipmanlardan gelen toplam bonus değerini hesaplar.
-     * @param {string} statId - Hesaplanacak statın ID'si (örn: 'thrust')
-     * @returns {number} Toplam bonus değeri
-     */
     getStatBonus(statId) {
         let total = 0;
         if (typeof playerData !== 'undefined' && playerData.equipment) {
@@ -69,10 +61,8 @@ class VoidRay {
     }
 
     gainXp(amount) { 
-        // EXP Bonusu varsa uygula
         const xpBonus = this.getStatBonus('xp_gain');
         const finalAmount = amount * (1 + xpBonus / 100);
-        
         this.xp += finalAmount; 
         if(this.xp >= this.maxXp) this.levelUp(); 
         this.updateUI(); 
@@ -82,27 +72,15 @@ class VoidRay {
         this.level++; 
         this.xp = 0; 
         this.maxXp = GameRules.calculateNextLevelXp(this.maxXp);
-        
-        // Can bonusu ver (Bu base değere eklenir, equipment bonusu ayrıca hesaplanır)
-        // Burada kalıcı bir iyileştirme yapmıyoruz, maxHealth update döngüsünde hesaplanıyor.
-        // Sadece mevcut canı fullüyoruz.
         this.health = this.maxHealth; 
-        
         window.eventBus.emit('player:levelup', { level: this.level });
         if (!echoRay && (this.level === 3 || (this.level > 3 && this.level >= echoDeathLevel + 3))) spawnEcho(this.x, this.y);
     }
     
     takeDamage(amount) {
         if (window.gameSettings && window.gameSettings.godMode) return;
-        
-        // Kalkan kapasitesi hasar azaltımı olarak kullanılabilir (Basit mantık)
-        // Veya doğrudan can havuzundan düşülür. Şimdilik can havuzu.
         this.health = Math.max(0, this.health - amount);
-        
-        if (typeof showDamageEffect === 'function') {
-            showDamageEffect();
-        }
-        
+        if (typeof showDamageEffect === 'function') showDamageEffect();
         if (this.health <= 0) this.die();
     }
 
@@ -114,7 +92,7 @@ class VoidRay {
     }
 
     respawn() {
-        this.updateStats(); // Statları güncelle
+        this.updateStats();
         this.health = this.maxHealth;
         this.energy = this.maxEnergy;
         this.vx = 0; this.vy = 0;
@@ -123,7 +101,11 @@ class VoidRay {
         this.y = GameRules.LOCATIONS.PLAYER_RESPAWN.y;
         this.isGhost = false; this.idleTimer = 0; this.currentAlpha = 1.0; 
         this.debugTarget = null; 
-        this.scoutTarget = null;
+        
+        // AI Sıfırla (Güvenli Erişim)
+        if (window.AIManager && window.AIManager.active) {
+            window.AIManager.toggle(); 
+        }
         
         const deathScreen = document.getElementById('death-screen');
         if(deathScreen) deathScreen.classList.remove('active');
@@ -145,21 +127,14 @@ class VoidRay {
         if(dustAmt) dustAmt.innerText = playerData.stardust;
     }
 
-    // Maksimum Can ve Enerji gibi dinamik statları güncelle
     updateStats() {
-        // Base değerler
         const baseMaxHealth = GAME_CONFIG.PLAYER.BASE_HEALTH + ((this.level - 1) * 20);
         const baseMaxEnergy = GAME_CONFIG.PLAYER.BASE_ENERGY;
-
-        // Bonuslar
         const bonusHP = this.getStatBonus('hull_hp');
         const bonusEnergy = this.getStatBonus('energy_max');
-
-        // Yeni Maksimumlar
         const newMaxHealth = baseMaxHealth + bonusHP;
         const newMaxEnergy = baseMaxEnergy + bonusEnergy;
 
-        // Değerler değiştiyse oranla
         if (this.maxHealth !== newMaxHealth) {
             const ratio = this.health / this.maxHealth;
             this.maxHealth = newMaxHealth;
@@ -169,7 +144,6 @@ class VoidRay {
         }
 
         if (this.maxEnergy !== newMaxEnergy) {
-            // Enerji genellikle fullenir veya korunur
             this.maxEnergy = newMaxEnergy;
             if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
         } else {
@@ -178,11 +152,10 @@ class VoidRay {
     }
     
     update(dt = 16) { 
-        // Her frame'de statları kontrol et (Ekipman değişimi anında yansıması için)
         this.updateStats();
 
-        // --- BONUSLARI HESAPLA ---
-        const bonusSpeedPct = this.getStatBonus('thrust'); // % olarak
+        // Bonuslar
+        const bonusSpeedPct = this.getStatBonus('thrust');
         const bonusTurnPct = this.getStatBonus('maneuver');
         const bonusMagnetPct = this.getStatBonus('magnet');
         const bonusRadarKm = this.getStatBonus('radar_range');
@@ -191,47 +164,36 @@ class VoidRay {
         const bonusGravityResPct = this.getStatBonus('gravity_res');
         const bonusFuelSavePct = this.getStatBonus('fuel_save');
 
-        // Çarpanlar
         const spdMult = (1 + (playerData.upgrades.playerSpeed * 0.15)) * (1 + bonusSpeedPct / 100);
         const turnMult = (1 + (playerData.upgrades.playerTurn * 0.2)) * (1 + bonusTurnPct / 100);
         const magnetMult = (1 + (playerData.upgrades.playerMagnet * 0.1)) * (1 + bonusMagnetPct / 100);
         
-        // Menziller
         this.scanRadius = GAME_CONFIG.PLAYER.SCAN_RADIUS * magnetMult;
         this.radarRadius = (GAME_CONFIG.PLAYER.RADAR_RADIUS + (bonusRadarKm * 1000)) * magnetMult;
 
-        // Hareket Değerleri
-        const BOOST = keys[" "] ? 0.6 : 0; 
-        let ACCEL = (0.2 + BOOST) * (1 + bonusSpeedPct / 200); // İvmelenmeye de hafif etki
+        const isBoosting = keys[" "] && this.energy > 0 && !window.cinematicMode;
+        const BOOST = isBoosting ? 0.6 : 0; 
+        let ACCEL = (0.2 + BOOST) * (1 + bonusSpeedPct / 200);
         
         const MAX_SPEED = (keys[" "] ? 18 : 10) * spdMult; 
         const TURN_SPEED = 0.05 * turnMult; 
         
-        // --- RADYASYON (SINIR DIŞI) ---
+        // --- RADYASYON ---
         const isOutOfBounds = this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE;
-        
         if (isOutOfBounds) {
             this.outOfBoundsTimer++;
-            
-            // Radyasyon direnci hasarı azaltır
             let damage = GameRules.calculateRadiationDamage(this.outOfBoundsTimer);
-            if (bonusRadResPct > 0) {
-                damage *= Math.max(0.1, 1 - (bonusRadResPct / 100)); // Max %90 koruma
-            }
-
+            if (bonusRadResPct > 0) damage *= Math.max(0.1, 1 - (bonusRadResPct / 100));
             this.takeDamage(damage);
 
             if (this.outOfBoundsTimer > 120) {
                 const centerX = WORLD_SIZE / 2;
                 const centerY = WORLD_SIZE / 2;
                 const angleToCenter = Math.atan2(centerY - this.y, centerX - this.x);
-                
                 const pushForce = GameRules.calculateVoidPushForce(this.outOfBoundsTimer);
-                
                 this.vx += Math.cos(angleToCenter) * pushForce;
                 this.vy += Math.sin(angleToCenter) * pushForce;
             }
-
             if (!window.gameSettings || !window.gameSettings.godMode) {
                 const radOverlay = document.getElementById('radiation-overlay');
                 if(radOverlay) radOverlay.classList.add('active');
@@ -246,32 +208,26 @@ class VoidRay {
             if(radWarn) radWarn.style.display = 'none';
         }
 
-        // --- ENERJİ YÖNETİMİ ---
-        const isBoosting = keys[" "] && this.energy > 0 && !window.cinematicMode;
-        
-        // Yakıt Tasarrufu Çarpanı (Ters orantılı, %10 tasarruf = 0.9 tüketim)
+        // --- ENERJİ ---
         const fuelConsumptionMult = Math.max(0.1, 1 - (bonusFuelSavePct / 100));
-
         if (isBoosting) {
-                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST * fuelConsumptionMult;
-                if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost); 
-                if(playerData.stats) playerData.stats.totalEnergySpent += cost;
+            const cost = GAME_CONFIG.PLAYER.ENERGY_COST.BOOST * fuelConsumptionMult;
+            if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost); 
+            if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else if (Math.hypot(this.vx, this.vy) > 2) {
-                const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE * fuelConsumptionMult;
-                if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost);
-                if(playerData.stats) playerData.stats.totalEnergySpent += cost;
+            const cost = GAME_CONFIG.PLAYER.ENERGY_COST.MOVE * fuelConsumptionMult;
+            if (!window.gameSettings || !window.gameSettings.godMode) this.energy = Math.max(0, this.energy - cost);
+            if(playerData.stats) playerData.stats.totalEnergySpent += cost;
         } else {
-                if (!isOutOfBounds) {
-                    // Enerji Yenilenme Bonusu
-                    const regenAmount = GAME_CONFIG.PLAYER.ENERGY_COST.REGEN * (1 + bonusEnergyRegenPct / 100);
-                    this.energy = Math.min(this.maxEnergy, this.energy + regenAmount);
-                }
+            if (!isOutOfBounds) {
+                const regenAmount = GAME_CONFIG.PLAYER.ENERGY_COST.REGEN * (1 + bonusEnergyRegenPct / 100);
+                this.energy = Math.min(this.maxEnergy, this.energy + regenAmount);
+            }
         }
         
         if (this.energy < 10 && !lowEnergyWarned) lowEnergyWarned = true;
         else if (this.energy > 15) lowEnergyWarned = false;
-
-        if (this.energy <= 0 && keys[" "]) ACCEL = 0.2; 
+        if (this.energy <= 0 && isBoosting) ACCEL = 0.2; 
 
         // UI Barlar
         const energyBar = document.getElementById('energy-bar-fill');
@@ -280,7 +236,6 @@ class VoidRay {
             if(this.energy < 20) energyBar.style.background = '#ef4444';
             else energyBar.style.background = '#38bdf8';
         }
-
         const healthBar = document.getElementById('health-bar-fill');
         if(healthBar) {
             const healthPct = (this.health / this.maxHealth) * 100;
@@ -290,23 +245,56 @@ class VoidRay {
             else healthBar.style.background = '#10b981'; 
         }
 
-        // --- HAREKET VE FİZİK ---
+        // --- KONTROL MANTIĞI ---
         let targetRoll = 0; let targetWingState = 0;
-
-        if (autopilot && (keys.w || keys.a || keys.s || keys.d)) {
-            const aiBtn = document.getElementById('btn-ai-toggle');
-            if (aiBtn && !aiBtn.classList.contains('warn-blink')) aiBtn.classList.add('warn-blink');
-        } else {
-            const aiBtn = document.getElementById('btn-ai-toggle');
-            if (aiBtn && aiBtn.classList.contains('warn-blink')) aiBtn.classList.remove('warn-blink');
-        }
-
         const isInputActive = keys.w || keys.a || keys.s || keys.d || keys[" "];
         const currentSpeed = Math.hypot(this.vx, this.vy);
         
-        let targetAlpha = 1.0;
+        // --- 1. OTO-PİLOT KONTROLÜ (AIManager) ---
+        // AIManager'ın varlığını kontrol et
+        if (window.AIManager && window.AIManager.active && !window.cinematicMode) {
+            // Kontrolü tamamen Manager'a devret
+            window.AIManager.update(this, dt);
+            
+            // Görsel Debug verilerini al
+            this.scoutTarget = window.AIManager.scoutTarget;
+            this.debugTarget = window.AIManager.debugTarget;
+            
+            // AI aktifken buton uyarısı (Eğer oyuncu tuşlara basarsa)
+            if (keys.w || keys.a || keys.s || keys.d) {
+                const aiBtn = document.getElementById('btn-ai-toggle');
+                if (aiBtn && !aiBtn.classList.contains('warn-blink')) aiBtn.classList.add('warn-blink');
+            } else {
+                const aiBtn = document.getElementById('btn-ai-toggle');
+                if (aiBtn && aiBtn.classList.contains('warn-blink')) aiBtn.classList.remove('warn-blink');
+            }
+        } 
+        // --- 2. MANUEL KONTROL ---
+        else {
+            if (window.cinematicMode) {
+                this.vx *= 0.95; this.vy *= 0.95;
+                this.wingPhase += 0.02; targetWingState = 0; 
+            } else {
+                if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
+                if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
+                if (keys.w || isBoosting) {
+                    this.vx += Math.cos(this.angle) * ACCEL; this.vy += Math.sin(this.angle) * ACCEL;
+                    targetWingState = -0.8; this.wingPhase += 0.2;
+                } else { this.wingPhase += 0.05; }
+                if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
+                
+                // Manuel modda scout target'ı temizle
+                this.scoutTarget = null;
+                this.debugTarget = null;
+            }
+        }
 
-        if (!autopilot && !isInputActive && currentSpeed < 0.5) {
+        // --- IDLE / GHOST MODU ---
+        let targetAlpha = 1.0;
+        // AIManager kontrolü
+        const isAIActive = window.AIManager ? window.AIManager.active : false;
+        
+        if (!isAIActive && !isInputActive && currentSpeed < 0.5) {
             this.idleTimer++;
             if (this.idleTimer > 120) {
                 if (!this.isGhost) {
@@ -321,150 +309,21 @@ class VoidRay {
             this.idleTimer = 0;
             targetAlpha = 1.0;
         }
-
         this.currentAlpha += (targetAlpha - this.currentAlpha) * 0.02;
-        this.debugTarget = null; 
 
-        if (window.cinematicMode) {
-            this.vx *= 0.95; this.vy *= 0.95;
-            this.wingPhase += 0.02; targetWingState = 0; 
-        } else if (autopilot) {
-            let targetX, targetY, doThrust = true;
-            const cap = GameRules.getPlayerCapacity(); // Buna da bonus eklenebilir ama şu an data.js'de yok
-            
-            if (collectedItems.length >= cap && aiMode !== 'deposit' && aiMode !== 'base') {
-                aiMode = 'deposit'; 
-                showNotification({name: "DEPO DOLU: OTOMATİK AKTARIM BAŞLATILIYOR", type:{color:'#a855f7'}}, "");
-                updateAIButton();
-            }
-
-            if (aiMode === 'base') {
-                 targetX = nexus.x; targetY = nexus.y;
-                 if(Utils.distEntity(this, nexus) < 400) doThrust = false;
-                 this.scoutTarget = null;
-            } 
-            else if (aiMode === 'deposit') {
-                targetX = storageCenter.x; targetY = storageCenter.y;
-                if(Utils.distEntity(this, storageCenter) < 200) {
-                    doThrust = false;
-                    depositToStorage(collectedItems, "VATOZ");
-                    aiMode = 'gather';
-                    showNotification({name: "OTOMATİK AKTARIM TAMAMLANDI", type:{color:'#10b981'}}, "");
-                    updateAIButton();
-                }
-                this.scoutTarget = null;
-            }
-            else if (aiMode === 'travel' && manualTarget) {
-                targetX = manualTarget.x; targetY = manualTarget.y;
-                if(Utils.dist(this.x, this.y, targetX, targetY) < 200) {
-                     doThrust = false; autopilot = false; manualTarget = null; 
-                     showNotification({name: "HEDEFE ULAŞILDI", type:{color:'#fff'}}, "");
-                     const aiToggle = document.getElementById('btn-ai-toggle');
-                     if(aiToggle) aiToggle.classList.remove('active');
-                     updateAIButton();
-                }
-            } else {
-                aiMode = 'gather';
-                let nearest = null, minDist = Infinity;
-                
-                if (collectedItems.length < cap) {
-                    const candidates = (entityManager && entityManager.grid) 
-                        ? entityManager.grid.query(this.x, this.y, this.radarRadius) 
-                        : planets;
-
-                    for(let p of candidates) {
-                        if(!p.collected && p.type.id !== 'toxic') {
-                            const distToMe = (p.x-this.x)**2 + (p.y-this.y)**2;
-                            if (distToMe < this.radarRadius**2) {
-                                let echoIsCloser = false;
-                                if (typeof echoRay !== 'undefined' && echoRay && echoRay.mode === 'roam' && echoRay.lootBag.length < GameRules.getEchoCapacity()) {
-                                    const distToEcho = (p.x - echoRay.x)**2 + (p.y - echoRay.y)**2;
-                                    if (distToEcho < distToMe) echoIsCloser = true;
-                                }
-                                if(!echoIsCloser && distToMe < minDist) { minDist = distToMe; nearest = p; }
-                            }
-                        }
-                    }
-                }
-                
-                if(nearest) { 
-                    targetX = nearest.x; targetY = nearest.y; 
-                    if (this.scoutTarget) this.scoutTarget = null;
-                } 
-                else { 
-                    if (!this.scoutTarget || Utils.dist(this.x, this.y, this.scoutTarget.x, this.scoutTarget.y) < 300) {
-                        const margin = 5000;
-                        const safeSize = WORLD_SIZE - margin;
-                        this.scoutTarget = {
-                            x: Utils.random(margin, safeSize),
-                            y: Utils.random(margin, safeSize)
-                        };
-                    }
-                    targetX = this.scoutTarget.x;
-                    targetY = this.scoutTarget.y;
-                }
-            }
-
-            if(targetX !== undefined) {
-                this.debugTarget = {x: targetX, y: targetY};
-                const targetAngle = Math.atan2(targetY - this.y, targetX - this.x);
-                let diff = targetAngle - this.angle;
-                while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
-                this.angle += diff * 0.1;
-                
-                if(doThrust) {
-                    if(Math.abs(diff) < 1.0) { this.vx += Math.cos(this.angle) * ACCEL; this.vy += Math.sin(this.angle) * ACCEL; } 
-                    else { this.vx *= 0.95; this.vy *= 0.95; }
-                } else { this.vx *= 0.9; this.vy *= 0.9; }
-                this.wingPhase += 0.2; targetRoll = diff * 5 * 0.6;
-            }
-        } else {
-            if (keys.a) { this.angle -= TURN_SPEED; targetRoll = -0.5 * 0.6; }
-            if (keys.d) { this.angle += TURN_SPEED; targetRoll = 0.5 * 0.6; }
-            if (keys.w || isBoosting) {
-                this.vx += Math.cos(this.angle) * ACCEL; this.vy += Math.sin(this.angle) * ACCEL;
-                targetWingState = -0.8; this.wingPhase += 0.2;
-            } else { this.wingPhase += 0.05; }
-            if (keys.s) { this.vx *= 0.92; this.vy *= 0.92; targetWingState = 1.2; }
-
-            if (typeof manualTarget !== 'undefined' && manualTarget) {
-                this.debugTarget = {x: manualTarget.x, y: manualTarget.y};
-            } else {
-                let nearest = null, minDist = Infinity;
-                if (typeof entityManager !== 'undefined' && entityManager.grid) {
-                    const candidates = entityManager.grid.query(this.x, this.y, 5000);
-                    for(let p of candidates) {
-                        if(!p.collected && p.type.id !== 'toxic') {
-                            const d = (p.x-this.x)**2 + (p.y-this.y)**2;
-                            if(d < minDist) { minDist = d; nearest = p; }
-                        }
-                    }
-                }
-                if(nearest) this.debugTarget = {x: nearest.x, y: nearest.y};
-            }
-            this.scoutTarget = null;
-        }
-
+        // --- YERÇEKİMİ ---
         if (entityManager && entityManager.grid) {
             const gravityQueryRange = 3000;
             const nearbyPlanets = entityManager.grid.query(this.x, this.y, gravityQueryRange);
-
             nearbyPlanets.forEach(p => { 
                 if(!p.collected && p.type.id !== 'toxic') {
                     const dx = p.x - this.x; const dy = p.y - this.y;
                     const distSq = dx*dx + dy*dy;
-                    // Çekim gücünü bonuslarla azalt
                     let magnetMult = (1 + (playerData.upgrades.playerMagnet * 0.5));
                     const gravityRadius = p.radius * 4 * magnetMult;
-
                     if(distSq < gravityRadius**2 && distSq > p.radius**2) {
                         let force = (p.radius * 5) / distSq;
-                        
-                        // Çekim Direnci Uygula (Gezegen çekimi için de geçerli)
-                        if (bonusGravityResPct > 0) {
-                            force *= Math.max(0.1, 1 - (bonusGravityResPct / 100));
-                        }
-
+                        if (bonusGravityResPct > 0) force *= Math.max(0.1, 1 - (bonusGravityResPct / 100));
                         this.vx += (dx / Math.sqrt(distSq)) * force;
                         this.vy += (dy / Math.sqrt(distSq)) * force;
                     }
@@ -472,40 +331,28 @@ class VoidRay {
             });
         }
 
-        // --- SOLUCAN DELİĞİ ÇEKİMİ ---
+        // --- SOLUCAN DELİĞİ ---
         this.gravityPull = null; 
-
         if (typeof entityManager !== 'undefined' && entityManager.wormholes) {
             const wGravityRadius = (GAME_CONFIG.WORMHOLE && GAME_CONFIG.WORMHOLE.GRAVITY_RADIUS) || 3500;
             const wGravityForce = (GAME_CONFIG.WORMHOLE && GAME_CONFIG.WORMHOLE.GRAVITY_FORCE) || 180;
-
             entityManager.wormholes.forEach(w => {
-                const dx = w.x - this.x;
-                const dy = w.y - this.y;
+                const dx = w.x - this.x; const dy = w.y - this.y;
                 const distSq = dx*dx + dy*dy;
-                
                 if (distSq < wGravityRadius * wGravityRadius && distSq > 100) { 
                     const dist = Math.sqrt(distSq);
                     let force = wGravityForce / dist; 
-                    
-                    // Çekim Direnci (Gravity Res)
-                    if (bonusGravityResPct > 0) {
-                        force *= Math.max(0.1, 1 - (bonusGravityResPct / 100));
-                    }
-                    
+                    if (bonusGravityResPct > 0) force *= Math.max(0.1, 1 - (bonusGravityResPct / 100));
                     this.vx += (dx / dist) * force;
                     this.vy += (dy / dist) * force;
-
                     if (!this.gravityPull || force > this.gravityPull.force) {
-                        this.gravityPull = {
-                            angle: Math.atan2(dy, dx),
-                            force: force
-                        };
+                        this.gravityPull = { angle: Math.atan2(dy, dx), force: force };
                     }
                 }
             });
         }
 
+        // --- FİZİK GÜNCELLEME ---
         const speed = Math.hypot(this.vx, this.vy);
         const speedEl = document.getElementById('speed-val');
         if(speedEl) speedEl.innerText = Math.floor(speed * 10); 
@@ -524,9 +371,9 @@ class VoidRay {
 
         this.roll += (targetRoll - this.roll) * 0.05; this.wingState += (targetWingState - this.wingState) * 0.1;
         
+        // Kuyruk
         const targetCount = isBoosting ? this.boostTailCount : this.baseTailCount;
         const transitionSpeed = 2;
-        
         if (this.tail.length < targetCount) {
              for(let k=0; k<transitionSpeed; k++) {
                  if (this.tail.length >= targetCount) break;
@@ -553,42 +400,28 @@ class VoidRay {
         if(coordsEl) coordsEl.innerText = `${Math.floor(this.x)} : ${Math.floor(this.y)}`;
     }
     
+    // Çizim fonksiyonu
     draw(ctx) {
         ctx.save();
         ctx.globalAlpha = this.currentAlpha;
-
-        // 1. TEMA DEĞERLERİNİ AL (Hue ve Saturation)
-        let baseHue = 199; // Varsayılan Mavi
-        let baseSat = 100; // Varsayılan Tam Doygunluk
-
+        let baseHue = 199; let baseSat = 100;
         if (window.gameSettings) {
-            if (typeof window.gameSettings.themeHue !== 'undefined') {
-                baseHue = window.gameSettings.themeHue;
-            }
-            if (typeof window.gameSettings.themeSat !== 'undefined') {
-                baseSat = window.gameSettings.themeSat;
-            }
+            if (typeof window.gameSettings.themeHue !== 'undefined') baseHue = window.gameSettings.themeHue;
+            if (typeof window.gameSettings.themeSat !== 'undefined') baseSat = window.gameSettings.themeSat;
         }
-
         const energyRatio = Math.max(0, Math.min(1, this.energy / this.maxEnergy));
         const saturation = Math.floor(energyRatio * baseSat); 
-        const lightness = 60; 
-        const alpha = 0.9;
-        
+        const lightness = 60; const alpha = 0.9;
         const dynamicStroke = `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${alpha})`;
         const dynamicShadow = `hsla(${baseHue}, ${saturation}%, ${lightness}%, 0.8)`;
         const dynamicLight = `hsla(${baseHue}, ${saturation}%, 50%, 1)`; 
-
         const isHidden = window.gameSettings && window.gameSettings.hidePlayer;
 
         if (!isHidden) {
             ctx.beginPath(); ctx.moveTo(this.tail[0].x, this.tail[0].y);
             for(let i=1; i<this.tail.length-1; i++) { let xc = (this.tail[i].x + this.tail[i+1].x) / 2; let yc = (this.tail[i].y + this.tail[i+1].y) / 2; ctx.quadraticCurveTo(this.tail[i].x, this.tail[i].y, xc, yc); }
-            
             let grad = ctx.createLinearGradient(this.tail[0].x, this.tail[0].y, this.tail[this.tail.length-1].x, this.tail[this.tail.length-1].y);
-            grad.addColorStop(0, dynamicStroke); 
-            grad.addColorStop(1, "transparent");
-            
+            grad.addColorStop(0, dynamicStroke); grad.addColorStop(1, "transparent");
             ctx.strokeStyle = grad; ctx.lineWidth = 3 * this.scale; ctx.lineCap = 'round'; ctx.stroke();
         }
         
@@ -616,56 +449,21 @@ class VoidRay {
             } else {
                 ctx.shadowBlur = 10; ctx.shadowColor = `hsla(199, ${saturation}%, ${lightness}%, 0.2)`;
             }
-
             let scaleX = 1 - Math.abs(this.roll) * 0.4; let shiftX = this.roll * 15; let wingTipY = 20 + (this.wingState * 15); let wingTipX = 60 - (this.wingState * 10); let wingFlap = Math.sin(this.wingPhase) * 5;
-            
             ctx.fillStyle = `hsla(${baseHue}, ${saturation * 0.3}%, 10%, 0.95)`; 
-            
             ctx.beginPath(); ctx.moveTo(0+shiftX, -30); ctx.bezierCurveTo(15+shiftX, -10, wingTipX+shiftX, wingTipY+wingFlap, 40*scaleX+shiftX, 40); ctx.bezierCurveTo(20+shiftX, 30, 10+shiftX, 40, 0+shiftX, 50); ctx.bezierCurveTo(-10+shiftX, 40, -20+shiftX, 30, -40*scaleX+shiftX, 40); ctx.bezierCurveTo(-wingTipX+shiftX, wingTipY+wingFlap, -15+shiftX, -10, 0+shiftX, -30); ctx.fill();
-            
             ctx.strokeStyle = dynamicLight; ctx.lineWidth = 2; ctx.stroke(); 
-            
             ctx.fillStyle = window.cinematicMode ? "#475569" : "#e0f2fe"; 
-            
-            if (!window.cinematicMode) {
-                ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); ctx.shadowColor = dynamicShadow; 
-            }
-            
+            if (!window.cinematicMode) { ctx.shadowBlur = 40 * Math.max(0.3, this.currentAlpha); ctx.shadowColor = dynamicShadow; }
             ctx.beginPath(); ctx.arc(0+shiftX, 0, 5, 0, Math.PI*2); ctx.fill(); 
         }
-
         ctx.restore();
 
         if (this.gravityPull && !isHidden) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.gravityPull.angle);
-            
-            ctx.strokeStyle = "rgba(167, 139, 250, 0.9)"; 
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = "rgba(139, 92, 246, 0.8)";
-            
-            const time = Date.now() / 200;
-            const offset = (time % 1) * 15; 
-            
-            for(let i=0; i<3; i++) {
-                const xDist = 60 + (i * 12) + offset; 
-                ctx.beginPath();
-                ctx.moveTo(xDist, -6);
-                ctx.lineTo(xDist + 8, 0); 
-                ctx.lineTo(xDist, 6);
-                ctx.stroke();
-            }
-            
-            ctx.fillStyle = "rgba(196, 181, 253, 0.9)";
-            ctx.font = "bold 10px monospace";
-            ctx.textAlign = "center";
-            ctx.save();
-            ctx.rotate(-Math.PI/2); 
-            ctx.restore();
-            
-            ctx.fillText("GRAVITY", 80, -12);
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.gravityPull.angle);
+            ctx.strokeStyle = "rgba(167, 139, 250, 0.9)"; ctx.lineWidth = 2; ctx.shadowBlur = 5; ctx.shadowColor = "rgba(139, 92, 246, 0.8)";
+            const time = Date.now() / 200; const offset = (time % 1) * 15; 
+            for(let i=0; i<3; i++) { const xDist = 60 + (i * 12) + offset; ctx.beginPath(); ctx.moveTo(xDist, -6); ctx.lineTo(xDist + 8, 0); ctx.lineTo(xDist, 6); ctx.stroke(); }
             ctx.restore();
         }
 
@@ -693,7 +491,7 @@ class VoidRay {
                     ctx.beginPath(); ctx.arc(this.vx * speedScale, this.vy * speedScale, 3, 0, Math.PI*2); ctx.fillStyle = "yellow"; ctx.fill();
                     ctx.fillStyle = "yellow"; ctx.font = "10px monospace"; ctx.fillText("V", this.vx * speedScale + 5, this.vy * speedScale + 5);
                 }
-                if (typeof keys !== 'undefined' && (keys.w || keys[" "] || autopilot)) {
+                if (typeof keys !== 'undefined' && (keys.w || keys[" "] || (window.AIManager && window.AIManager.active))) {
                     const thrustLen = 40; const tx = Math.cos(this.angle) * thrustLen; const ty = Math.sin(this.angle) * thrustLen;
                     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(tx, ty); ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 2; ctx.stroke();
                     ctx.beginPath(); ctx.arc(tx, ty, 3, 0, Math.PI*2); ctx.fillStyle = "#4ade80"; ctx.fill();

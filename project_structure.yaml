@@ -12,7 +12,7 @@ css:
   - panels.css
   - stats.css
   - inventory.css
-  - equipment.css # YENİ
+  - equipment.css
   - chat.css
   - profile.css
   - world.css
@@ -41,6 +41,7 @@ js:
   managers:
     - save_manager.js
     - achievement_manager.js
+    - ai_manager.js
 
   windows:
     - inventory.js

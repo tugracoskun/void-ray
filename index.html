@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="css/panels.css">
     <link rel="stylesheet" href="css/stats.css">
     <link rel="stylesheet" href="css/inventory.css">
-    <link rel="stylesheet" href="css/equipment.css"> <!-- YENİ -->
+    <link rel="stylesheet" href="css/equipment.css"> 
     <link rel="stylesheet" href="css/chat.css">
     <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/world.css">
@@ -49,7 +49,7 @@
             if (typeof initSettings === 'function') initSettings();
             if (typeof checkMobile === 'function') checkMobile();
             
-            // YENİ: UI Event Listeners (EventBus sonrası)
+            // UI Event Listeners
             if (typeof initUIListeners === 'function') initUIListeners();
 
             // 2. Ana Menü Mantığını (Save Kontrolü) Başlat
@@ -60,7 +60,6 @@
                 const boot = new SystemBoot();
                 boot.start();
             } else {
-                // Boot dosyası yüklenmediyse direkt menüyü aç (Fallback)
                 const controls = document.getElementById('menu-controls-wrapper');
                 if(controls) {
                     controls.classList.remove('menu-controls-hidden');
@@ -73,9 +72,7 @@
     </script>
     
     <!-- SCRIPTS -->
-    <!-- EventBus (Diğer scriptlerden önce yüklenmeli) -->
     <script src="js/EventBus.js"></script>
-    
     <script src="js/boot.js"></script>
     <script src="js/loader.js"></script>
 
@@ -91,12 +88,13 @@
     
     <script src="js/managers/save_manager.js"></script>
     <script src="js/managers/achievement_manager.js"></script>
+    <script src="js/managers/ai_manager.js"></script> <!-- EKLENDİ -->
     <script src="js/TutorialSystem.js"></script>
     
     <!-- UI ve PENCERELER -->
     <script src="js/ui.js"></script>
     <script src="js/windows/inventory.js"></script>
-    <script src="js/windows/equipment.js"></script> <!-- YENİ -->
+    <script src="js/windows/equipment.js"></script>
     <script src="js/windows/stats.js"></script>
     <script src="js/console.js"></script>
     <script src="js/windows/chat.js"></script>

@@ -40,10 +40,30 @@ let targetZoom = GAME_CONFIG.CAMERA.DEFAULT_ZOOM;
 let isPaused = false;
 let animationId = null;
 
-// --- DÜZELTME: Konsoldan erişim için 'let' yerine 'var' kullanıldı ---
-var manualTarget = null; 
-var autopilot = false;
-var aiMode = 'gather'; 
+// --- DÜZELTME: Global AI Değişkenleri Proxy Olarak Tanımlandı ---
+// Böylece ui.js ve controls.js değiştirilmeden çalışmaya devam eder.
+// Arka planda AIManager ile senkronize olurlar.
+
+Object.defineProperty(window, 'autopilot', {
+    get: function() { return window.AIManager ? window.AIManager.active : false; },
+    set: function(val) { 
+        // Eğer true atanırsa ve aktif değilse toggle et
+        if (val && window.AIManager && !window.AIManager.active) window.AIManager.toggle();
+        // Eğer false atanırsa ve aktifse toggle et
+        else if (!val && window.AIManager && window.AIManager.active) window.AIManager.toggle();
+    }
+});
+
+Object.defineProperty(window, 'aiMode', {
+    get: function() { return window.AIManager ? window.AIManager.mode : 'gather'; },
+    set: function(val) { if (window.AIManager) window.AIManager.mode = val; }
+});
+
+Object.defineProperty(window, 'manualTarget', {
+    get: function() { return window.AIManager ? window.AIManager.manualTarget : null; },
+    set: function(val) { if (window.AIManager) window.AIManager.manualTarget = val; }
+});
+
 var echoDeathLevel = 0;
 var lowEnergyWarned = false;
 // --------------------------------------------------------------------
@@ -80,7 +100,7 @@ function spawnEcho(x, y) {
 function addItemToInventory(planet) { 
     // MANTIK: GameRules.isInventoryFull
     if (GameRules.isInventoryFull(collectedItems.length)) {
-        if (!autopilot) {
+        if (!AIManager.active) { // AIManager kontrolü
             showNotification({name: MESSAGES.UI.INVENTORY_FULL, type:{color:'#ef4444'}}, "");
             if(audio) audio.playError();
         }
@@ -137,14 +157,17 @@ function echoManualMerge() {
     }
 }
 
+/**
+ * AI Mod Döngüsü (Artık AIManager'ı kullanıyor)
+ */
 function cycleAIMode() {
-    if(!autopilot) {
-        autopilot = true;
-        aiMode = 'gather';
+    if (!AIManager.active) {
+        AIManager.toggle();
     } else {
-        if (aiMode === 'gather') aiMode = 'base';
-        else if (aiMode === 'base') autopilot = false;
-        else aiMode = 'gather';
+        // Basit mod döngüsü: gather -> base -> kapat -> gather
+        if (AIManager.mode === 'gather') AIManager.setMode('base');
+        else if (AIManager.mode === 'base') AIManager.toggle(); // Kapat
+        else AIManager.setMode('gather');
     }
     updateAIButton();
 }
@@ -173,6 +196,12 @@ function init() {
     entityManager = new EntityManager(); 
     audio = new ZenAudio();
     
+    // AIManager zaten global, onu resetleyelim
+    if (typeof AIManager !== 'undefined') {
+        AIManager.active = false;
+        AIManager.manualTarget = null;
+    }
+    
     gameStartTime = Date.now(); 
     lastFrameTime = Date.now(); 
     
@@ -187,13 +216,8 @@ function init() {
 
     entityManager.init();
     
-    if (typeof AchievementManager !== 'undefined') {
-        AchievementManager.init();
-    }
-
-    if (typeof TutorialManager !== 'undefined') {
-        TutorialManager.init();
-    }
+    if (typeof AchievementManager !== 'undefined') AchievementManager.init();
+    if (typeof TutorialManager !== 'undefined') TutorialManager.init();
 
     if (typeof SaveManager !== 'undefined') {
         SaveManager.init();
@@ -208,15 +232,14 @@ function init() {
     isPaused = false;
     startTipsCycle();
     
+    // HARİTA TIKLAMA ENTEGRASYONU (AIManager ile)
     if (bmCanvas && typeof initMapListeners === 'function') {
         initMapListeners(bmCanvas, WORLD_SIZE, (worldX, worldY) => {
-            manualTarget = {x: worldX, y: worldY};
-            autopilot = true;
-            aiMode = 'travel';
-            const aiToggle = document.getElementById('btn-ai-toggle');
-            if(aiToggle) aiToggle.classList.add('active');
-            updateAIButton();
-            showNotification({name: MESSAGES.UI.ROUTE_CREATED, type:{color:'#fff'}}, "");
+            if (AIManager) {
+                AIManager.setManualTarget(worldX, worldY);
+                // UI güncellemesi
+                updateAIButton();
+            }
         });
     }
 
@@ -243,6 +266,7 @@ function startLoop() {
     loop();
 }
 
+// Statik çizim fonksiyonu (değişmedi)
 function drawStaticNoise(ctx, w, h, intensity) {
     ctx.save();
     const count = 20 * intensity; 
@@ -284,30 +308,23 @@ function loop() {
         frameCount++;
         if (now - lastFpsTime >= 1000) {
             if (window.gameSettings.showFps) {
-                // 1. FPS
                 const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
                 const fpsEl = document.getElementById('debug-fps-val');
                 if(fpsEl) fpsEl.innerText = fps;
                 
-                // 2. MS (Frame Time)
                 const ms = (1000 / Math.max(1, fps)).toFixed(1);
                 const msEl = document.getElementById('debug-ms-val');
                 if(msEl) msEl.innerText = ms;
 
-                // 3. OBJE SAYILARI
                 let pCount = (entityManager && entityManager.planets) ? entityManager.planets.length : 0;
                 let wCount = (entityManager && entityManager.wormholes) ? entityManager.wormholes.length : 0;
                 let partCount = particleSystem ? particleSystem.count : 0;
-                
                 const totalObj = pCount + wCount + partCount;
-                
                 const objEl = document.getElementById('debug-obj-val');
                 if(objEl) objEl.innerText = totalObj;
-                
                 const partEl = document.getElementById('debug-part-val');
                 if(partEl) partEl.innerText = partCount;
 
-                // 4. MEMORY
                 const memEl = document.getElementById('debug-mem-val');
                 if(memEl) {
                     if (performance && performance.memory) {
@@ -336,8 +353,6 @@ function loop() {
             echoRay.update(); 
             if (echoRay.mode === 'return' && echoRay.pendingMerge) {
                  const dist = Utils.distEntity(player, echoRay);
-                 // MANTIK: GameRules.canEchoMerge
-                 // Otomatik birleşme için biraz tolerans (-50) kullanıyoruz
                  if (dist < GAME_CONFIG.ECHO.INTERACTION_DIST - 50) echoManualMerge();
             }
         }
@@ -357,7 +372,6 @@ function loop() {
             if(indicator) indicator.classList.remove('active');
         }
 
-        // MANTIK: GameRules.isInSafeZone
         const currentlySafe = GameRules.isInSafeZone(player, nexus);
         
         if (currentlySafe) {
@@ -374,23 +388,17 @@ function loop() {
             }
         }
 
-        if(autopilot) {
+        if(AIManager.active) {
             playerData.stats.timeAI += dt;
         }
 
-        if(typeof profileOpen !== 'undefined' && profileOpen) {
-            renderProfile();
-        }
-
+        if(typeof profileOpen !== 'undefined' && profileOpen) renderProfile();
         if(typeof statsOpen !== 'undefined' && statsOpen) renderStats();
         if(typeof contextOpen !== 'undefined' && contextOpen) renderContext();
-        if(typeof TutorialManager !== 'undefined') TutorialManager.update(dt); // TUTORIAL UPDATE
+        if(typeof TutorialManager !== 'undefined') TutorialManager.update(dt);
+        if (entityManager) entityManager.update(dt);
 
-        if (entityManager) {
-            entityManager.update(dt);
-        }
-
-        // --- TUŞ KONTROLLERİ (Pencere Kapatma / Pause) ---
+        // --- TUŞ KONTROLLERİ ---
         if (keys.Escape) { 
             if (typeof inventoryOpen !== 'undefined' && inventoryOpen) closeInventory();
             else if (typeof echoInvOpen !== 'undefined' && echoInvOpen) closeEchoInventory();
@@ -402,7 +410,6 @@ function loop() {
             else if (typeof settingsOpen !== 'undefined' && settingsOpen) closeSettings();
             else if (typeof contextOpen !== 'undefined' && contextOpen) closeContext(); 
             else if (typeof profileOpen !== 'undefined' && profileOpen) closeProfile();
-            // YENİ: Kontrol Penceresini Kapatma
             else if (typeof controlsOpen !== 'undefined' && controlsOpen) closeControls();
             else togglePause();
             keys.Escape = false;
@@ -410,13 +417,11 @@ function loop() {
 
         ctx.fillStyle = "#020617"; ctx.fillRect(0,0,width,height);
         
-        // --- ARKA PLAN KATMANLARI (SIRASI ÖNEMLİ) ---
-        // 1. Yıldızlar (En arkada)
+        // --- ARKA PLAN ÇİZİMİ ---
         if (entityManager) {
             entityManager.drawStars(ctx, width, height, window.cameraFocus || window.cameraTarget);
         }
         
-        // 2. Kamera Transformasyonunu Başlat
         ctx.save(); 
         
         let targetOffsetX = window.gameSettings.cameraOffsetX;
@@ -425,10 +430,8 @@ function loop() {
         if (window.gameSettings.adaptiveCamera) {
             const lookAheadFactor = GAME_CONFIG.CAMERA.ADAPTIVE_FACTOR; 
             const maxAdaptiveOffset = GAME_CONFIG.CAMERA.MAX_OFFSET; 
-            
             targetOffsetX = -window.cameraTarget.vx * lookAheadFactor;
             targetOffsetY = -window.cameraTarget.vy * lookAheadFactor;
-            
             targetOffsetX = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetX));
             targetOffsetY = Math.max(-maxAdaptiveOffset, Math.min(maxAdaptiveOffset, targetOffsetY));
         }
@@ -453,7 +456,6 @@ function loop() {
             isCameraTransitioning = false;
         } else {
             const distCam = Utils.distEntity(window.cameraTarget, window.cameraFocus);
-            
             if (distCam > 5000) {
                 window.cameraFocus.x = window.cameraTarget.x;
                 window.cameraFocus.y = window.cameraTarget.y;
@@ -462,10 +464,7 @@ function loop() {
                 const lerpSpeed = 0.08; 
                 window.cameraFocus.x += (window.cameraTarget.x - window.cameraFocus.x) * lerpSpeed;
                 window.cameraFocus.y += (window.cameraTarget.y - window.cameraFocus.y) * lerpSpeed;
-                
-                if (distCam < 50) {
-                    isCameraTransitioning = false; 
-                }
+                if (distCam < 50) isCameraTransitioning = false; 
             } else {
                 const lerpSpeed = 0.9; 
                 window.cameraFocus.x += (window.cameraTarget.x - window.cameraFocus.x) * lerpSpeed;
@@ -475,16 +474,11 @@ function loop() {
 
         ctx.translate(-window.cameraFocus.x, -window.cameraFocus.y);
         
-        // 3. Uzay Izgarası (Dünya koordinatlarında, yıldızların üzerinde ama gezegenlerin altında)
         if (entityManager) {
             entityManager.drawGrid(ctx, width, height, window.cameraFocus.x, window.cameraFocus.y, currentZoom);
-        }
-        
-        if (entityManager) {
             entityManager.drawPlanets(ctx, player, echoRay, width, height, currentZoom);
         }
 
-        // Güvenli Bölge Görseli (Güvenli bölge yarıçapı Config'den)
         const safeR = GAME_CONFIG.WORLD_GEN.SAFE_ZONE_RADIUS;
         ctx.save();
         ctx.translate(nexus.x, nexus.y);
@@ -524,23 +518,11 @@ function loop() {
             if (echoRay.mode === 'return') {
                 const distToEcho = Utils.distEntity(player, echoRay);
                 let lineAlpha = 0.4;
-                if (distToEcho < player.scanRadius) {
-                    lineAlpha = Math.max(0, (distToEcho / player.scanRadius) * 0.4);
-                }
-
+                if (distToEcho < player.scanRadius) lineAlpha = Math.max(0, (distToEcho / player.scanRadius) * 0.4);
                 if (lineAlpha > 0.05) { 
-                    ctx.beginPath();
-                    ctx.moveTo(echoRay.x, echoRay.y);
-                    ctx.lineTo(player.x, player.y);
-                    ctx.strokeStyle = MAP_CONFIG.colors.echo; 
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([15, 10]); 
-                    ctx.lineDashOffset = -Date.now() / 50; 
-                    ctx.globalAlpha = lineAlpha;
-                    ctx.stroke();
-                    ctx.globalAlpha = 1.0;
-                    ctx.setLineDash([]);
-                    ctx.lineDashOffset = 0;
+                    ctx.beginPath(); ctx.moveTo(echoRay.x, echoRay.y); ctx.lineTo(player.x, player.y);
+                    ctx.strokeStyle = MAP_CONFIG.colors.echo; ctx.lineWidth = 2; ctx.setLineDash([15, 10]); ctx.lineDashOffset = -Date.now() / 50; 
+                    ctx.globalAlpha = lineAlpha; ctx.stroke(); ctx.globalAlpha = 1.0; ctx.setLineDash([]); ctx.lineDashOffset = 0;
                 }
             }
         }
@@ -551,76 +533,49 @@ function loop() {
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
             const dist = Utils.distEntity(player, echoRay);
             const maxRange = player.radarRadius; 
-            
-            // MANTIK: GameRules.calculateSignalInterference
             const interference = GameRules.calculateSignalInterference(dist, maxRange);
-
             if (interference >= 1.0) {
-                // Sinyal koptu
                 window.cameraTarget = player;
                 showNotification({name: MESSAGES.ECHO.RANGE_WARNING, type:{color:'#ef4444'}}, MESSAGES.ECHO.LOST_SIGNAL_DESC);
                 if(audio) audio.playError();
                 const indicator = document.getElementById('echo-vision-indicator');
                 if(indicator) indicator.classList.remove('active');
             } else if (interference > 0) {
-                // Parazit çiz
                 drawStaticNoise(ctx, width, height, interference);
             }
         }
 
         const promptEl = document.getElementById('merge-prompt');
         if (promptEl) {
-            // MANTIK: GameRules.canInteract ile manuel mesafe hesapları değiştirildi
-            
             let isNexusOpen = (typeof nexusOpen !== 'undefined' && nexusOpen);
             let isStorageOpen = (typeof storageOpen !== 'undefined' && storageOpen);
             let isMapOpen = (typeof mapOpen !== 'undefined' && mapOpen);
-
-            // Nexus: Radius + 200 birim
             let showNexusPrompt = GameRules.canInteract(player, nexus, 200) && !isNexusOpen;
-            // Storage: Radius + 200 birim
             let showStoragePrompt = GameRules.canInteract(player, storageCenter, 200) && !isStorageOpen;
-            
             let showEchoMergePrompt = false;
-
             if (echoRay && !isMapOpen) {
-                 // Echo ile manuel birleşme: 300 birim
                  if (!echoRay.attached && GameRules.canInteract(player, echoRay, 300)) {
                      showEchoMergePrompt = true;
                  }
             }
-
             let activePrompts = [];
-
             if (showNexusPrompt) {
                 activePrompts.push("[E] NEXUS'A GİRİŞ YAP");
-                if (keys.e && document.activeElement !== document.getElementById('chat-input')) {
-                     enterNexus(); keys.e = false;
-                }
+                if (keys.e && document.activeElement !== document.getElementById('chat-input')) { enterNexus(); keys.e = false; }
             } else if (showStoragePrompt) {
                 activePrompts.push("[E] DEPO YÖNETİMİ");
-                if (keys.e && document.activeElement !== document.getElementById('chat-input')) {
-                     openStorage(); keys.e = false;
-                }
+                if (keys.e && document.activeElement !== document.getElementById('chat-input')) { openStorage(); keys.e = false; }
             }
-
             if (showEchoMergePrompt) {
                 activePrompts.push("[F] BİRLEŞ");
-                if (keys.f && document.activeElement !== document.getElementById('chat-input')) {
-                     echoManualMerge(); keys.f = false;
-                }
+                if (keys.f && document.activeElement !== document.getElementById('chat-input')) { echoManualMerge(); keys.f = false; }
             }
-            
             if (echoRay && echoRay.attached) {
                 if (keys.f && document.activeElement !== document.getElementById('chat-input')) {
-                     echoRay.attached = false; 
-                     echoRay.mode = 'roam'; 
-                     updateEchoDropdownUI(); 
-                     keys.f = false; 
+                     echoRay.attached = false; echoRay.mode = 'roam'; updateEchoDropdownUI(); keys.f = false; 
                      showNotification({name: MESSAGES.ECHO.DETACH, type:{color: MAP_CONFIG.colors.echo}}, "");
                 }
             }
-
             if (activePrompts.length > 0) {
                 promptEl.innerHTML = activePrompts.join('<br>');
                 promptEl.className = 'visible';
@@ -631,43 +586,24 @@ function loop() {
         }
 
         const navOrigin = window.cameraFocus || window.cameraTarget;
-
         if(echoRay && !echoRay.attached && window.gameSettings.showEchoArrow && window.cameraTarget !== echoRay) {
             drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, echoRay, MAP_CONFIG.colors.echo);
         }
-
         if (window.cameraTarget === echoRay && echoRay && !echoRay.attached) {
              drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, player, MAP_CONFIG.colors.player);
         }
+        if (window.gameSettings.showNexusArrow) drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
+        if (window.gameSettings.showRepairArrow) drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, repairStation, MAP_CONFIG.colors.repair);
+        if (window.gameSettings.showStorageArrow) drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
 
-        if (window.gameSettings.showNexusArrow) {
-            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, nexus, MAP_CONFIG.colors.nexus);
-        }
-        
-        if (window.gameSettings.showRepairArrow) {
-            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, repairStation, MAP_CONFIG.colors.repair);
-        }
-        
-        if (window.gameSettings.showStorageArrow) {
-            drawTargetIndicator(ctx, navOrigin, {width, height, zoom: currentZoom}, storageCenter, MAP_CONFIG.colors.storage);
-        }
-
-        // --- GÜNCELLEME: WORMHOLES LİSTESİ EKLENDİ ---
         const entities = { 
-            player, 
-            echoRay, 
-            nexus, 
-            repairStation, 
-            storageCenter, 
+            player, echoRay, nexus, repairStation, storageCenter, 
             planets: (entityManager ? entityManager.planets : []),
-            wormholes: (entityManager ? entityManager.wormholes : []) // YENİ
+            wormholes: (entityManager ? entityManager.wormholes : []) 
         };
-        const state = { manualTarget };
-        
+        const state = { manualTarget: AIManager.manualTarget };
         drawMiniMap(mmCtx, entities, state, navOrigin, window.cameraTarget);
-        
         if(typeof mapOpen !== 'undefined' && mapOpen) drawBigMap(bmCtx, bmCanvas, WORLD_SIZE, entities, state);
-
     } 
     animationId = requestAnimationFrame(loop);
 }
@@ -688,7 +624,6 @@ function resize() {
     height = window.innerHeight; 
     canvas.width = width; 
     canvas.height = height; 
-    
     if(mmCanvas) { mmCanvas.width = 180; mmCanvas.height = 180; }
     if(bmCanvas) { bmCanvas.width = window.innerWidth; bmCanvas.height = window.innerHeight; }
 }
