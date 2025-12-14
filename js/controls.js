@@ -1,13 +1,22 @@
 /**
  * Void Ray - Kontrol Sistemi
- * GÜNCELLEME: Profil butonu listener'ı güçlendirildi.
+ * GÜNCELLEME: 'J' tuşu ile Işık Atlaması (Light Jump) Aç/Kapa desteği.
  */
 
 // Tuş Durumları (Global erişim için)
-const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, c:false, p:false, Escape:false };
+const keys = { w:false, a:false, s:false, d:false, " ":false, f:false, q:false, e:false, m:false, h:false, c:false, p:false, j:false, Escape:false };
+
+// Fare Konumu (Global erişim için)
+const mouse = { x: 0, y: 0 };
 
 function initControls() {
     console.log("Kontroller başlatılıyor...");
+
+    // --- FARE HAREKETİ TAKİBİ ---
+    window.addEventListener('mousemove', e => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
 
     // --- KLAVYE GİRDİLERİ ---
     window.addEventListener('keydown', e => { 
@@ -24,6 +33,19 @@ function initControls() {
         else if(e.code === "Space") keys[" "] = true; 
         else if(keys.hasOwnProperty(e.code)) keys[e.code] = true; 
         
+        // --- IŞIK ATLAMASI (J TUŞU) ---
+        // GÜNCELLEME: Toggle mekaniği. Eğer şarj varsa iptal et, yoksa başlat.
+        if(e.key.toLowerCase() === 'j') {
+            if (typeof player !== 'undefined') {
+                if (player.isChargingJump) {
+                    player.cancelLightJump("Manuel İptal");
+                } else {
+                    player.attemptLightJump();
+                }
+            }
+            keys.j = false; // Tek tetikleme
+        }
+
         // --- KAMERA DEĞİŞTİRME (C TUŞU) ---
         if(e.key.toLowerCase() === 'c') {
             if (typeof echoRay !== 'undefined' && echoRay && !echoRay.attached) {

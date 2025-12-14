@@ -1,6 +1,6 @@
 /**
  * Void Ray - Veri ve Konfigürasyon (Data Source)
- * GÜNCELLEME: Emojiler teknik sembollerle (Wireframe uyumlu) değiştirildi.
+ * GÜNCELLEME: Işık Atlaması seyahat hızı düşürüldü (Daha görünür olması için).
  */
 
 const WORLD_SIZE = 120000; 
@@ -50,6 +50,11 @@ const GAME_CONFIG = {
         RADAR_RADIUS: 10000,
         BASE_TAIL_COUNT: 20,
         BOOST_TAIL_COUNT: 50,
+        // YENİ: Işık Atlaması Ayarları
+        LIGHT_JUMP_EFFICIENCY: 750, // Birim/Enerji
+        LIGHT_JUMP_CHARGE_TIME: 180, // 3 Saniye
+        LIGHT_JUMP_CHARGE_DRAIN: 0.25, // Şarj sızıntısı
+        LIGHT_JUMP_SPEED: 250, // GÜNCELLENDİ: 2000 -> 250 (Daha sinematik bir hız)
         ENERGY_COST: {
             BOOST: 0.05,
             MOVE: 0.002,
@@ -123,7 +128,15 @@ const MESSAGES = {
         SAFE_ZONE_EXIT: "GÜVENLİ BÖLGEDEN AYRILDINIZ",
         SAFE_ZONE_EXIT_DESC: "Dikkatli Olun",
         WORMHOLE_ENTER: "SOLUCAN DELİĞİ TESPİT EDİLDİ",
-        WORMHOLE_DESC: "Uzay-Zaman Atlaması Başlatılıyor..."
+        WORMHOLE_DESC: "Uzay-Zaman Atlaması Başlatılıyor...",
+        // Işık Atlaması Mesajları
+        JUMP_FAIL_ENERGY: "ENERJİ KRİTİK SEVİYEDE",
+        JUMP_FAIL_UNPREDICTABLE: "ATLAMA ÖNGÖRÜLEMİYOR",
+        JUMP_CANCELLED: "ATLAMA İPTAL EDİLDİ",
+        // Aşamalar
+        JUMP_PHASE_1: "ROTA HESAPLANIYOR...",
+        JUMP_PHASE_2: "KOORDİNATLARA KİLİTLENİYOR...",
+        JUMP_PHASE_3: "HİPER MOTORLAR ATEŞLENİYOR!"
     }
 };
 
@@ -164,8 +177,6 @@ const LOOT_DB = {
 };
 
 // --- RPG EŞYA SİSTEMİ (TEKNİK SEMBOLLER) ---
-// Emojiler yerine geometrik ve teknik semboller
-
 const ITEM_TYPES = {
     WEAPON: { id: 'weapon', label: 'Lazer Modülü', icon: '⌖' }, // Crosshair (Nişangah)
     ENGINE: { id: 'engine', label: 'İyon Motoru', icon: '▲' }, // Üçgen (İtici)
@@ -227,7 +238,8 @@ const TIPS = [
     "Nadir gezegenlerden Efsunlu Eşyalar düşebilir!",
     "Efsunlu motorlar İtici Güç bonusu ile geminizi hızlandırır.",
     "Space tuşu ile kısa süreli hızlanabilirsiniz (Enerji harcar).",
-    "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın."
+    "Envanteriniz dolarsa Nexus'ta satış yapın veya kapasiteyi artırın.",
+    "[J] tuşu ile Işık Atlamasını başlatabilir, tekrar basarak iptal edebilirsiniz."
 ];
 
 const MAP_CONFIG = {
