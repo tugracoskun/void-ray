@@ -260,6 +260,6 @@ const DEFAULT_GAME_SETTINGS = {
     cameraOffsetX: 0, cameraOffsetY: 0, adaptiveCamera: false, smoothCameraTransitions: true,
     developerMode: false, enableConsole: false, showGravityFields: false, showHitboxes: false,
     showVectors: false, showTargetVectors: false, showFps: false, godMode: false, hidePlayer: false,
-    enableCRT: false, crtIntensity: 50, showStars: true, starBrightness: 100, showGrid: true,
+    enableCRT: false, crtIntensity: 50, showStars: true, starBrightness: 100, showGrid: false,
     themeColor: '#94d8c3', themeHue: 162, themeSat: 47
 };

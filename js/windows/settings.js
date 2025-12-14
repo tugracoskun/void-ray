@@ -17,7 +17,7 @@ if (typeof window.gameSettings.crtIntensity === 'undefined') window.gameSettings
 if (typeof window.gameSettings.themeColor === 'undefined') window.gameSettings.themeColor = '#94d8c3';
 if (typeof window.gameSettings.themeHue === 'undefined') window.gameSettings.themeHue = 162;
 if (typeof window.gameSettings.themeSat === 'undefined') window.gameSettings.themeSat = 47;
-if (typeof window.gameSettings.showGrid === 'undefined') window.gameSettings.showGrid = true;
+if (typeof window.gameSettings.showGrid === 'undefined') window.gameSettings.showGrid = false;
 if (typeof window.gameSettings.starBrightness === 'undefined') window.gameSettings.starBrightness = 100;
 
 // --- YENİ: KAMERA TOOLTIP YARDIMCISI ---
