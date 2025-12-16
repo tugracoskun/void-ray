@@ -265,6 +265,15 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
         // Boyut değişmediyse sadece temizle
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+
+    // --- DİNAMİK TEMA RENGİ ---
+    let themeColor = "#94d8c3";
+    if (window.gameSettings && window.gameSettings.themeColor) {
+        themeColor = window.gameSettings.themeColor;
+    }
+    const themeRgbaLow = (typeof Utils !== 'undefined' && Utils.hexToRgba) ? Utils.hexToRgba(themeColor, 0.1) : "rgba(148, 216, 195, 0.1)";
+    const themeRgbaMid = (typeof Utils !== 'undefined' && Utils.hexToRgba) ? Utils.hexToRgba(themeColor, 0.3) : "rgba(148, 216, 195, 0.3)";
+    const themeRgbaHigh = (typeof Utils !== 'undefined' && Utils.hexToRgba) ? Utils.hexToRgba(themeColor, 0.5) : "rgba(148, 216, 195, 0.5)";
     
     // --- İNTERPOLASYON (SOFT ZOOM/PAN) ---
     // Mevcut değerleri hedef değerlere %10 oranında yaklaştır (Lerp)
@@ -297,7 +306,7 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     // --- ZOOM SEVİYESİ GÖSTERGESİ ---
     ctx.save();
     ctx.font = "bold 16px monospace";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillStyle = themeRgbaHigh;
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
     ctx.shadowColor = "rgba(0,0,0,0.8)";
@@ -334,9 +343,9 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
     }
 
     ctx.beginPath();
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.1)";
+    ctx.strokeStyle = themeRgbaLow; 
     ctx.lineWidth = 1;
-    ctx.fillStyle = "rgba(56, 189, 248, 0.4)";
+    ctx.fillStyle = themeRgbaMid;
     ctx.font = "10px monospace";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
@@ -359,7 +368,7 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
 
     ctx.restore();
 
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.3)"; 
+    ctx.strokeStyle = themeRgbaMid; 
     ctx.lineWidth = 2;
     ctx.strokeRect(offsetX, offsetY, worldSize*scale, worldSize*scale);
 
@@ -443,12 +452,12 @@ function drawBigMap(ctx, canvas, worldSize, entities, state) {
 
     ctx.beginPath();
     ctx.arc(nx, ny, SAFE_ZONE_R * scale, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.3)"; // Mavi-Yeşil ton
+    ctx.strokeStyle = themeRgbaMid; 
     ctx.lineWidth = 1;
     ctx.setLineDash([10, 5]);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(56, 189, 248, 0.05)";
+    ctx.fillStyle = (typeof Utils !== 'undefined' && Utils.hexToRgba) ? Utils.hexToRgba(themeColor, 0.05) : "rgba(148, 216, 195, 0.05)";
     ctx.fill();
 
     // Üsler
